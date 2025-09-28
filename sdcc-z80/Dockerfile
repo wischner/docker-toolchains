@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.title="sdcc-z80" \
 ENV PREFIX=/opt/sdcc
 ENV PATH="${PREFIX}/bin:${PATH}"
 
-# Build + runtime tools (add ncurses/readline for uCsim)
+# Build + runtime tools (readline/ncurses for uCsim)
 RUN apk add --no-cache \
     build-base bison flex zlib-dev boost-dev mawk \
     readline-dev ncurses-dev \
@@ -28,7 +28,7 @@ RUN wget -O /tmp/sdcc-src.tar.bz2 \
  && mkdir -p /tmp/src \
  && tar -xjf /tmp/sdcc-src.tar.bz2 -C /tmp/src --strip-components=1
 
-# Configure & build Z80-only (uCsim always enabled)
+# Build SDCC (Z80-only), then explicitly build+install uCsim
 RUN set -e; \
     mkdir -p /tmp/build; cd /tmp/build; \
     ../src/configure --prefix="${PREFIX}" \
@@ -43,6 +43,15 @@ RUN set -e; \
       --disable-mos6502-port --disable-mos65c02-port \
     && make -j"$(getconf _NPROCESSORS_ONLN)" \
     && make install \
+    # --- explicitly build & install uCsim (some builds only install 'ucsim') ---
+    && cd /tmp/src/sim/ucsim \
+    && ./configure --prefix="${PREFIX}" --disable-werror \
+    && make -j"$(getconf _NPROCESSORS_ONLN)" \
+    && make install \
+    # --- ensure 'sz80' exists: provide a wrapper selecting the Z80 target ---
+    && if [ ! -x "${PREFIX}/bin/sz80" ]; then \
+         printf '#!/bin/sh\nexec ucsim -t z80 "$@"\n' > "${PREFIX}/bin/sz80" && chmod +x "${PREFIX}/bin/sz80"; \
+       fi \
     # strip ELF binaries to save space
     && find "${PREFIX}/bin" -type f -exec sh -c 'file -b "$1" | grep -q ELF && strip "$1" || true' _ {} \; \
     && rm -rf /tmp/src /tmp/build /tmp/sdcc-src.tar.bz2
