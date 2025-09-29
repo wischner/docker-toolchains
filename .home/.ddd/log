@@ -1,0 +1,28 @@
+GNU DDD 3.4.0 (x86_64-pc-linux-musl)
+Copyright (C) 1995-1999 Technische Universität Braunschweig, Germany.
+Copyright (C) 1999-2001 Universität Passau, Germany.
+Copyright (C) 2001 Universität des Saarlandes, Germany.
+Copyright (C) 2001-2009 Free Software Foundation, Inc.
+
+Compiled with GCC 13.2.1 20240309
+Requires X11R6, Xt11R7, Motif 2.3.8 (Motif Version 2.3.8)
+Includes XPM 3.4.11, DDD core
+$  ddd --debugger sz80
++  /bin/sh -c 'exec sz80 -q -fullname'
+#  Hello, world!
+#  Starting GDB...
+#  Running GDB (pid 7, tty /dev/pts/1)...
+#  Current language: C/C++
+#  Searching "vsllib/ddd.vsl"...
+#  Trying "/work/.home/.ddd/vsllib/ddd.vsl"
+#  Trying "/usr/share/ddd-3.4.0/vsllib/ddd.vsl"
+#  Searching "vsllib/ddd.vsl"..."/usr/share/ddd-3.4.0/vsllib/ddd.vsl".
+2025.09.29 19:25:02
+<- "uCsim, Copyright (C) 1997 Daniel Drotos.\n"
+   "uCsim comes with ABSOLUTELY NO WARRANTY; for details type `show w\'.\n"
+   "This is free software, and you are welcome to redistribute it\n"
+   "under certain conditions; type `show c\' for details.\n"
+   "0> "
+#  Saving options in "/work/.home/.ddd/init"...
+#  Saving options in "/work/.home/.ddd/init"...done.
+#  Thanks for using DDD 3.4.0!

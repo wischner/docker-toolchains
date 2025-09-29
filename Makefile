@@ -5,7 +5,7 @@
 
 # Defaults (override on command line: make build-all ORG=me IMG_VER=1.0.1)
 ORG     ?= wischner
-IMG_VER ?= 1.0.0
+IMG_VER ?= 1.0.1
 
 # Any immediate subdir that has a Dockerfile is considered a toolchain
 TOOLCHAINS := $(patsubst %/,%,$(dir $(wildcard */Dockerfile)))

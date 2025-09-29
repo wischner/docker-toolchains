@@ -33,3 +33,10 @@ m68k-elf-objdump -d hello.elf
 ```
 
 > Note: This toolchain does not include libc or startup files — you must supply your own startup code and linker script for your target.
+
+## Support and contributions
+
+For bug reports, feature requests, or questions, please use the issue tracker:  
+[https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)
+
+Contributions are welcome. If you’d like to improve this image, feel free to open a pull request.

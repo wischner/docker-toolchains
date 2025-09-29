@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.0.1
 
 LABEL org.opencontainers.image.title="sdcc-z80-zx-spectrum" \
       org.opencontainers.image.description="SDCC Z80 toolchain + ZX Spectrum helpers (bin2tap) + Fuse emulator (SDL) built on Alpine" \
@@ -22,15 +22,14 @@ RUN apk add --no-cache python3 which
 # autoconf/automake/libtool/pkgconf: autotools
 # zlib-dev, libpng-dev, libxml2-dev, libarchive-dev: file formats
 # glib-dev: common util dep
-# sdl2-dev: we’ll build Fuse with SDL backend (avoid GTK on Alpine)
 # git, ca-certs, build-base: usual suspects
 # Build deps (no autotools needed with release tarballs)
 RUN apk add --no-cache \
-    git ca-certificates build-base pkgconf curl tar \
+    git ca-certificates build-base pkgconf \
+    curl file tar \
     zlib-dev libpng-dev libxml2-dev libarchive-dev \
-    glib-dev sdl2-dev \
-    autoconf automake libtool \
-    readline-dev
+    glib-dev gtk+3.0 gtk+3.0-dev gdk-pixbuf-dev pango-dev cairo-dev \
+    autoconf automake libtool
 
 # Build & install libspectrum (release tarball, direct mirror)
 RUN set -eux; \
@@ -48,15 +47,16 @@ RUN set -eux; \
 
 
 # Build & install Fuse (speccytools fork with GDB support, SDL backend)
-# Build & install Fuse (speccytools fork with GDB support, SDL backend)
 RUN set -eux; \
     git -c credential.helper= -c http.https://github.com/.extraHeader= \
-        clone --depth=1 https://github.com/speccytools/fuse.git /tmp/fuse && \
-    cd /tmp/fuse && \
-    ./autogen.sh && \
-    ./configure --prefix=/usr --with-sdl --without-gtk --disable-werror && \
-    make -j"$(getconf _NPROCESSORS_ONLN)" && \
-    make install && \
+        clone --depth=1 https://github.com/speccytools/fuse.git /tmp/fuse; \
+    cd /tmp/fuse; \
+    ./autogen.sh; \
+    # Prefer GTK3, fall back to generic GTK if needed; explicitly disable SDL
+    ( ./configure --prefix=/usr --with-gtk3  --without-sdl --disable-werror \
+      || ./configure --prefix=/usr --with-gtk  --without-sdl --disable-werror ); \
+    make -j"$(getconf _NPROCESSORS_ONLN)"; \
+    make install; \
     fuse --help >/dev/null 2>&1 || true; \
     rm -rf /tmp/fuse
 
@@ -91,12 +91,10 @@ RUN set -e; \
     'echo "Wrote $base.tap (load at $addr)"' \
     > /usr/local/bin/ihx2tap && chmod +x /usr/local/bin/ihx2tap
 
-# ROMs handling
-# We do NOT ship Spectrum ROMs (copyright). Mount them at runtime:
-#   -v /path/to/roms:/opt/roms
-# Fuse will look here by default. You can override via FUSE_ROM_DIR.
-ENV FUSE_ROM_DIR=/opt/roms
-RUN mkdir -p /opt/roms
+# Copy Sinclair roms.
+RUN mkdir -p /usr/share/spectrum-roms/
+COPY roms/ /usr/share/spectrum-roms/
+ENV FUSE_ROM_DIR=/usr/share/spectrum-roms
 
 # Convenience wrapper to run Fuse pointing at the ROM dir (if you want SDL window)
 # Usage inside container (with X/Wayland mapped) or via host:

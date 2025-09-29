@@ -34,3 +34,10 @@ gdb-multiarch app.elf
 ```
 
 This environment gives you a ready-to-use cross-compiler, debugger, and flashing tools for ARM-based microcontrollers.
+
+## Support and contributions
+
+For bug reports, feature requests, or questions, please use the issue tracker:  
+[https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)
+
+Contributions are welcome. If you’d like to improve this image, feel free to open a pull request.
