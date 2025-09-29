@@ -21,6 +21,10 @@ It extends the base `wischner/sdcc-z80` image with Spectrum-specific tools and t
   - `fuse-gdb-run` — run Fuse with GDB server enabled (if supported)
 - Build tools: `make`, `git`
 
+## Sample Project
+
+[ZX Spectrum Template App](https://github.com/retro-vault/zxspec48-app)
+
 ## Usage
 Run the container with your project mounted into `/work`:
 
