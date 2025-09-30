@@ -1,7 +1,7 @@
 # ARM bare-metal toolchain (arm-none-eabi) + OpenOCD on Alpine (single-stage)
 FROM alpine:3.20
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.0.1
 # xPack GNU Arm Embedded GCC (change these if you want a different version/build)
 ARG XPACK_VER=v13.2.1-1.1
 ARG XPACK_TARBALL=xpack-arm-none-eabi-gcc-13.2.1-1.1-linux-x64.tar.gz
@@ -16,8 +16,6 @@ LABEL org.opencontainers.image.title="gcc-arm-none-eabi" \
 
 ENV TOOLCHAIN_DIR=/opt/arm-none-eabi
 ENV PATH="${TOOLCHAIN_DIR}/bin:${PATH}"
-# For Pico projects you can mount SDK at /work/lib/pico-sdk; leave env for convenience
-ENV PICO_SDK_PATH=/work/lib/pico-sdk
 
 # Runtime tools & libs
 # - openocd (Alpine package) to avoid building from source in single stage

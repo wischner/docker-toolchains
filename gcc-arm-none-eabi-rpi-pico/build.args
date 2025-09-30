@@ -1,0 +1,4 @@
+IMG_VERSION=1.0.0
+# Host-specific if you’re baking the user into the image (optional)
+UID=1000
+GID=1000
