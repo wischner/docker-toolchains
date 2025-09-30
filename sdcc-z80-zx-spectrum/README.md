@@ -11,14 +11,12 @@ It extends the base `wischner/sdcc-z80` image with Spectrum-specific tools and t
 - `sdasz80` / `sdldz80` (assembler and linker)
 - `uCsim` with `sz80` wrapper (Z80 simulator)
 - `libspectrum` (snapshot/tape/disk formats)
-- [Fuse](https://github.com/speccytools/fuse) (speccytools fork, SDL backend; optional GDB server)
+- [Fuse](https://github.com/speccytools/fuse) (with GDB server)
 - [bin2tap](https://github.com/compilersoftware/bin2tap) (convert flat binaries to `.tap`)
 - Convenience wrappers:
   - `zx-sdcc` — run SDCC with `-mz80 -DSPECTRUM`
   - `ihx2bin` — convert `.ihx` → `.bin`
   - `ihx2tap` — convert `.ihx` → `.tap` (default load address `32768`)
-  - `fuse-run` — run Fuse using ROMs mounted at `/opt/roms`
-  - `fuse-gdb-run` — run Fuse with GDB server enabled (if supported)
 - Build tools: `make`, `git`
 
 ## Sample Project
@@ -50,39 +48,14 @@ X11 example:
     docker run --rm -it \
       -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
       -v "$(pwd):/work" \
-      -v /path/to/roms:/opt/roms \
       wischner/sdcc-z80-zx-spectrum:latest \
-      fuse-run hello.tap
-
-Wayland (XWayland) example (values depend on your compositor):
-
-    docker run --rm -it \
-      -e DISPLAY \
-      -v /tmp/.X11-unix:/tmp/.X11-unix \
-      -v "$(pwd):/work" \
-      -v /path/to/roms:/opt/roms \
-      wischner/sdcc-z80-zx-spectrum:latest \
-      fuse-run hello.tap
+      fuse hello.tap
 
 ## ROMs
-The `FUSE_ROM_DIR` points to `/usr/share/spectrum-roms`.
-
-## Debugging with GDB
-If the included Fuse build provides a GDB server, you can publish a port and attach with `gdb`:
-
-    docker run --rm -it -p 1337:1337 \
-      -v "$(pwd):/work" \
-      -v /path/to/roms:/opt/roms \
-      wischner/sdcc-z80-zx-spectrum:latest \
-      fuse-gdb-run hello.tap
-
-Attach from the host:
-
-    gdb-multiarch -ex "target remote :1337" hello.elf
+Sinclair ROMs are in `/usr/share/spectrum-roms`.
 
 ## Environment
-- `FUSE_ROM_DIR` — ROM directory inside the container (default: `/opt/roms`)
-- `FUSE_GDB_PORT` — port used by `fuse-gdb-run` (default: `1337`)
+- `FUSE_ROM_DIR` — ROM directory inside the container (default: `/usr/share/spectrum-roms`)
 
 ## Support and contributions
 

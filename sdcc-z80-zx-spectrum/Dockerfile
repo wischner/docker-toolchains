@@ -6,10 +6,10 @@
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.1
+ARG IMG_VERSION=1.0.2
 
 LABEL org.opencontainers.image.title="sdcc-z80-zx-spectrum" \
-      org.opencontainers.image.description="SDCC Z80 toolchain + ZX Spectrum helpers (bin2tap) + Fuse emulator (SDL) built on Alpine" \
+      org.opencontainers.image.description="SDCC Z80 toolchain + ZX Spectrum helpers built on Alpine" \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.licenses="GPL-2.0-or-later; see component licenses" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
@@ -96,15 +96,7 @@ RUN mkdir -p /usr/share/spectrum-roms/
 COPY roms/ /usr/share/spectrum-roms/
 ENV FUSE_ROM_DIR=/usr/share/spectrum-roms
 
-# Convenience wrapper to run Fuse pointing at the ROM dir (if you want SDL window)
-# Usage inside container (with X/Wayland mapped) or via host:
-#   fuse-run <tape.tap>
-RUN printf '%s\n' \
-'#!/bin/sh' \
-'ROMDIR="${FUSE_ROM_DIR:-/opt/roms}"' \
-'exec fuse --roms "$ROMDIR" "$@"' \
-> /usr/local/bin/fuse-run && chmod +x /usr/local/bin/fuse-run
-
+# Set work dir.
 WORKDIR /work
 
 # Quick prints so logs show what’s in the image (non-fatal if headless)
