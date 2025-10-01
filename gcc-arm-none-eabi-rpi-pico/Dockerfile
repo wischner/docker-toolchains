@@ -17,10 +17,13 @@ LABEL org.opencontainers.image.title="gcc-arm-none-eabi-rpi-pico" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
       org.opencontainers.image.version="${IMG_VERSION}"
 
+# Speed-ups for local builds that opt-in to ccache
 ENV CCACHE_DIR=/work/.ccache \
     CMAKE_C_COMPILER_LAUNCHER=ccache \
     CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    GIT_TERMINAL_PROMPT=0
+    GIT_TERMINAL_PROMPT=0 \
+    # Make toolchain discovery explicit for Pico SDK (Alpine-native toolchain lives in /usr)
+    PICO_TOOLCHAIN_PATH=/usr
 
 # Packages (Alpine 3.20)
 RUN apk add --no-cache \

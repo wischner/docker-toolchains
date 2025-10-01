@@ -3,74 +3,75 @@
 # One folder = one image
 # =========================
 
-# Defaults (override on command line: make build-all ORG=me IMG_VER=1.0.1)
 ORG     ?= wischner
-IMG_VER ?= 1.0.1
+IMG_VER ?= 1.0.0
 
 # Any immediate subdir that has a Dockerfile is considered a toolchain
 TOOLCHAINS := $(patsubst %/,%,$(dir $(wildcard */Dockerfile)))
 
-# Helper to pass optional per-dir build args from <dir>/build.args (KEY=VAL per line)
-define _args_for_dir
-$(shell if [ -f $(1)/build.args ]; then \
-  awk -F= 'NF>=2 && $$1 !~ /^[[:space:]]*#/ {gsub(/^[[:space:]]+|[[:space:]]+$$/,"",$$1); gsub(/^[[:space:]]+|[[:space:]]+$$/,"",$$2); printf "--build-arg %s=%s ",$$1,$$2}' $(1)/build.args; \
-fi)
-endef
-
-.PHONY: help list build-all push-all clean $(TOOLCHAINS) build-% push-%
+.PHONY: help list build-all push-all clean $(TOOLCHAINS) build-% push-% print-versions
 
 help:
 	@echo "Targets:"
 	@echo "  make list                 # list detected toolchains"
-	@echo "  make build-all            # build all images (:latest and :$${IMG_VER})"
-	@echo "  make push-all             # push all images (:latest and :$${IMG_VER})"
-	@echo "  make build-<dir>          # build specific dir (e.g. build-sdcc-z80)"
-	@echo "  make push-<dir>           # push specific dir (e.g. push-gcc-arm-none-eabi)"
+	@echo "  make build-all            # build all images (:latest and :<per-image IMG_VERSION>)"
+	@echo "  make push-all             # push all images (:latest and :<per-image IMG_VERSION>)"
+	@echo "  make build-<dir>          # build specific dir"
+	@echo "  make push-<dir>           # push specific dir"
+	@echo "  make print-versions       # show effective versions per dir"
 
 list:
-	@echo "ORG=$(ORG)  IMG_VER=$(IMG_VER)"
-	@echo "Toolchains: $(TOOLCHAINS)"
+	@echo "ORG=$(ORG)  IMG_VER(default)=$(IMG_VER)"
+	@printf "Toolchains: %s\n" "$(TOOLCHAINS)"
+
+print-versions:
+	@set -e; \
+	for d in $(TOOLCHAINS); do \
+	  BVER=$$(awk -F= 'NF>=2 && $$1 !~ /^[[:space:]]*#/ {key=$$1; val=$$2; gsub(/^[[:space:]]+|[[:space:]]+$$/,"",key); gsub(/^[[:space:]]+|[[:space:]]+$$/,"",val); if (toupper(key)=="IMG_VERSION"){print val; exit}}' "$$d/build.args" 2>/dev/null || true); \
+	  DVER=$$(awk 'BEGIN{IGNORECASE=1} /^[[:space:]]*ARG[[:space:]]+IMG_VERSION([[:space:]]*=[[:space:]]*[^[:space:]]+)?/ {match($$0,/=[[:space:]]*([^[:space:]]+)/,m); if(m[1]!=""){ver=m[1]; gsub(/^["'\''"]|["'\''"]$$/,"",ver); print ver; exit}}' "$$d/Dockerfile" 2>/dev/null || true); \
+	  EFF=$${BVER:-$${DVER:-$(IMG_VER)}}; \
+	  printf "%-28s build.args=%-10s Dockerfile=%-10s effective=%s\n" $$d "$$BVER" "$$DVER" "$$EFF"; \
+	done
 
 build-all: $(addprefix build-,$(TOOLCHAINS))
 push-all:  $(addprefix push-,$(TOOLCHAINS))
 
-# Generic build rule:
-# - Image name: $(ORG)/<dir>
-# - Tags: :latest and :$(IMG_VER)
-# - Always passes IMG_VERSION, plus <dir>/build.args if present
+# Build: tag :latest and :<effective version>, pass all build.args (except IMG_VERSION)
 build-%:
-	@echo "==> Building $(ORG)/$*:latest and :$(IMG_VER)"
-	@ARGS="$$(printf "%s" '$(_args_for_dir $*)') --build-arg IMG_VERSION=$(IMG_VER)"; \
-	set -e; \
-	echo "    Context: ./$*"; \
+	@set -e; \
+	d="$*"; \
+	echo "==> Building $(ORG)/$$d"; \
+	BVER=$$(awk -F= 'NF>=2 && $$1 !~ /^[[:space:]]*#/ {key=$$1; val=$$2; gsub(/^[[:space:]]+|[[:space:]]+$$/,"",key); gsub(/^[[:space:]]+|[[:space:]]+$$/,"",val); if (toupper(key)=="IMG_VERSION"){print val; exit}}' "$$d/build.args" 2>/dev/null || true); \
+	DVER=$$(awk 'BEGIN{IGNORECASE=1} /^[[:space:]]*ARG[[:space:]]+IMG_VERSION([[:space:]]*=[[:space:]]*[^[:space:]]+)?/ {match($$0,/=[[:space:]]*([^[:space:]]+)/,m); if(m[1]!=""){ver=m[1]; gsub(/^["'\''"]|["'\''"]$$/,"",ver); print ver; exit}}' "$$d/Dockerfile" 2>/dev/null || true); \
+	EFF=$${BVER:-$${DVER:-$(IMG_VER)}}; \
+	EXTRA_ARGS=$$(awk -F= 'NF>=2 && $$1 !~ /^[[:space:]]*#/ {key=$$1; val=$$2; gsub(/^[[:space:]]+|[[:space:]]+$$/,"",key); gsub(/^[[:space:]]+|[[:space:]]+$$/,"",val); if (toupper(key)!="IMG_VERSION") printf "--build-arg %s=%s ", key, val}' "$$d/build.args" 2>/dev/null); \
+	ARGS="$$EXTRA_ARGS --build-arg IMG_VERSION=$$EFF"; \
+	echo "    Context: ./$$d"; \
 	echo "    Args:    $$ARGS"; \
-	docker build $$ARGS \
-	  -t $(ORG)/$*:latest \
-	  -t $(ORG)/$*:$(IMG_VER) \
-	  ./$* ; \
-	if [ -f "$*/Makefile.toolchain" ]; then \
-	  echo "==> Post-build hook for $*"; \
-	  $(MAKE) -C $* -f Makefile.toolchain build || true; \
+	echo "    Tags:    latest, $$EFF"; \
+	docker build $$ARGS -t $(ORG)/$$d:latest -t $(ORG)/$$d:$$EFF ./$$d ; \
+	if [ -f "$$d/Makefile.toolchain" ]; then \
+	  echo "==> Post-build hook for $$d"; \
+	  $(MAKE) -C $$d -f Makefile.toolchain build || true; \
 	fi
 
-# Generic push rule (ensures images exist & tags are present)
 push-%:
 	@set -e; \
-	echo "==> Preparing to push $(ORG)/$*:latest and :$(IMG_VER)"; \
-	# Ensure :latest exists; if not, build it
-	if ! docker image inspect $(ORG)/$*:latest >/dev/null 2>&1; then \
-	  echo "   Local image $(ORG)/$*:latest not found. Building..."; \
-	  $(MAKE) build-$*; \
+	d="$*"; \
+	BVER=$$(awk -F= 'NF>=2 && $$1 !~ /^[[:space:]]*#/ {key=$$1; val=$$2; gsub(/^[[:space:]]+|[[:space:]]+$$/,"",key); gsub(/^[[:space:]]+|[[:space:]]+$$/,"",val); if (toupper(key)=="IMG_VERSION"){print val; exit}}' "$$d/build.args" 2>/dev/null || true); \
+	DVER=$$(awk 'BEGIN{IGNORECASE=1} /^[[:space:]]*ARG[[:space:]]+IMG_VERSION([[:space:]]*=[[:space:]]*[^[:space:]]+)?/ {match($$0,/=[[:space:]]*([^[:space:]]+)/,m); if(m[1]!=""){ver=m[1]; gsub(/^["'\''"]|["'\''"]$$/,"",ver); print ver; exit}}' "$$d/Dockerfile" 2>/dev/null || true); \
+	EFF=$${BVER:-$${DVER:-$(IMG_VER)}}; \
+	echo "==> Preparing to push $(ORG)/$$d:latest and :$$EFF"; \
+	if ! docker image inspect $(ORG)/$$d:latest >/dev/null 2>&1; then \
+	  echo "   Local image :latest not found. Building..."; \
+	  $(MAKE) build-$$d; \
 	fi; \
-	# Ensure :$(IMG_VER) tag exists; if not, tag from :latest
-	if ! docker image inspect $(ORG)/$*:$(IMG_VER) >/dev/null 2>&1; then \
-	  echo "   Tag :$(IMG_VER) missing. Tagging from :latest..."; \
-	  docker tag $(ORG)/$*:latest $(ORG)/$*:$(IMG_VER); \
+	if ! docker image inspect $(ORG)/$$d:$$EFF >/dev/null 2>&1; then \
+	  echo "   Tag :$$EFF missing. Tagging from :latest..."; \
+	  docker tag $(ORG)/$$d:latest $(ORG)/$$d:$$EFF; \
 	fi; \
-	echo "==> Pushing $(ORG)/$*:latest"; \
-	docker push $(ORG)/$*:latest; \
-	echo "==> Pushing $(ORG)/$*:$(IMG_VER)"; \
-	docker push $(ORG)/$*:$(IMG_VER)
+	echo "==> Pushing $(ORG)/$$d:latest"; docker push $(ORG)/$$d:latest; \
+	echo "==> Pushing $(ORG)/$$d:$$EFF"; docker push $(ORG)/$$d:$$EFF
 
 clean:
 	@echo "Pruning dangling images and builder cache..."
