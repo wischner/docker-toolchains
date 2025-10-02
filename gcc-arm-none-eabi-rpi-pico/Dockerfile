@@ -1,14 +1,15 @@
 # wischner/gcc-arm-none-eabi-rpi-pico
 # Extends your base image with Pico/Pico W conveniences and ships the Pico SDK.
-FROM wischner/gcc-arm-none-eabi:latest
 
-ARG IMG_VERSION=1.0.0
+ARG BASE_TAG=1.0.3
+FROM wischner/gcc-arm-none-eabi:${BASE_TAG}
+
+ARG IMG_VERSION=1.0.3
 ARG UID=1000
 ARG GID=1000
 
-# Pin SDK tag required by picotool (>= 2.1.0). Adjust if you want a newer tag.
+# Pin SDK tag required by picotool (>= 2.1.0)
 ARG PICO_SDK_REF=2.1.0
-# pico-extras is optional; try to pin to the same tag, but we'll fallback to default if missing.
 ARG PICO_EXTRAS_REF=2.1.0
 
 LABEL org.opencontainers.image.title="gcc-arm-none-eabi-rpi-pico" \
@@ -22,19 +23,18 @@ ENV CCACHE_DIR=/work/.ccache \
     CMAKE_C_COMPILER_LAUNCHER=ccache \
     CMAKE_CXX_COMPILER_LAUNCHER=ccache \
     GIT_TERMINAL_PROMPT=0 \
-    # Make toolchain discovery explicit for Pico SDK (Alpine-native toolchain lives in /usr)
     PICO_TOOLCHAIN_PATH=/usr
 
 # Packages (Alpine 3.20)
+# (wget/tar/xz not needed anymore since we only git-clone; keep if you like)
 RUN apk add --no-cache \
       cmake \
       python3 py3-pip py3-pyserial py3-elftools \
-      build-base ccache git-lfs pkgconf \
+      build-base ccache git git-lfs pkgconf \
       libusb libusb-dev hidapi hidapi-dev libftdi1 libftdi1-dev \
-      autoconf automake libtool linux-headers \
-      wget tar xz
+      autoconf automake libtool linux-headers
 
-# --- Fetch Pico SDK (STRICT: fail if tag doesn't exist) + extras (best-effort) ---
+# --- Fetch Pico SDK (STRICT) + extras (best-effort) ---
 RUN set -e; \
     clone_ref_or_fail() { \
       repo="$1"; ref="$2"; dest="$3"; \
@@ -88,6 +88,7 @@ WORKDIR /work
 # Sanity check
 RUN set -e; \
     echo "=== ARM toolchain ==="; arm-none-eabi-gcc --version | head -n1; \
+    echo "=== C++ toolchain ==="; arm-none-eabi-g++ --version | head -n1; \
     echo "=== pioasm ===";     pioasm --help 2>/dev/null | head -n1 || true; \
     echo "=== picotool ===";   picotool -V || true; \
     echo "Pico layer ready."
