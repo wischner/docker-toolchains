@@ -1,0 +1,6 @@
+# Ignore Haiku package files (large binaries)
+*.hpkg
+
+# Keep this README
+!README.md
+!.gitignore

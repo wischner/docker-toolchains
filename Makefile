@@ -5,6 +5,7 @@
 
 ORG     ?= wischner
 IMG_VER ?= 1.0.0
+DOCKER_BUILD_FLAGS ?=
 
 # Any immediate subdir that has a Dockerfile is considered a toolchain
 TOOLCHAINS := $(patsubst %/,%,$(dir $(wildcard */Dockerfile)))
@@ -49,7 +50,7 @@ build-%:
 	echo "    Context: ./$$d"; \
 	echo "    Args:    $$ARGS"; \
 	echo "    Tags:    latest, $$EFF"; \
-	docker build $$ARGS -t $(ORG)/$$d:latest -t $(ORG)/$$d:$$EFF ./$$d ; \
+	docker build $(DOCKER_BUILD_FLAGS) $$ARGS -t $(ORG)/$$d:latest -t $(ORG)/$$d:$$EFF ./$$d ; \
 	if [ -f "$$d/Makefile.toolchain" ]; then \
 	  echo "==> Post-build hook for $$d"; \
 	  $(MAKE) -C $$d -f Makefile.toolchain build || true; \

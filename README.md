@@ -33,13 +33,25 @@ This repository is **actively developed**. Next steps:
   Small Device C Compiler (Z80 backend) plus `uCsim` Z80 simulator.  
   *Lean Z80 C toolchain for classic 8‑bit targets.*
 
-- [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)  
-  Z80 toolchain variant tailored for **ZX Spectrum** builds.  
+- [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)
+  Z80 toolchain variant tailored for **ZX Spectrum** builds.
   *Convenient defaults/structure for Spectrum projects.*
 
-- [**GCC m68k**](./gcc-m68k)  
-  GCC/binutils cross‑compiler targeting **`m68k-elf`**.  
+- [**SDCC Z80 – Iskra Delta Partner**](./sdcc-z80-idp)
+  Z80 toolchain variant tailored for **Iskra Delta Partner** with cpmtools.
+  *CP/M disk image creation and Partner-specific libraries.*
+
+- [**GCC m68k**](./gcc-m68k)
+  GCC/binutils cross‑compiler targeting **`m68k-elf`**.
   *Develop for classic Motorola 68k systems (e.g., Atari ST, Amiga).*
+
+- [**GCC x86_64 Linux SDL2**](./gcc-x86_64-linux-sdl)
+  GCC x86_64 toolchain with **SDL2**, OpenGL (Mesa), X11, and audio/image libraries on Ubuntu 22.04.
+  *SDL2 game and multimedia application development.*
+
+- [**GCC x86_64 Haiku**](./gcc-x86_64-haiku)
+  GCC cross-compiler targeting **Haiku OS** (x86_64-unknown-haiku) with Jam build system.
+  *Build Haiku OS and native Haiku applications.*
 
 ---
 
@@ -67,9 +79,36 @@ cmake --build build -j
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80:latest   sdcc -mz80 -o hello.ihx hello.c
 ```
 
+### SDCC Z80 – Iskra Delta Partner
+```bash
+# Compile with Partner libraries and headers
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80-idp:latest   idp-sdcc -o program.ihx program.c
+
+# Create CP/M disk image
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80-idp:latest   mkfs.cpm -f partner disk.img
+```
+
 ### GCC m68k
 ```bash
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k:latest   m68k-elf-gcc -o hello.elf hello.c
+```
+
+### GCC x86_64 Linux SDL2
+```bash
+# Compile an SDL2 application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)
+
+# CMake build
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   bash -c "cmake -S . -B build && cmake --build build -j"
+```
+
+### GCC x86_64 Haiku
+```bash
+# Compile a Haiku application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-haiku:latest   x86_64-unknown-haiku-gcc -o app.elf app.c
+
+# Build with Jam
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-haiku:latest   jam
 ```
 
 ---
