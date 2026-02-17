@@ -38,6 +38,15 @@ RUN wget -O /tmp/sdcc-src.tar.bz2 \
  && mkdir -p /tmp/src \
  && tar -xjf /tmp/sdcc-src.tar.bz2 -C /tmp/src --strip-components=1
 
+# Patch SDCC Z80 defaults:
+# 1) Change default code_loc from 0x200 to 0x100 (standard CP/M TPA)
+RUN sed -i 's/options\.code_loc = 0x200/options.code_loc = 0x100/' /tmp/src/src/z80/main.c
+# 2) Set default data_loc to 0 instead of 0x8000 (let linker place it after _CODE)
+RUN sed -i 's/options\.data_loc = 0x8000/options.data_loc = 0/' /tmp/src/src/z80/main.c
+# 3) Guard the Z80 _DATA emission so it's skipped when data_loc is 0
+#    (Z80 branch writes it unconditionally, unlike MCS51 which checks)
+RUN sed -i 's/WRITE_SEG_LOC ("_DATA", options.data_loc);/if (options.data_loc) { WRITE_SEG_LOC ("_DATA", options.data_loc); }/' /tmp/src/src/SDCCmain.c
+
 # Build SDCC (Z80-only), then explicitly build+install uCsim
 RUN set -e; \
     mkdir -p /tmp/build; cd /tmp/build; \
@@ -98,6 +107,6 @@ RUN set -e; \
     echo "Checking Z80 assembler/linker:"; \
     command -v sdasz80 && command -v sdldz80; \
     echo "Checking uCsim sz80:"; \
-    command -v sz80 \
+    command -v sz80; \
     echo "Checking DDD:"; \
     command -v ddd

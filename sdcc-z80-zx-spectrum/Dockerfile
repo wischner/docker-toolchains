@@ -29,7 +29,8 @@ RUN apk add --no-cache \
     curl file tar \
     zlib-dev libpng-dev libxml2-dev libarchive-dev \
     glib-dev gtk+3.0 gtk+3.0-dev gdk-pixbuf-dev pango-dev cairo-dev \
-    autoconf automake libtool
+    autoconf automake libtool \
+    mbedtls-dev
 
 # Build & install libspectrum (release tarball, direct mirror)
 RUN set -eux; \
@@ -46,11 +47,13 @@ RUN set -eux; \
     rm -rf /tmp/libspectrum*
 
 
-# Build & install Fuse (speccytools fork with GDB support, SDL backend)
+# Build & install Fuse (speccytools fork with GDB support, GTK3 backend)
+# Pinned to 70947ae (Dec 2024) — later Spectranext commits break disk.c
 RUN set -eux; \
     git -c credential.helper= -c http.https://github.com/.extraHeader= \
-        clone --depth=1 https://github.com/speccytools/fuse.git /tmp/fuse; \
+        clone https://github.com/speccytools/fuse.git /tmp/fuse; \
     cd /tmp/fuse; \
+    git checkout 70947ae; \
     ./autogen.sh; \
     # Prefer GTK3, fall back to generic GTK if needed; explicitly disable SDL
     ( ./configure --prefix=/usr --with-gtk3  --without-sdl --disable-werror \
@@ -61,15 +64,12 @@ RUN set -eux; \
     rm -rf /tmp/fuse
 
 
-# ZX helpers: bin2tap + wrappers
-# (If you already added these in a previous iteration, this is idempotent)
+# ZX helpers: bin2tap + conversion wrappers
 RUN set -e; \
     git clone --depth=1 https://github.com/compilersoftware/bin2tap.git /tmp/bin2tap && \
     make -C /tmp/bin2tap && \
     install -m 0755 /tmp/bin2tap/bin2tap /usr/local/bin/bin2tap && \
     rm -rf /tmp/bin2tap && \
-    printf '#!/bin/sh\nexec sdcc -mz80 -DSPECTRUM "$@"\n' > /usr/local/bin/zx-sdcc && \
-    chmod +x /usr/local/bin/zx-sdcc && \
     printf '%s\n' \
     '#!/bin/sh' \
     'set -e' \
@@ -106,6 +106,5 @@ RUN set -e; \
     which fuse || true; \
     fuse --help >/dev/null 2>&1 || true; \
     which bin2tap; \
-    which zx-sdcc; \
     which ihx2bin; \
     which ihx2tap

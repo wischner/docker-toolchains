@@ -24,7 +24,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/sdcc-z80:latest \
-  sdcc -mz80 --debug hello.c
+  sdcc --debug hello.c
 
 # Run it in the Z80 simulator (uCsim)
 docker run --rm \
@@ -40,7 +40,7 @@ docker run --rm \
 # Compile multiple sources; sdcc will assemble/link and produce .ihx
 docker run --rm -u $(id -u):$(id -g) -v "$PWD":/work -w /work \
   wischner/sdcc-z80:latest \
-  sdcc -mz80 --debug main.c drivers/video.c zxlib/*.c
+  sdcc --debug main.c drivers/video.c zxlib/*.c
 ```
 
 ### Graphical debugging with DDD (X11)
@@ -50,6 +50,19 @@ Modern SDCC releases no longer ship **`sdcdb`**, the GDB-style debugger that DDD
 We’re actively working on a replacement (either a `.cdb` → GDB bridge or an equivalent debugger). 
 
 **Thank you for your patience** while we build this.
+
+## Changelog
+
+### 1.1.0
+- Patched SDCC default segment locations for Z80:
+  - `_CODE`: changed from `0x0200` to `0x0100` (standard CP/M TPA address).
+    Override with `--code-loc <addr>`.
+  - `_DATA`: removed hardcoded `0x8000` default. The linker now places `_DATA`
+    immediately after `_CODE` instead of wasting the address space in between.
+    Override with `--data-loc <addr>`.
+
+### 1.0.1
+- Initial public release.
 
 ## Support and contributions
 

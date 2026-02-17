@@ -41,6 +41,10 @@ push-all:  $(addprefix push-,$(TOOLCHAINS))
 build-%:
 	@set -e; \
 	d="$*"; \
+	if [ -f "$$d/Makefile.toolchain" ]; then \
+	  echo "==> Pre-build hook for $$d"; \
+	  $(MAKE) -C $$d -f Makefile.toolchain prepare; \
+	fi; \
 	echo "==> Building $(ORG)/$$d"; \
 	BVER=$$(awk -F= 'NF>=2 && $$1 !~ /^[[:space:]]*#/ {key=$$1; val=$$2; gsub(/^[[:space:]]+|[[:space:]]+$$/,"",key); gsub(/^[[:space:]]+|[[:space:]]+$$/,"",val); if (toupper(key)=="IMG_VERSION"){print val; exit}}' "$$d/build.args" 2>/dev/null || true); \
 	DVER=$$(awk 'BEGIN{IGNORECASE=1} /^[[:space:]]*ARG[[:space:]]+IMG_VERSION([[:space:]]*=[[:space:]]*[^[:space:]]+)?/ {match($$0,/=[[:space:]]*([^[:space:]]+)/,m); if(m[1]!=""){ver=m[1]; gsub(/^["'\''"]|["'\''"]$$/,"",ver); print ver; exit}}' "$$d/Dockerfile" 2>/dev/null || true); \
