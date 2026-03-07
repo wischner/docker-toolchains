@@ -2,6 +2,7 @@
 
 LIBRARIES_MANIFEST ?= libraries.manifest
 LIBRARIES_DST ?= libraries
+UGPX_REPO ?= iskra-delta/idp-udev
 
 prepare:
 	@set -e; \
@@ -42,7 +43,31 @@ prepare:
 	  printf '%s\n' "$$tag" > "$$dst/.version"; \
 	  rm -rf "$$tmp_dir"; \
 	  echo "Installed $$name $$tag into $$dst"; \
-	done < "$(LIBRARIES_MANIFEST)"
+	done < "$(LIBRARIES_MANIFEST)"; \
+	repo="$(UGPX_REPO)"; \
+	dst="$(LIBRARIES_DST)/ugpx"; \
+	tmp_dir="$$(mktemp -d)"; \
+	repo_url="https://api.github.com/repos/$$repo"; \
+	repo_json="$$(curl -fsSL "$$repo_url")"; \
+	branch="$$(printf '%s\n' "$$repo_json" | sed -n 's/.*"default_branch":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
+	[ -n "$$branch" ] || branch="main"; \
+	commit_json="$$(curl -fsSL "https://api.github.com/repos/$$repo/commits/$$branch")"; \
+	commit="$$(printf '%s\n' "$$commit_json" | sed -n 's/.*"sha":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
+	[ -n "$$commit" ] || { echo "Could not resolve commit for $$repo ($$branch)"; rm -rf "$$tmp_dir"; exit 1; }; \
+	echo "Syncing $$repo ($$branch @ $$commit)"; \
+	curl -fsSL -o "$$tmp_dir/repo.tar.gz" "https://codeload.github.com/$$repo/tar.gz/refs/heads/$$branch"; \
+	tar -xzf "$$tmp_dir/repo.tar.gz" -C "$$tmp_dir"; \
+	src_root="$$(find "$$tmp_dir" -mindepth 1 -maxdepth 1 -type d -name 'idp-udev-*' | head -n1)"; \
+	[ -d "$$src_root/src/ugpx" ] || { echo "Missing src/ugpx in $$repo"; rm -rf "$$tmp_dir"; exit 1; }; \
+	[ -f "$$src_root/include/ugpx.h" ] || { echo "Missing include/ugpx.h in $$repo"; rm -rf "$$tmp_dir"; exit 1; }; \
+	mkdir -p "$$dst/src" "$$dst/include/gpx"; \
+	cp -a "$$src_root/src/ugpx/." "$$dst/src/"; \
+	cp "$$src_root/include/ugpx.h" "$$dst/include/gpx/ugpx.h"; \
+	printf '%s\n' "$$repo" > "$$dst/.repo"; \
+	printf '%s\n' "$$commit" > "$$dst/.version"; \
+	printf '%s\n' "separate" > "$$dst/.merge_policy"; \
+	rm -rf "$$tmp_dir"; \
+	echo "Installed ugpx $$commit into $$dst"
 
 build:
 	@true
