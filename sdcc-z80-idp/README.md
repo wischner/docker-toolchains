@@ -249,9 +249,8 @@ sdcc-z80-idp/
 # <github_repo> [release_tag_or_latest]
 retro-vault/libsdcc-z80 latest
 retro-vault/libcpm3-z80 latest
+iskra-delta/idp-udev latest
 ```
-
-`ugpx` is not declared in `libraries.manifest`. It is synced separately from `iskra-delta/idp-udev` because only that library is needed from the upstream repository.
 
 ## Building the image
 
