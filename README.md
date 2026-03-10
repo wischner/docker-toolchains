@@ -41,6 +41,10 @@ This repository is **actively developed**. Next steps:
   Z80 toolchain variant tailored for **Iskra Delta Partner** with cpmtools.
   *CP/M disk image creation and Partner-specific libraries.*
 
+- [**SDCC Z80 – CP/M 3**](./sdcc-z80-cpm3)
+  Z80 toolchain variant tailored for **CP/M 3** workflows.
+  *CP/M disk image creation and CP/M 3-oriented bundled runtime libraries.*
+
 - [**GCC m68k**](./gcc-m68k)
   GCC/binutils cross‑compiler targeting **`m68k-elf`**.
   *Develop for classic Motorola 68k systems (e.g., Atari ST, Amiga).*
