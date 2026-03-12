@@ -60,7 +60,7 @@ RUN set -e; \
     printf '%s\n' "${tag}" > /opt/snatch/.version; \
     rm -rf "${tmp_dir}"
 
-ENV PATH="/opt/snatch:${PATH}" \
+ENV PATH="/opt/sdcc/bin:/opt/snatch:${PATH}" \
     SNATCH_PLUGIN_DIR="/opt/snatch/plugins"
 
 # Copy synced library bundles payload

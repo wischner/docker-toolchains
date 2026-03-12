@@ -3,6 +3,7 @@
 LIBRARIES_MANIFEST ?= libraries.manifest
 LIBRARIES_DST ?= libraries
 UGPX_REPO ?= iskra-delta/idp-udev
+IDP_SDK_REPO ?= iskra-delta/idp-sdk
 
 prepare:
 	@set -e; \
@@ -22,6 +23,8 @@ prepare:
 	  name="$${repo##*/}"; \
 	  if [ "$$repo" = "$(UGPX_REPO)" ]; then \
 	    name="ugpx"; \
+	  elif [ "$$repo" = "$(IDP_SDK_REPO)" ]; then \
+	    name="idp-sdk"; \
 	  fi; \
 	  dst="$(LIBRARIES_DST)/$$name"; \
 	  mkdir -p "$$dst"; \
@@ -50,6 +53,21 @@ prepare:
 	    cp "$$src_root/lib/ugpx.lib" "$$dst/lib/ugpx.lib"; \
 	    cp "$$src_root/include/gpx/ugpx.h" "$$dst/include/gpx/ugpx.h"; \
 	    printf '%s\n' "separate" > "$$dst/.merge_policy"; \
+	  elif [ "$$repo" = "$(IDP_SDK_REPO)" ]; then \
+	    tar -xzf "$$tmp_dir/release.tar.gz" -C "$$tmp_dir"; \
+	    src_root="$$(find "$$tmp_dir" -mindepth 1 -maxdepth 1 -type d -name 'idp-sdk-*' | head -n1)"; \
+	    [ -d "$$src_root/include" ] || { echo "Missing include/ in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    [ -f "$$src_root/lib/libsdcc-z80.lib" ] || { echo "Missing lib/libsdcc-z80.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    [ -f "$$src_root/lib/libcpm3-z80.lib" ] || { echo "Missing lib/libcpm3-z80.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    [ -f "$$src_root/lib/libsdk.lib" ] || { echo "Missing lib/libsdk.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    crt0_src="$$(find "$$src_root/lib" -maxdepth 1 -type f -name 'crt0*.rel' | sort | head -n1)"; \
+	    [ -n "$$crt0_src" ] || { echo "Missing crt0*.rel in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    mkdir -p "$$dst/lib" "$$dst/include"; \
+	    cp -a "$$src_root/include/." "$$dst/include/"; \
+	    cp "$$src_root/lib/libsdcc-z80.lib" "$$dst/lib/"; \
+	    cp "$$src_root/lib/libcpm3-z80.lib" "$$dst/lib/"; \
+	    cp "$$src_root/lib/libsdk.lib" "$$dst/lib/"; \
+	    cp "$$crt0_src" "$$dst/lib/crt0.rel"; \
 	  else \
 	    tar -xzf "$$tmp_dir/release.tar.gz" -C "$$dst" --strip-components=1; \
 	  fi; \

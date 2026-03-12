@@ -35,12 +35,12 @@ This image does not just add a few extra files beside the stock SDCC installatio
 
 During image build:
 
-- release bundles listed in `libraries.manifest` are downloaded into `sdcc-z80-idp/libraries/`
-- their headers are copied into the SDCC include directory
-- their `.lib` archives are unpacked and merged into `z80.lib`
-- a `crt0*.rel` startup object is normalized to `crt0.rel`
+- the latest `iskra-delta/idp-sdk` release is downloaded into `sdcc-z80-idp/libraries/`
+- its full `include/` tree replaces the SDCC Z80 include directory
+- its `libsdcc-z80.lib`, `libcpm3-z80.lib`, and `libsdk.lib` archives are unpacked and merged into `z80.lib`
+- its `crt0*.rel` startup object is normalized to `crt0.rel`
 - `ugpx` is fetched separately from `iskra-delta/idp-udev`
-- `ugpx` is built as its own standalone `ugpx.lib`, not merged into `z80.lib`
+- `ugpx` is installed as its own standalone `ugpx.lib`, not merged into `z80.lib`
 
 That means:
 
@@ -53,10 +53,11 @@ That means:
 
 ### Merged into `z80.lib`
 
-These are synced from GitHub releases listed in `libraries.manifest`:
+These are synced from the latest `iskra-delta/idp-sdk` release:
 
-- `retro-vault/libsdcc-z80`
-- `retro-vault/libcpm3-z80`
+- `libsdcc-z80.lib`
+- `libcpm3-z80.lib`
+- `libsdk.lib`
 
 These provide the base Partner-targeted SDCC runtime and CP/M-oriented pieces used by normal builds.
 
@@ -247,8 +248,7 @@ sdcc-z80-idp/
 
 ```text
 # <github_repo> [release_tag_or_latest]
-retro-vault/libsdcc-z80 latest
-retro-vault/libcpm3-z80 latest
+iskra-delta/idp-sdk latest
 iskra-delta/idp-udev latest
 ```
 
@@ -264,7 +264,8 @@ The build does this automatically:
 
 - prepares `sdcc-z80-idp/libraries/`
 - fetches the latest configured release bundles
-- fetches the latest `ugpx` source snapshot
+- uses `idp-sdk` as the source of the merged runtime, startup object, and headers
+- fetches the latest `ugpx` release payload separately
 - builds the Docker image
 
 ## License
