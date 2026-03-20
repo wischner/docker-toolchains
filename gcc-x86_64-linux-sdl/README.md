@@ -1,19 +1,25 @@
-# GCC x86_64 Linux SDL2 toolchain
+# GCC x86_64 Linux SDL toolchain
 
 This image is part of **Wischner Ltd. Toolchains**.
 
 ## What it is
-A ready-to-use **SDL2 development environment** for Linux x86_64 based on Ubuntu 22.04.
-Intended for building SDL2 games and multimedia applications with full OpenGL, audio, and font support.
+
+A ready-to-use **SDL2 and SDL3 development environment** for Linux x86_64 based on Ubuntu 22.04.
+It is intended for building SDL games and multimedia applications with full OpenGL, audio, and font support.
+
+This image extends `wischner/gcc-x86_64-linux-x11` and adds SDL-focused libraries on top of the X11/OpenGL base.
 
 ## Installed components
+
+- Everything from `wischner/gcc-x86_64-linux-x11`
 - **GCC / G++** (Ubuntu 22.04 default toolchain)
 - **CMake**, **Make**, **pkg-config**
 - **GDB** and **Valgrind** for debugging and profiling
 - **Git** for version control
 - [SDL2](https://www.libsdl.org/) with `SDL2_image`, `SDL2_mixer`, `SDL2_ttf`
+- [SDL3](https://www.libsdl.org/) available through `pkg-config sdl3`
 - **OpenGL** (Mesa), GLU, EGL
-- **X11** libraries (Xrandr, Xcursor, Xi, Xinerama, Xxf86vm, Xss)
+- **X11** libraries and tools inherited from the X11 base image
 - **Wayland** and xkbcommon
 - Image codecs: libpng, libjpeg, libtiff, libwebp
 - Audio codecs: libvorbis, libogg, libflac, libmpg123, libopus
@@ -34,6 +40,13 @@ docker run --rm \
   wischner/gcc-x86_64-linux-sdl:latest \
   gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)
 
+# Compile a single SDL3 program
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-sdl:latest \
+  gcc -o game3 main.c $(pkg-config --cflags --libs sdl3)
+
 # CMake-based project build
 docker run --rm \
   -u $(id -u):$(id -g) \
@@ -53,7 +66,7 @@ docker run --rm -it \
   bash
 ```
 
-### Running SDL2 applications with display (X11)
+### Running SDL applications with display (X11)
 
 ```bash
 # Pass the host X11 display to the container

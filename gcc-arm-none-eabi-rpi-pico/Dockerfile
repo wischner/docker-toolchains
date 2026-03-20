@@ -1,10 +1,10 @@
 # wischner/gcc-arm-none-eabi-rpi-pico
-# Extends your base image with Pico/Pico W conveniences and ships the Pico SDK.
+# Extends the Ubuntu-based arm-none-eabi image with Pico/Pico W conveniences.
 
-ARG BASE_TAG=1.0.3
-FROM wischner/gcc-arm-none-eabi:${BASE_TAG}
+ARG BASE_IMAGE=wischner/gcc-arm-none-eabi:1.1.0
+FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.3
+ARG IMG_VERSION=1.1.0
 ARG UID=1000
 ARG GID=1000
 
@@ -13,7 +13,7 @@ ARG PICO_SDK_REF=2.1.0
 ARG PICO_EXTRAS_REF=2.1.0
 
 LABEL org.opencontainers.image.title="gcc-arm-none-eabi-rpi-pico" \
-      org.opencontainers.image.description="Pico/Pico W tools on top of wischner/gcc-arm-none-eabi: ships Pico SDK, pioasm, picotool, Python utils, ccache." \
+      org.opencontainers.image.description="Raspberry Pi Pico and Pico W toolchain on Ubuntu with Pico SDK, pioasm, picotool, Python helpers, and ccache." \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
       org.opencontainers.image.version="${IMG_VERSION}"
@@ -25,14 +25,18 @@ ENV CCACHE_DIR=/work/.ccache \
     GIT_TERMINAL_PROMPT=0 \
     PICO_TOOLCHAIN_PATH=/usr
 
-# Packages (Alpine 3.20)
-# (wget/tar/xz not needed anymore since we only git-clone; keep if you like)
-RUN apk add --no-cache \
-      cmake \
-      python3 py3-pip py3-pyserial py3-elftools \
-      build-base ccache git git-lfs pkgconf \
-      libusb libusb-dev hidapi hidapi-dev libftdi1 libftdi1-dev \
-      autoconf automake libtool linux-headers
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+      ccache \
+      git-lfs \
+      autoconf \
+      automake \
+      libtool \
+      libftdi1 \
+      libftdi1-dev \
+      libudev-dev \
+      && rm -rf /var/lib/apt/lists/*
 
 # --- Fetch Pico SDK (STRICT) + extras (best-effort) ---
 RUN set -e; \
@@ -78,8 +82,8 @@ RUN set -e; \
     rm -rf /tmp/picotool
 
 # Non-root user
-RUN addgroup -g ${GID} builder && \
-    adduser -D -u ${UID} -G builder builder && \
+RUN groupadd -g ${GID} builder && \
+    useradd -m -u ${UID} -g ${GID} -s /bin/bash builder && \
     mkdir -p /work && chown -R builder:builder /work
 
 USER builder
@@ -89,6 +93,7 @@ WORKDIR /work
 RUN set -e; \
     echo "=== ARM toolchain ==="; arm-none-eabi-gcc --version | head -n1; \
     echo "=== C++ toolchain ==="; arm-none-eabi-g++ --version | head -n1; \
+    echo "=== OpenOCD ==="; openocd --version | head -n1; \
     echo "=== pioasm ===";     pioasm --help 2>/dev/null | head -n1 || true; \
     echo "=== picotool ===";   picotool -V || true; \
     echo "Pico layer ready."

@@ -5,7 +5,7 @@ Each image provides a ready-to-use compiler and related tools for retrocomputing
 
 All images are published under the `wischner` namespace on Docker Hub.
 
-> **Tip:** Pin specific tags (e.g. `:1.0.3`) instead of `:latest` to get repeatable builds.
+> **Tip:** Pin specific tags (e.g. `:1.1.0`) instead of `:latest` to get repeatable builds.
 
 ---
 
@@ -22,11 +22,11 @@ This repository is **actively developed**. Next steps:
 ## Available toolchains
 
 - [**GCC ARM (arm-none-eabi)**](./gcc-arm-none-eabi)  
-  Alpine-native ARM bare‑metal GCC/G++ (newlib), `gdb-multiarch`, and OpenOCD.  
+  Ubuntu-based ARM bare‑metal GCC/G++ (newlib), `gdb-multiarch`, and OpenOCD.  
   *Cross‑compile and debug Cortex‑M (and other ARM MCUs) in one image.*
 
 - [**GCC ARM for Raspberry Pi Pico / Pico W**](./gcc-arm-none-eabi-rpi-pico)  
-  Extends the base ARM image with the **Pico SDK**, `pico-extras`, and host tools **`pioasm`** + **`picotool`**.  
+  Extends the base ARM image with the **Pico SDK**, `pico-extras`, and host tools **`pioasm`** + **`picotool`** on Ubuntu.  
   *Turn‑key RP2040 development over SWD (OpenOCD) or BOOTSEL USB (picotool).*
 
 - [**SDCC Z80**](./sdcc-z80)  
@@ -49,9 +49,13 @@ This repository is **actively developed**. Next steps:
   GCC/binutils cross‑compiler targeting **`m68k-elf`**.
   *Develop for classic Motorola 68k systems (e.g., Atari ST, Amiga).*
 
-- [**GCC x86_64 Linux SDL2**](./gcc-x86_64-linux-sdl)
-  GCC x86_64 toolchain with **SDL2**, OpenGL (Mesa), X11, and audio/image libraries on Ubuntu 22.04.
-  *SDL2 game and multimedia application development.*
+- [**GCC x86_64 Linux X11**](./gcc-x86_64-linux-x11)
+  GCC x86_64 toolchain with **X11**, OpenGL (Mesa), and extra image/font tooling on Ubuntu 22.04.
+  *Native X11/OpenGL development and reusable Linux desktop base image.*
+
+- [**GCC x86_64 Linux SDL**](./gcc-x86_64-linux-sdl)
+  GCC x86_64 SDL toolchain layered on the Linux X11 base with SDL2, SDL3, audio, and multimedia support.
+  *SDL2 and SDL3 game and multimedia application development.*
 
 - [**GCC x86_64 Haiku**](./gcc-x86_64-haiku)
   GCC cross-compiler targeting **Haiku OS** (x86_64-unknown-haiku) with Jam build system.
@@ -65,13 +69,13 @@ Each image mounts your current working directory into `/work` inside the contain
 
 ### ARM bare‑metal (generic)
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi:1.0.3   arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -o app.elf app.c
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi:1.1.0   arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -o app.elf app.c
 ```
 
 ### Raspberry Pi Pico / Pico W (RP2040)
 ```bash
 # Interactive shell (with USB passthrough for flashing/debug)
-docker run --rm -it   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.0.2 bash
+docker run --rm -it   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 bash
 
 # Build a project (SDK baked at /opt/pico-sdk)
 cmake -S . -B build -DPICO_SDK_PATH=/opt/pico-sdk -DPICO_BOARD=pico_w
@@ -97,10 +101,19 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80-idp:latest 
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k:latest   m68k-elf-gcc -o hello.elf hello.c
 ```
 
-### GCC x86_64 Linux SDL2
+### GCC x86_64 Linux X11
+```bash
+# Compile an X11/OpenGL application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-x11:latest   gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)
+```
+
+### GCC x86_64 Linux SDL
 ```bash
 # Compile an SDL2 application
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)
+
+# Compile an SDL3 application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   gcc -o game3 main.c $(pkg-config --cflags --libs sdl3)
 
 # CMake build
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   bash -c "cmake -S . -B build && cmake --build build -j"
@@ -133,7 +146,7 @@ make build-all
 
 Push all to Docker Hub (override org/version as needed):
 ```bash
-make push-all ORG=wischner IMG_VER=1.0.3
+make push-all ORG=wischner IMG_VER=1.1.0
 ```
 
 Per‑toolchain build arguments can be placed in `<toolchain>/build.args` (one `KEY=VAL` per line).  

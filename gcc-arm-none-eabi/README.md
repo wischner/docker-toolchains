@@ -2,66 +2,70 @@
 
 This image is part of **Wischner Ltd. Toolchains**.
 
-> **Pin your tags.** Use a versioned tag (e.g. `:1.0.3`) instead of `:latest` to avoid accidental regressions.
+> **Pin your tags.** Use a versioned tag such as `:1.1.0` instead of `:latest` for repeatable builds.
 
 ## What it is
-ARM bare‑metal GCC toolchain (`arm-none-eabi`) with **GDB** and **OpenOCD** for general embedded development on Alpine Linux (musl).  
-Supports building and debugging Cortex‑M and other ARM microcontrollers.
 
-This image uses **Alpine’s native cross toolchain** (musl) — no glibc shims required.
+An Ubuntu 22.04 based **ARM bare-metal development environment** built around the `arm-none-eabi` GCC toolchain.
+It is intended for general microcontroller development and includes the standard compiler, binutils, newlib, GDB, OpenOCD, and common build utilities.
+
+This image is the generic ARM base image.
+It does **not** include Raspberry Pi Pico SDK content or Pico-specific host tools such as `pioasm` and `picotool`.
+Those live in `wischner/gcc-arm-none-eabi-rpi-pico`.
 
 ## Installed components
-- Alpine’s `arm-none-eabi` toolchain (**GCC, G++, binutils, newlib**)
-  - `arm-none-eabi-gcc`, `arm-none-eabi-g++`, `arm-none-eabi-as`, `arm-none-eabi-ld`,
-    `arm-none-eabi-objcopy`, `arm-none-eabi-objdump`, `arm-none-eabi-size`
-- Debuggers & tools
-  - `gdb-multiarch` (GDB for cross targets)
-  - `openocd` (mainline)
-- Build utilities
-  - `cmake`, `make`, `git`, `bash`, `file`
-- USB helpers
-  - `usbutils` (`lsusb`), `libusb`, `hidapi`
 
-### Paths & compatibility
-- Toolchain lives in: **`/usr/bin`** (e.g. `/usr/bin/arm-none-eabi-gcc`)
-- Convenience/legacy path: **`/opt/arm-none-eabi/bin`** (symlinks to `/usr/bin/arm-none-eabi-*`)
-- Environment exported:
-  - `PICO_TOOLCHAIN_PATH=/usr`
-  - `PATH=/usr/bin:$PATH`
+- **GCC / G++** for `arm-none-eabi`
+- **binutils** for `arm-none-eabi`
+- **newlib** and bare-metal C/C++ runtime libraries
+- **gdb-multiarch**
+- **OpenOCD**
+- **CMake**, **Make**, **Ninja**, **pkg-config**
+- **Git**
+- **Python 3** with `pyserial` and `pyelftools`
+- USB/debug helpers: `usbutils`, `libusb`, `hidapi`
+- Common utilities: `bash`, `curl`, `wget`, `tar`, `xz`, `file`
+
+## Paths and environment
+
+- Toolchain binaries live in `/usr/bin`
+- Compatibility symlinks are available in `/opt/arm-none-eabi/bin`
+- `ARM_NONE_EABI_TOOLCHAIN_PATH=/usr`
 - Default working directory: `/work`
 
-> **Version note:** Tool versions come from the Alpine 3.20 repositories used to build this image.  
-> Check at runtime:
-> ```bash
-> arm-none-eabi-gcc --version
-> gdb-multiarch --version
-> openocd --version
-> ```
+## Using this image as your compiler
 
-## Usage
+You do not need to enter the container permanently. Run the toolchain directly from the host and bind-mount your project into `/work`.
 
-### Quick start (interactive shell)
+### Quick examples
+
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi:1.0.3 bash
+# Interactive shell
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi:1.1.0 \
+  bash
+
+# Compile a simple Cortex-M program
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi:1.1.0 \
+  arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -Os \
+    -ffunction-sections -fdata-sections \
+    -Wl,--gc-sections -nostartfiles -specs=nosys.specs \
+    -o hello.elf hello.c
 ```
 
-### Compile a minimal program
-```bash
-cat > hello.c <<'EOF'
-int main(void) { return 0; }
-EOF
+## Debugging with OpenOCD and GDB
 
-arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -Os   -ffunction-sections -fdata-sections   -Wl,--gc-sections -nostartfiles -specs=nosys.specs   -o hello.elf hello.c
+Adjust the interface and target scripts for your hardware:
 
-arm-none-eabi-size hello.elf
-```
-
-## Debugging with OpenOCD + GDB
-(Adjust interface/target scripts to your hardware.)
 ```bash
 # Terminal 1
 openocd -f interface/stlink.cfg -f target/stm32f1x.cfg
 ```
+
 ```bash
 # Terminal 2
 gdb-multiarch hello.elf
@@ -71,23 +75,29 @@ gdb-multiarch hello.elf
 (gdb) continue
 ```
 
-## Notes for Raspberry Pi Pico / Pico W (RP2040)
-- This base image exposes the toolchain in `/usr` and sets `PICO_TOOLCHAIN_PATH=/usr`.  
-  You normally **don’t** need to pass it to CMake, but you can with:
-  ```bash
-  -DPICO_TOOLCHAIN_PATH=/usr
-  ```
-- If you want the SDK, `picotool`, and `pioasm` baked in, use the higher‑level image:
-  **`wischner/gcc-arm-none-eabi-rpi-pico`**.
+## When to use the Pico image instead
 
-## Build‑time arguments
-- `IMG_VERSION` (used only for the image label)
+Use `wischner/gcc-arm-none-eabi-rpi-pico` if you want:
+
+- the Pico SDK preinstalled
+- `pioasm`
+- `picotool`
+- `pico-extras`
+- Raspberry Pi Pico and Pico W oriented defaults
+
+## Build-time arguments
+
+- `IMG_VERSION`
 
 Example:
+
 ```bash
-docker build --build-arg IMG_VERSION=1.0.3 -t wischner/gcc-arm-none-eabi:1.0.3 .
+docker build \
+  --build-arg IMG_VERSION=1.1.0 \
+  -t wischner/gcc-arm-none-eabi:1.1.0 .
 ```
 
-## Support & contributions
-For bug reports, feature requests, or questions, please use the issue tracker:  
-<https://github.com/wischner/docker-toolchains/issues>
+## Support and contributions
+
+For bug reports, feature requests, or questions, please use the issue tracker:
+[https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)

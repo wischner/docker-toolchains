@@ -1,73 +1,77 @@
 # GCC ARM for Raspberry Pi Pico / Pico W
 
-This image is part of **Wischner Ltd. Toolchains** and extends `wischner/gcc-arm-none-eabi` with Pico/Pico W utilities.  
-It **ships the Pico SDK** and builds the essential host tools.
+This image is part of **Wischner Ltd. Toolchains** and extends `wischner/gcc-arm-none-eabi`.
 
-> **Pinned tags recommended.** Use a versioned tag (e.g. `:1.0.2`) for both the base and this image to avoid drift from `:latest`.
+> **Pin your tags.** Use versioned tags such as `:1.1.0` for both the base image and the Pico image to keep builds reproducible.
 
 ## What it is
-ARM bare‑metal GCC toolchain (`arm-none-eabi`) with **Pico‑specific tools** for building, flashing, and debugging RP2040 projects over SWD (OpenOCD) or BOOTSEL USB (picotool).
+
+An Ubuntu-based **Raspberry Pi Pico and Pico W development environment** built on top of the generic `arm-none-eabi` toolchain image.
+It adds the Pico SDK, pico-extras, `pioasm`, `picotool`, Python helpers, and ccache for RP2040 workflows.
 
 ## Installed components
-- Alpine’s cross toolchain: **GCC + G++ + binutils + newlib**  
-  Binaries: `arm-none-eabi-gcc`, `arm-none-eabi-g++`, `arm-none-eabi-as`, `arm-none-eabi-ld`, `arm-none-eabi-objcopy`, `arm-none-eabi-objdump`, `arm-none-eabi-size`, `arm-none-eabi-gdb` (via `gdb-multiarch`)
-- **OpenOCD** (mainline, from base image)
-- **Pico SDK** baked at `/opt/pico-sdk` (default tag: **2.1.0**)
-- **pico-extras** baked at `/opt/pico-extras` (default tag: **2.1.0**; falls back to default branch if the tag doesn’t exist)
-- **Host tools**
-  - `pioasm` (built from SDK)
-  - `picotool` (built against the baked SDK; BOOTSEL ops and UF2 conversion)
-- Python & helpers: `python3`, `py3-pyserial`, `py3-elftools`
-- Build tools & libs: `cmake`, `make` (via `build-base`), `git`, `git-lfs`, `ccache`, `pkgconf`
-- USB/debug libs: `libusb`, `hidapi`, `libftdi1`
-- Kernel headers (`linux-headers`) for picotool’s whereami dependency
 
-> **Version note:** Toolchain and OpenOCD versions come from the Alpine 3.20 repositories in the base image.  
-> Check at runtime:
-> ```bash
-> arm-none-eabi-gcc --version
-> gdb-multiarch --version
-> openocd --version
-> picotool -V
-> ```
+- Everything from `wischner/gcc-arm-none-eabi`
+- **Pico SDK** installed at `/opt/pico-sdk`
+- **pico-extras** installed at `/opt/pico-extras`
+- **pioasm** built from the installed Pico SDK
+- **picotool** built against the installed Pico SDK
+- **ccache**
+- **git-lfs**
+- Additional Pico host dependencies such as `libftdi` and `libudev`
 
 ## Defaults inside the image
+
 - `PICO_SDK_PATH=/opt/pico-sdk`
 - `PICO_EXTRAS_PATH=/opt/pico-extras`
-- `PICO_TOOLCHAIN_PATH=/usr`  *(Alpine-native toolchain lives in `/usr/bin`)*
+- `PICO_TOOLCHAIN_PATH=/usr`
 - `CMAKE_C_COMPILER_LAUNCHER=ccache`
 - `CMAKE_CXX_COMPILER_LAUNCHER=ccache`
-- Non-root user `builder` (UID/GID configurable at build time)
-- `WORKDIR=/work`
+- `CCACHE_DIR=/work/.ccache`
+- Non-root user `builder`
+- Default working directory: `/work`
 
-## Usage
+## Using this image
 
-### Quick start (interactive shell)
+### Quick start
+
 ```bash
-docker run --rm -it   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.0.2 bash
+docker run --rm -it \
+  --privileged \
+  -v /dev/bus/usb:/dev/bus/usb \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 \
+  bash
 ```
 
-### Recommended: match host ownership (so artifacts aren’t root-owned)
-```bash
-docker run --rm -it   --user $(id -u):$(id -g)   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.0.2 bash
-```
+### Match host ownership
 
-### (Optional) use a different SDK at runtime
 ```bash
-docker run --rm -it   -e PICO_SDK_PATH=/work/lib/pico-sdk   -v "$HOME/pico-sdk":/work/lib/pico-sdk   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.0.2 bash
+docker run --rm -it \
+  --user $(id -u):$(id -g) \
+  --privileged \
+  -v /dev/bus/usb:/dev/bus/usb \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 \
+  bash
 ```
 
 ## Build a Pico project
+
 ```bash
-cmake -S . -B build -DPICO_SDK_PATH="${PICO_SDK_PATH}" -DPICO_BOARD=pico_w
-cmake --build build -j
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 \
+  bash -c "cmake -S . -B build -DPICO_SDK_PATH=$PICO_SDK_PATH -DPICO_BOARD=pico_w && cmake --build build -j"
 ```
 
-> `PICO_TOOLCHAIN_PATH` is already set to `/usr`, so you don’t need to pass it to CMake.
+`PICO_TOOLCHAIN_PATH` is already set to `/usr`, so you usually do not need to pass it explicitly.
 
-## Flash & debug
+## Flashing and debugging
 
-### SWD via OpenOCD + GDB
+### SWD via OpenOCD and GDB
+
 ```bash
 # Terminal 1
 openocd -f interface/picoprobe.cfg -f target/rp2040.cfg
@@ -83,36 +87,44 @@ arm-none-eabi-gdb build/your.elf
 ```
 
 ### BOOTSEL via picotool
+
 ```bash
-# Put the Pico into BOOTSEL (USB mass storage) mode first
 picotool info -a
 picotool load build/your.uf2 -f
 ```
 
-### Convert ELF → UF2 (modern flow, replaces legacy elf2uf2)
+### Convert ELF to UF2
+
 ```bash
 picotool uf2 convert build/your.elf -o build/your.uf2
 ```
 
 ## Build-time arguments
-Override with `--build-arg` as needed:
-- `IMG_VERSION` (image version label)
-- `BASE_TAG` (default: `1.0.2`) — base image tag used in `FROM`
-- `UID` / `GID` (default: `1000` / `1000`)
-- `PICO_SDK_REF` (default: `2.1.0`) — SDK tag/branch/commit (required by picotool ≥ 2.1.0)
-- `PICO_EXTRAS_REF` (default: `2.1.0`) — extras tag/branch/commit (falls back to default branch if missing)
+
+- `IMG_VERSION`
+- `BASE_IMAGE`
+- `UID`
+- `GID`
+- `PICO_SDK_REF`
+- `PICO_EXTRAS_REF`
 
 Example:
+
 ```bash
-docker build   --build-arg BASE_TAG=1.0.2   --build-arg PICO_SDK_REF=2.1.1   --build-arg PICO_EXTRAS_REF=2.1.1   -t wischner/gcc-arm-none-eabi-rpi-pico:1.0.2 .
+docker build \
+  --build-arg BASE_IMAGE=wischner/gcc-arm-none-eabi:1.1.0 \
+  --build-arg PICO_SDK_REF=2.1.0 \
+  --build-arg PICO_EXTRAS_REF=2.1.0 \
+  -t wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 .
 ```
 
 ## Notes
-- For non-root USB access you need appropriate **udev rules on the host** (Pico/picoprobe).
-- Image is Make/CMake‑centric (no Ninja).
-- `ccache` is pre‑wired via CMake launcher env for faster rebuilds.
-- If you override `PICO_SDK_PATH` at runtime and depend on extras, also set `PICO_EXTRAS_PATH`.
 
-## Support & contributions
-For bug reports, feature requests, or questions, please use the issue tracker:  
-<https://github.com/wischner/docker-toolchains/issues>
+- USB access still depends on appropriate host udev rules.
+- `ccache` is pre-wired through the CMake launcher environment variables.
+- If you override `PICO_SDK_PATH`, also override `PICO_EXTRAS_PATH` when your project uses pico-extras.
+
+## Support and contributions
+
+For bug reports, feature requests, or questions, please use the issue tracker:
+[https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)
