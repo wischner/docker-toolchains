@@ -57,6 +57,10 @@ This repository is **actively developed**. Next steps:
   GCC x86_64 SDL toolchain layered on the Linux X11 base with SDL2, SDL3, audio, and multimedia support.
   *SDL2 and SDL3 game and multimedia application development.*
 
+- [**GCC x86_64 Windows MinGW-w64**](./gcc-x86_64-windows-mingw-w64)
+  GCC/MinGW-w64 cross-compilation toolchain for building 64-bit Windows binaries from Linux.
+  *Cross-compile `.exe` and `.dll` targets with CMake support.*
+
 - [**GCC x86_64 Haiku**](./gcc-x86_64-haiku)
   GCC cross-compiler targeting **Haiku OS** (x86_64-unknown-haiku) with Jam build system.
   *Build Haiku OS and native Haiku applications.*
@@ -117,6 +121,15 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl
 
 # CMake build
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   bash -c "cmake -S . -B build && cmake --build build -j"
+```
+
+### GCC x86_64 Windows MinGW-w64
+```bash
+# Compile a Windows x64 executable
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-windows-mingw-w64:latest   x86_64-w64-mingw32-gcc -O2 -o hello.exe hello.c
+
+# CMake cross-build
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-windows-mingw-w64:latest   bash -c "cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/mingw-w64-x86_64.cmake && cmake --build build-win -j"
 ```
 
 ### GCC x86_64 Haiku

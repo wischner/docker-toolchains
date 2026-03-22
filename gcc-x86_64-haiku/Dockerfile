@@ -2,7 +2,12 @@
 FROM ubuntu:22.04
 
 ARG IMG_VERSION=1.0.0
-ARG HAIKU_COMMIT=r1beta5
+ARG HAIKU_COMMIT=master
+ARG HAIKU_PACKAGE_MIRROR=https://eu.hpkg.haiku-os.org
+ARG HAIKU_PACKAGE_BRANCH=master
+ARG HAIKU_PACKAGE_ARCH=x86_64
+ARG HAIKU_PACKAGE_VERSION=latest
+ARG HAIKU_NIGHTLY_INDEX_URL=https://download.haiku-os.org/nightly-images/x86_64/
 
 LABEL org.opencontainers.image.title="gcc-x86_64-haiku" \
       org.opencontainers.image.description="Haiku OS cross-compilation toolchain: GCC cross-compiler with Haiku headers and Jam build system for building Haiku applications." \
@@ -50,6 +55,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     xz-utils \
     zstd \
+    libzstd-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone Haiku buildtools and source (full history needed for git describe)
@@ -83,6 +89,13 @@ RUN mkdir -p ${HAIKU_TOOLCHAIN_PATH}/build \
 # Cross tools binaries
 ENV PATH="${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/bin:${PATH}"
 
+# GCC 13 cross build installs only libstdc++-static.a for x86_64.
+# Provide the conventional libstdc++.a name so plain `-lstdc++` links work.
+RUN LIB_DIR="${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/x86_64-unknown-haiku/lib" \
+ && if [ -f "${LIB_DIR}/libstdc++-static.a" ] && [ ! -e "${LIB_DIR}/libstdc++.a" ]; then \
+        ln -s libstdc++-static.a "${LIB_DIR}/libstdc++.a"; \
+    fi
+
 # Build Jam (Haiku's build system)
 RUN cd ${HAIKU_TOOLCHAIN_PATH}/buildtools/jam \
  && make \
@@ -92,7 +105,7 @@ RUN cd ${HAIKU_TOOLCHAIN_PATH}/buildtools/jam \
 # Source + sysroot (IMPORTANT: sysroot is cross-tools-x86_64/sysroot)
 ENV HAIKU_SOURCE=${HAIKU_TOOLCHAIN_PATH}/haiku
 ENV HAIKU_SYSROOT=${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/sysroot
-ENV HAIKU_REVISION=hrev57991
+ENV HAIKU_REVISION=auto
 
 # Build Haiku 'package' tool to extract HPKG files
 # We need a minimal Haiku build configuration to build the package tool
@@ -101,10 +114,12 @@ RUN cd ${HAIKU_TOOLCHAIN_PATH}/build \
  && echo "Configuring Haiku build for package tool..." \
  && ./haiku/configure \
         --cross-tools-source ./buildtools \
-        --cross-tools-prefix ${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64 \
+        --cross-tools-prefix ${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/bin/x86_64-unknown-haiku- \
  \
  && echo "Building host package tool..." \
- && jam -q -j"$(nproc)" "<build>package" \
+ && cd ${HAIKU_TOOLCHAIN_PATH}/haiku \
+ && jam -q -j"$(nproc)" -sHAIKU_OUTPUT_DIR=${HAIKU_TOOLCHAIN_PATH}/build "<build>package" \
+ && cd ${HAIKU_TOOLCHAIN_PATH}/build \
  \
  && echo "Locating host 'package' tool..." \
  && PACKAGE_TOOL="$(find "${HAIKU_TOOLCHAIN_PATH}/build/objects" -type f -path '*/tools/package/package' -executable 2>/dev/null | head -n1)" \
@@ -119,20 +134,57 @@ RUN cd ${HAIKU_TOOLCHAIN_PATH}/build \
         chmod +x /etc/profile.d/haiku-package.sh; \
     fi
 
-# Copy Haiku runtime packages from local folder (user-provided)
-# Place haiku-*.hpkg and haiku_devel-*.hpkg in packages/ folder before building
-COPY packages/*.hpkg /tmp/hpkgs/
+# Optional local runtime package override.
+# If HPKGs are provided in packages/, they are used. Otherwise the build fetches
+# the latest package pair from the EU mirror automatically.
+COPY packages/ /opt/haiku-packages/
 
-# Extract HPKGs into sysroot overlay
+# Resolve and extract HPKGs into sysroot overlay
 RUN . /etc/profile.d/haiku-package.sh 2>/dev/null || true \
+ && echo "Resolving Haiku runtime packages..." \
+ && mkdir -p /tmp/hpkgs \
+ && shopt -s nullglob \
+ && LOCAL_BASE=(/opt/haiku-packages/haiku-*.hpkg) \
+ && LOCAL_DEVEL=(/opt/haiku-packages/haiku_devel-*.hpkg) \
+ && if [ ${#LOCAL_BASE[@]} -gt 0 ] && [ ${#LOCAL_DEVEL[@]} -gt 0 ]; then \
+      echo "Using local HPKG files from /opt/haiku-packages"; \
+      cp "${LOCAL_BASE[0]}" /tmp/hpkgs/; \
+      cp "${LOCAL_DEVEL[0]}" /tmp/hpkgs/; \
+    else \
+      echo "Downloading HPKG files from ${HAIKU_PACKAGE_MIRROR}"; \
+      PKG_VERSION="${HAIKU_PACKAGE_VERSION}"; \
+      if [ "${PKG_VERSION}" = "latest" ]; then \
+        HREV_FROM_NIGHTLY="$(curl -fsSL "${HAIKU_NIGHTLY_INDEX_URL}" | sed -n 's/.*haiku-master-hrev\([0-9]\+\)-x86_64-anyboot\.zip.*/\1/p' | head -n1)"; \
+        VERSIONS_RAW="$(curl -fsSL "${HAIKU_PACKAGE_MIRROR}/haiku/${HAIKU_PACKAGE_BRANCH}/${HAIKU_PACKAGE_ARCH}/")"; \
+        CANDIDATES="$(printf '%s' "${VERSIONS_RAW}" | tr -d '[]\" ' | tr ',' '\n' | grep -E '^r1~beta[0-9]+_hrev[0-9]+' | grep -v '_dirty' || true)"; \
+        if [ -n "${HREV_FROM_NIGHTLY}" ]; then \
+          PKG_VERSION="$(printf '%s\n' "${CANDIDATES}" | grep -E "_hrev${HREV_FROM_NIGHTLY}(_[0-9]+)?$" | sort -V | tail -n1 || true)"; \
+        fi; \
+        if [ -z "${PKG_VERSION}" ]; then \
+          PKG_VERSION="$(printf '%s\n' "${CANDIDATES}" | sort -V | tail -n1)"; \
+        fi; \
+      fi; \
+      test -n "${PKG_VERSION}"; \
+      BASE_URL="${HAIKU_PACKAGE_MIRROR}/haiku/${HAIKU_PACKAGE_BRANCH}/${HAIKU_PACKAGE_ARCH}/${PKG_VERSION}/packages"; \
+      BASE_PKG="haiku-${PKG_VERSION}-1-${HAIKU_PACKAGE_ARCH}.hpkg"; \
+      DEVEL_PKG="haiku_devel-${PKG_VERSION}-1-${HAIKU_PACKAGE_ARCH}.hpkg"; \
+      echo "Selected package version: ${PKG_VERSION}"; \
+      curl -fsSL -o "/tmp/hpkgs/${BASE_PKG}" "${BASE_URL}/${BASE_PKG}"; \
+      curl -fsSL -o "/tmp/hpkgs/${DEVEL_PKG}" "${BASE_URL}/${DEVEL_PKG}"; \
+    fi \
  && echo "Extracting Haiku runtime packages into sysroot..." \
  && ls -lh /tmp/hpkgs/ \
  && SYS_SYSTEM="${HAIKU_SYSROOT}/boot/system" \
  && mkdir -p "${SYS_SYSTEM}" \
  && HAIKU_HPKG="$(ls -1 /tmp/hpkgs/haiku-*.hpkg 2>/dev/null | grep -v devel | head -n1)" \
- && HAIKU_DEVEL_HPKG="$(ls -1 /tmp/hpkgs/haiku*_devel-*.hpkg 2>/dev/null | head -n1)" \
+ && HAIKU_DEVEL_HPKG="$(ls -1 /tmp/hpkgs/haiku_devel-*.hpkg 2>/dev/null | head -n1)" \
  && test -n "$HAIKU_HPKG" && echo "Base package: $HAIKU_HPKG" \
  && test -n "$HAIKU_DEVEL_HPKG" && echo "Devel package: $HAIKU_DEVEL_HPKG" \
+ && RESOLVED_VERSION="$(basename "$HAIKU_HPKG" | sed -n 's/^haiku-\(.*\)-1-x86_64\.hpkg$/\1/p')" \
+ && RESOLVED_REVISION="$(basename "$HAIKU_HPKG" | sed -n 's/.*\(hrev[0-9]\+\).*/\1/p')" \
+ && test -n "${RESOLVED_VERSION}" \
+ && test -n "${RESOLVED_REVISION}" \
+ && printf 'HAIKU_PACKAGE_VERSION=%s\nHAIKU_REVISION=%s\n' "${RESOLVED_VERSION}" "${RESOLVED_REVISION}" > /opt/haiku-buildtools/haiku-package-info.env \
  && haiku-package extract -C "${SYS_SYSTEM}" "$HAIKU_HPKG" \
  && haiku-package extract -C "${SYS_SYSTEM}" "$HAIKU_DEVEL_HPKG" \
  && rm -rf /tmp/hpkgs \
@@ -153,6 +205,8 @@ RUN echo "=== Haiku Cross-Compilation Toolchain (link-capable) ===" \
  && echo "Sysroot (gcc):" \
  && x86_64-unknown-haiku-gcc -print-sysroot \
  && echo "Sysroot (env): ${HAIKU_SYSROOT}" \
+ && echo "Package metadata:" \
+ && cat /opt/haiku-buildtools/haiku-package-info.env \
  && echo "Checking some expected runtime bits in sysroot..." \
  && (find "${HAIKU_SYSROOT}/boot/system" -maxdepth 4 -name 'libroot.so' | head -n1 || true) \
  && (find "${HAIKU_SYSROOT}/boot/system" -maxdepth 6 -name 'crt*.o' | head -n1 || true) \

@@ -1,67 +1,35 @@
-# Haiku Runtime Packages
+# Optional Local Haiku Packages
 
-Place the following Haiku package files (`.hpkg`) in this directory before building the Docker image:
+You usually do **not** need to put anything in this folder.
 
-## Required Files
+The `gcc-x86_64-haiku` Docker build now automatically downloads the required
+runtime packages from the EU mirror:
 
-1. **haiku-hrev57991-1-x86_64.hpkg** - Base Haiku runtime libraries
-2. **haiku_devel-hrev57991-1-x86_64.hpkg** - Haiku development headers and libraries
+- `haiku-<version>-1-x86_64.hpkg`
+- `haiku_devel-<version>-1-x86_64.hpkg`
 
-## Where to Get These Files
+`<version>` is resolved from the latest nightly by default (`HAIKU_PACKAGE_VERSION=latest`).
 
-### Option 1: Download from Official Haiku Package Repository
+## When to use this folder
 
-```bash
-# Base URL for r1beta5 packages
-REPO="https://eu.hpkg.haiku-os.org/haiku/r1beta5/x86_64/current/packages"
+Use this folder only if you want to override automatic download, for example:
 
-# Download base package
-wget -O haiku-hrev57991-1-x86_64.hpkg \
-  "$REPO/haiku-hrev57991-1-x86_64.hpkg"
+- building offline
+- pinning to a custom package pair
+- testing local/cached package files
 
-# Download development package
-wget -O haiku_devel-hrev57991-1-x86_64.hpkg \
-  "$REPO/haiku_devel-hrev57991-1-x86_64.hpkg"
-```
+## Local override format
 
-### Option 2: Extract from Haiku ISO
+If both files are present, the Docker build uses them instead of downloading:
 
-1. Download Haiku r1beta5 ISO from https://www.haiku-os.org/get-haiku/
-2. Mount the ISO: `sudo mount -o loop haiku-r1beta5-x86_64-anyboot.iso /mnt`
-3. Copy packages from: `/mnt/system/packages/`
-   - `haiku-*.hpkg`
-   - `haiku_devel-*.hpkg`
+1. `haiku-*.hpkg`
+2. `haiku_devel-*.hpkg`
 
-### Option 3: Copy from Running Haiku Installation
+Examples:
 
-If you have Haiku installed (VM or physical):
-```bash
-# Packages are located at:
-/boot/system/packages/haiku-*.hpkg
-/boot/system/packages/haiku_devel-*.hpkg
-```
-
-## What's Inside These Packages
-
-**haiku-hrev57991-1-x86_64.hpkg** contains:
-- Runtime libraries: `libroot.so`, `libbe.so`, `libnetwork.so`, etc.
-- C runtime objects: `crt0.o`, `crti.o`, `crtn.o`
-- System binaries and data files
-
-**haiku_devel-hrev57991-1-x86_64.hpkg** contains:
-- Development headers: `/boot/system/develop/headers/`
-  - `os/` - Haiku OS/BeAPI headers
-  - `posix/` - POSIX headers
-  - `config/` - Configuration headers
-  - `gnu/`, `bsd/` - Compatibility headers
-- Static libraries for development
-
-## File Size
-
-These files are approximately:
-- haiku-*.hpkg: ~40-60 MB
-- haiku_devel-*.hpkg: ~5-10 MB
+- `haiku-r1~beta5_hrev59523-1-x86_64.hpkg`
+- `haiku_devel-r1~beta5_hrev59523-1-x86_64.hpkg`
 
 ## .gitignore
 
-The `.hpkg` files are excluded from git (see `.gitignore`) since they are large binaries. Each developer needs to download them locally before building the image.
+`.hpkg` files are excluded from git (see `.gitignore`) because they are large binaries.

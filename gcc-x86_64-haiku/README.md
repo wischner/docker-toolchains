@@ -65,10 +65,11 @@ docker run --rm -it \
 - `HAIKU_TOOLCHAIN_PATH=/opt/haiku-buildtools` - Base path for Haiku tools
 - `HAIKU_SOURCE=/opt/haiku-buildtools/haiku` - Haiku source tree
 - `HAIKU_SYSROOT=/opt/haiku-buildtools/build/cross-tools-x86_64/sysroot` - Cross-compiler sysroot
-- `HAIKU_REVISION=hrev57991` - Haiku revision used for package builds
+- `HAIKU_REVISION=auto` - Resolved during build from the selected HPKG pair
 - `PATH` includes cross-compiler binaries from `${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/bin`
 
 The sysroot contains a complete Haiku runtime overlay at `${HAIKU_SYSROOT}/boot/system` with libraries and development headers.
+Resolved package metadata is written to `/opt/haiku-buildtools/haiku-package-info.env` inside the image.
 
 ## Using Haiku headers
 
@@ -89,23 +90,31 @@ This image builds for **x86_64-unknown-haiku** (64-bit Haiku).
 
 ## Version pinning
 
-The Haiku commit/tag is specified in `build.args`:
-- `HAIKU_COMMIT` - Git branch/tag of Haiku repository (default: `r1beta5`)
+The Haiku source/package selection is configured in `build.args`:
+- `HAIKU_COMMIT` - Git branch/tag of Haiku repositories (default: `master`)
+- `HAIKU_PACKAGE_MIRROR` - package mirror base URL (default: EU mirror)
+- `HAIKU_PACKAGE_BRANCH` - package branch path on mirror (default: `master`)
+- `HAIKU_PACKAGE_ARCH` - package architecture (default: `x86_64`)
+- `HAIKU_PACKAGE_VERSION` - package version (`latest` by default, or explicit like `r1~beta5_hrev59523`)
+- `HAIKU_NIGHTLY_INDEX_URL` - nightly index page used to detect latest `hrev`
 - `IMG_VERSION` - Docker image version
 
 ## Building from source
 
-**IMPORTANT:** Before building, you must download the Haiku runtime packages. See [packages/README.md](packages/README.md) for instructions on obtaining:
-- `haiku-hrev57991-1-x86_64.hpkg`
-- `haiku_devel-hrev57991-1-x86_64.hpkg`
+By default, the build automatically:
+1. reads the latest nightly revision from the EU nightly index
+2. resolves the matching package version on the EU package mirror
+3. downloads:
+   - `haiku-<version>-1-x86_64.hpkg`
+   - `haiku_devel-<version>-1-x86_64.hpkg`
 
-Place these files in the `packages/` directory before building.
+Optional override: place local `.hpkg` files in `packages/` to use those instead of downloading. See [packages/README.md](packages/README.md).
 
 The Haiku cross-compilation toolchain is built during image creation:
 1. Clone Haiku buildtools and main repositories (with tags for proper versioning)
 2. Configure and build cross-compilation toolchain (GCC, binutils, GDB, standard libraries)
 3. Build Haiku package tool
-4. Copy and extract Haiku runtime packages into sysroot overlay
+4. Resolve (or use local override), download, and extract Haiku runtime packages into sysroot overlay
 5. Build and install Jam build system
 6. Clean up build artifacts
 
@@ -136,6 +145,6 @@ This image bundles:
 - Haiku buildtools (MIT License)
 - GCC (GPL-3.0)
 - Binutils (GPL-3.0)
-- Alpine Linux components (various open source licenses)
+- Ubuntu components and build dependencies (various open source licenses)
 
 See component documentation for full license details.
