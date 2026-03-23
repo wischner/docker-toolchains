@@ -53,6 +53,18 @@ This repository is **actively developed**. Next steps:
   GCC x86_64 toolchain with **X11**, OpenGL (Mesa), and extra image/font tooling on Ubuntu 22.04.
   *Native X11/OpenGL development and reusable Linux desktop base image.*
 
+- [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)
+  GCC x86_64 toolchain layered on the X11 image with **Open Motif**, `uil`, `mwm`, and GLw headers.
+  *Native Motif desktop development and legacy X11 GUI maintenance.*
+
+- [**GCC x86_64 Linux GNUstep**](./gcc-x86_64-linux-gnustep)
+  GCC x86_64 toolchain layered on the X11 image with **GNUstep**, Objective-C / Objective-C++, `gnustep-make`, Gorm, and ProjectCenter.
+  *Native GNUstep Foundation/AppKit development and OpenStep-style desktop software maintenance.*
+
+- [**GCC x86_64 Linux OpenLook / XView**](./gcc-x86_64-linux-openlook)
+  GCC x86_64 toolchain layered on the X11 image with **OpenLook**, **XView**, `olwm`, `olvwm`, and SlingShot.
+  *Native XView/OpenLook development and maintenance of classic `/usr/openwin` software.*
+
 - [**GCC x86_64 Linux SDL**](./gcc-x86_64-linux-sdl)
   GCC x86_64 SDL toolchain layered on the Linux X11 base with SDL2, SDL3, audio, and multimedia support.
   *SDL2 and SDL3 game and multimedia application development.*
@@ -62,7 +74,7 @@ This repository is **actively developed**. Next steps:
   *Cross-compile `.exe` and `.dll` targets with CMake support.*
 
 - [**GCC x86_64 Haiku**](./gcc-x86_64-haiku)
-  GCC cross-compiler targeting **Haiku OS** (x86_64-unknown-haiku) with Jam build system.
+  GCC cross-compiler targeting **Haiku OS** (x86_64-unknown-haiku) with Jam build system and bundled Haiku-native `gdb` / `gdbserver`.
   *Build Haiku OS and native Haiku applications.*
 
 ---
@@ -109,6 +121,33 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k:latest   m6
 ```bash
 # Compile an X11/OpenGL application
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-x11:latest   gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)
+```
+
+### GCC x86_64 Linux Open Motif
+```bash
+# Compile a Motif application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   gcc -o app main.c -lXm -lXt -lX11
+
+# Compile a UIL file
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   uil layout.uil -o layout.uid
+```
+
+### GCC x86_64 Linux GNUstep
+```bash
+# Compile a GNUstep Foundation tool
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-gnustep:latest   bash -lc '. /usr/share/GNUstep/Makefiles/GNUstep.sh && gcc -o hello hello.m $(gnustep-config --objc-flags) $(gnustep-config --base-libs)'
+
+# Build a GNUstep project with gnustep-make
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-gnustep:latest   bash -lc '. /usr/share/GNUstep/Makefiles/GNUstep.sh && make'
+```
+
+### GCC x86_64 Linux OpenLook / XView
+```bash
+# Compile an XView application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   gcc -o app app.c -I/usr/openwin/include -I/usr/include/tirpc -L/usr/openwin/lib -Wl,-rpath,/usr/openwin/lib -lxview -lolgx -lX11 -lXext -lXmu -lXt -lXpm -ltirpc -lm -lutil
+
+# Compile an app that uses SlingShot
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   gcc -o app app.c -I/usr/openwin/include -I/usr/include/tirpc -L/usr/openwin/lib -Wl,-rpath,/usr/openwin/lib -lsspkg -lxview -lolgx -lX11 -lXext -lXmu -lXt -lXpm -ltirpc -lm -lutil
 ```
 
 ### GCC x86_64 Linux SDL

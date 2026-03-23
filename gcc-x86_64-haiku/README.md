@@ -7,7 +7,7 @@ GCC cross-compiler for Haiku OS (x86_64-unknown-haiku target).
 ### Core toolchain
 - **GCC cross-compiler** (x86_64-unknown-haiku-gcc, g++)
 - **Binutils** (as, ld, ar, objcopy, objdump, ranlib, strip, nm)
-- **GDB debugger** (x86_64-unknown-haiku-gdb, if built)
+- **Haiku-native GDB and gdbserver** - bundled in the target sysroot at `${HAIKU_SYSROOT}/boot/system/bin/`
 - **Standard libraries** (libgcc, libstdc++, libsupc++)
 
 ### Haiku headers and sysroot
@@ -70,6 +70,19 @@ docker run --rm -it \
 
 The sysroot contains a complete Haiku runtime overlay at `${HAIKU_SYSROOT}/boot/system` with libraries and development headers.
 Resolved package metadata is written to `/opt/haiku-buildtools/haiku-package-info.env` inside the image.
+Bundled Haiku debugger binaries are installed at `${HAIKU_SYSROOT}/boot/system/bin/gdb` and `${HAIKU_SYSROOT}/boot/system/bin/gdbserver`.
+These are Haiku target binaries for packaging or deployment, not Linux-host executables you can run inside the container.
+
+## Remote debugging note
+
+For remote debugging on Haiku, use the `gdb` binary bundled by this image.
+The `gdb` shipped on Haiku itself is not stable enough for remote debugging.
+
+Before starting that bundled `gdb` on Haiku, export:
+
+```bash
+export LD_LIBRARY_PATH=/boot/system/lib:$LD_LIBRARY_PATH
+```
 
 ## Using Haiku headers
 
@@ -115,8 +128,9 @@ The Haiku cross-compilation toolchain is built during image creation:
 2. Configure and build cross-compilation toolchain (GCC, binutils, GDB, standard libraries)
 3. Build Haiku package tool
 4. Resolve (or use local override), download, and extract Haiku runtime packages into sysroot overlay
-5. Build and install Jam build system
-6. Clean up build artifacts
+5. Install bundled Haiku `gdb` and `gdbserver` binaries into the sysroot
+6. Build and install Jam build system
+7. Clean up build artifacts
 
 The build process takes approximately **30-45 minutes** and results in a complete cross-compilation toolchain for building Haiku executables.
 
@@ -129,7 +143,8 @@ make DOCKER_BUILD_FLAGS="--progress=plain --no-cache" build-gcc-x86_64-haiku
 
 This is a **complete cross-compilation toolchain** including:
 - GCC cross-compiler with Haiku sysroot
-- Binutils and GDB
+- Binutils and bundled Haiku debugger binaries
+- Bundled Haiku-native `gdb` and `gdbserver` target binaries
 - Haiku runtime libraries (libroot.so, crt*.o, etc.)
 - Haiku development headers
 - Haiku source tree (for reference)

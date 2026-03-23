@@ -1,0 +1,2 @@
+# Keep the large local GDB source tree out of Docker build contexts.
+gcc-x86_64-haiku/packages/gdb-17.1/

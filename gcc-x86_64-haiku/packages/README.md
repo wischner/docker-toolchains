@@ -18,6 +18,10 @@ Use this folder only if you want to override automatic download, for example:
 - pinning to a custom package pair
 - testing local/cached package files
 
+This folder also carries bundled Haiku target binaries used by the image build.
+At the moment, `binaries/gdb` and `binaries/gdbserver` are installed into
+`${HAIKU_SYSROOT}/boot/system/bin` inside the image.
+
 ## Local override format
 
 If both files are present, the Docker build uses them instead of downloading:
