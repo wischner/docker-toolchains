@@ -105,6 +105,11 @@ RUN set -eux; \
     perl -0pi -e 's/static Requestor \*SelGetReq\(\);/static Requestor *SelGetReq();\nstatic int XvGetRequestedValue();\nstatic int ProcessNonBlkIncr();\nstatic int ProcessReq();\nstatic int OldPkgIsOwner();/' lib/libxview/selection/sel_req.c; \
     perl -0pi -e 's/#include <xview_private\/sel_impl.h>\n/#include <xview_private\/sel_impl.h>\n\nstatic int SelFindReply();\n/' lib/libxview/selection/sel_util.c; \
     perl -0pi -e 's/#include <xview_private\/svr_kmdata.h>\n/#include <xview_private\/svr_kmdata.h>\n\nstatic int xv_set_scheduler();\n/' lib/libxview/server/server.c; \
+    perl -0pi -e 's/\/\* Used by atom mgr \*\//\/\* Used by atom mgr \*\/\n    XID atom_mgr_ids[4];\n    XAllocIDs((Display *)server->xdisplay, atom_mgr_ids, 4);/' lib/libxview/server/server.c; \
+    perl -0pi -e 's/server->atom_mgr\[ATOM\]\s*=\s*\(XID\)\s*XAllocID\(\(Display \*\)server->xdisplay\);/server->atom_mgr[ATOM] = atom_mgr_ids[0];/' lib/libxview/server/server.c; \
+    perl -0pi -e 's/server->atom_mgr\[NAME\]\s*=\s*\(XID\)\s*XAllocID\(\(Display \*\)server->xdisplay\);/server->atom_mgr[NAME] = atom_mgr_ids[1];/' lib/libxview/server/server.c; \
+    perl -0pi -e 's/server->atom_mgr\[TYPE\]\s*=\s*\(XID\)\s*XAllocID\(\(Display \*\)server->xdisplay\);/server->atom_mgr[TYPE] = atom_mgr_ids[2];/' lib/libxview/server/server.c; \
+    perl -0pi -e 's/server->atom_mgr\[DATA\]\s*=\s*\(XID\)\s*XAllocID\(\(Display \*\)server->xdisplay\);/server->atom_mgr[DATA] = atom_mgr_ids[3];/' lib/libxview/server/server.c; \
     perl -0pi -e 's/#include <fcntl.h>\n/#include <fcntl.h>\n#include <unistd.h>\n/' lib/libxview/ttysw/tty_init.c; \
     perl -0pi -e 's/\/\* static \*\/ void ttysw_parseargs\(\);/\/\* static \*\/ void ttysw_parseargs();\nstatic int ttyinit();/' lib/libxview/ttysw/tty_init.c; \
     perl -0pi -e 's/^\s*extern char\s+\*ttyname\(\);\n//mg' lib/libxview/ttysw/tty_init.c; \

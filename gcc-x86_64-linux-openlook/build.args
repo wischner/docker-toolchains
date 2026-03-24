@@ -1,2 +1,2 @@
-IMG_VERSION=1.0.0
+IMG_VERSION=1.0.1
 BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.0.0
