@@ -187,12 +187,8 @@ RUN . /etc/profile.d/haiku-package.sh 2>/dev/null || true \
  && printf 'HAIKU_PACKAGE_VERSION=%s\nHAIKU_REVISION=%s\n' "${RESOLVED_VERSION}" "${RESOLVED_REVISION}" > /opt/haiku-buildtools/haiku-package-info.env \
  && haiku-package extract -C "${SYS_SYSTEM}" "$HAIKU_HPKG" \
  && haiku-package extract -C "${SYS_SYSTEM}" "$HAIKU_DEVEL_HPKG" \
- && mkdir -p "${SYS_SYSTEM}/bin" \
- && install -m0755 /opt/haiku-packages/binaries/gdb "${SYS_SYSTEM}/bin/gdb" \
- && install -m0755 /opt/haiku-packages/binaries/gdbserver "${SYS_SYSTEM}/bin/gdbserver" \
  && rm -rf /tmp/hpkgs \
- && echo "Sysroot overlay ready at: ${SYS_SYSTEM}" \
- && echo "Bundled Haiku debugger binaries installed at: ${SYS_SYSTEM}/bin"
+ && echo "Sysroot overlay ready at: ${SYS_SYSTEM}"
 
 # Clean up git metadata (optional size reduction)
 RUN rm -rf ${HAIKU_TOOLCHAIN_PATH}/haiku/.git \
@@ -214,11 +210,6 @@ RUN echo "=== Haiku Cross-Compilation Toolchain (link-capable) ===" \
  && echo "Checking some expected runtime bits in sysroot..." \
  && (find "${HAIKU_SYSROOT}/boot/system" -maxdepth 4 -name 'libroot.so' | head -n1 || true) \
  && (find "${HAIKU_SYSROOT}/boot/system" -maxdepth 6 -name 'crt*.o' | head -n1 || true) \
- && echo "Checking bundled Haiku debugger binaries..." \
- && test -x "${HAIKU_SYSROOT}/boot/system/bin/gdb" \
- && test -x "${HAIKU_SYSROOT}/boot/system/bin/gdbserver" \
- && file "${HAIKU_SYSROOT}/boot/system/bin/gdb" \
- && file "${HAIKU_SYSROOT}/boot/system/bin/gdbserver" \
  && echo "Testing compile + link:" \
  && echo 'int main(void){return 0;}' > /tmp/test.c \
  && x86_64-unknown-haiku-gcc /tmp/test.c -o /tmp/test \

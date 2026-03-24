@@ -12,7 +12,6 @@ package pair (`haiku` + `haiku_devel`) from the EU mirror by default.
 - Haiku-targeted binutils
 - Haiku sysroot and runtime libraries
 - Haiku development headers
-- bundled Haiku-native `gdb` and `gdbserver` in the target sysroot
 - Haiku source tree for reference
 - Jam build system
 - build tools such as `git`, `python3`, `perl`, `cmake`, `make`, and `nasm`
@@ -159,22 +158,6 @@ make docker
 - `HAIKU_TOOLCHAIN_PATH=/opt/haiku-buildtools`
 - `HAIKU_SOURCE=/opt/haiku-buildtools/haiku`
 - `HAIKU_SYSROOT=/opt/haiku-buildtools/build/cross-tools-x86_64/sysroot`
-
-The image also bundles Haiku `gdb` and `gdbserver` binaries at:
-`/opt/haiku-buildtools/build/cross-tools-x86_64/sysroot/boot/system/bin/`
-
-These are Haiku target binaries meant to be copied into a Haiku system or package, not Linux-host executables.
-
-## Remote debugging note
-
-For remote debugging on Haiku, use the `gdb` bundled by this image.
-The `gdb` shipped on Haiku itself is not stable enough for remote debugging.
-
-Before starting that bundled `gdb` on Haiku, run:
-
-```bash
-export LD_LIBRARY_PATH=/boot/system/lib:$LD_LIBRARY_PATH
-```
 
 ## Support
 

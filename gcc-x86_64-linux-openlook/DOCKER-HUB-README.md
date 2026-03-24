@@ -2,7 +2,7 @@
 
 `wischner/gcc-x86_64-linux-openlook` is a reusable Ubuntu 22.04 based Docker image for **native Linux desktop development with X11, OpenLook, and XView**.
 
-It is designed for legacy OpenLook desktop software, XView applications, `olwm` and `olvwm` based environments, and projects that use the SlingShot XView extension library.
+It is designed for legacy OpenLook desktop software, XView applications, and `olwm` / `olvwm` based environments.
 
 ## What is included
 
@@ -12,7 +12,7 @@ It is designed for legacy OpenLook desktop software, XView applications, `olwm` 
 - `olwm` and `olvwm`
 - XView clients and contrib examples
 - installed XView example sources and manuals
-- SlingShot XView extension libraries and headers
+- SlingShot source snapshot under `/usr/openwin/share/src/SlingShot` for optional manual builds
 - imake-era X11 build tools needed for classic OpenLook/XView projects
 
 ## What this image is for
@@ -21,7 +21,7 @@ It is designed for legacy OpenLook desktop software, XView applications, `olwm` 
 - maintaining classic OpenLook desktop software
 - building software that expects `/usr/openwin`
 - experimenting with `olwm` and `olvwm`
-- building applications against the SlingShot XView extensions
+- rebuilding optional SlingShot extras from the bundled source snapshot
 
 ## Quick start
 
@@ -33,16 +33,6 @@ docker run --rm \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-openlook:latest \
   gcc -o app app.c -I/usr/openwin/include -I/usr/include/tirpc -L/usr/openwin/lib -Wl,-rpath,/usr/openwin/lib -lxview -lolgx -lX11 -lXext -lXmu -lXt -lXpm -ltirpc -lm -lutil
-```
-
-Compile an app that uses SlingShot:
-
-```bash
-docker run --rm \
-  -u $(id -u):$(id -g) \
-  -v "$PWD":/work -w /work \
-  wischner/gcc-x86_64-linux-openlook:latest \
-  gcc -o app app.c -I/usr/openwin/include -I/usr/include/tirpc -L/usr/openwin/lib -Wl,-rpath,/usr/openwin/lib -lsspkg -lxview -lolgx -lX11 -lXext -lXmu -lXt -lXpm -ltirpc -lm -lutil
 ```
 
 Interactive shell:
