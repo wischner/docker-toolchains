@@ -1,0 +1,35 @@
+.PHONY: prepare build
+
+GEMIX_ROOT ?= /home/tstih/data/triglav-os/gem
+SDK_DIR ?= sdk
+INCLUDE_SRC ?= $(GEMIX_ROOT)/include
+LIB_SRC ?= $(GEMIX_ROOT)/bin
+
+prepare:
+	@set -e; \
+	for dir in "$(INCLUDE_SRC)" "$(LIB_SRC)"; do \
+	  if [ ! -d "$$dir" ]; then \
+	    echo "Missing GEMix source directory: $$dir"; \
+	    exit 1; \
+	  fi; \
+	done; \
+	for lib in libaes.so libvdi.so libplatform_linux.so librasta.so; do \
+	  if [ ! -f "$(LIB_SRC)/$$lib" ]; then \
+	    echo "Missing GEMix library: $(LIB_SRC)/$$lib"; \
+	    exit 1; \
+	  fi; \
+	done; \
+	mkdir -p "$(SDK_DIR)/include" "$(SDK_DIR)/lib"; \
+	find "$(SDK_DIR)/include" -mindepth 1 -delete; \
+	find "$(SDK_DIR)/lib" -mindepth 1 -delete; \
+	cp -a "$(INCLUDE_SRC)/." "$(SDK_DIR)/include/"; \
+	cp "$(LIB_SRC)/libaes.so" "$(SDK_DIR)/lib/"; \
+	cp "$(LIB_SRC)/libvdi.so" "$(SDK_DIR)/lib/"; \
+	cp "$(LIB_SRC)/libplatform_linux.so" "$(SDK_DIR)/lib/"; \
+	cp "$(LIB_SRC)/librasta.so" "$(SDK_DIR)/lib/"; \
+	printf '%s\n' "$(GEMIX_ROOT)" > "$(SDK_DIR)/.source"; \
+	date -u +'%Y-%m-%dT%H:%M:%SZ' > "$(SDK_DIR)/.prepared_at"; \
+	echo "Staged GEMix SDK into $(SDK_DIR)"
+
+build:
+	@true
