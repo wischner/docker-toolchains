@@ -1,8 +1,9 @@
 # SDCC Z80-only toolchain with uCsim sz80 (single-stage Alpine)
 FROM alpine:3.20
 
-ARG IMG_VERSION=1.0.1
+ARG IMG_VERSION=1.2.0
 ARG SDCC_VERSION=4.5.0
+ARG XYZ_VERSION=v1.1.0
 
 LABEL org.opencontainers.image.title="sdcc-z80" \
       org.opencontainers.image.description="SDCC Z80-only toolchain with uCsim sz80 (single-stage, includes make/git)." \
@@ -96,6 +97,26 @@ RUN set -eux; \
     make install; \
     cd /; rm -rf /tmp/ddd-${ver} /tmp/ddd-${ver}.tar.gz
 
+# Build Alpine-native xlink/xdbg tooling from xyz and install only the
+# requested host-side programs, static libraries, and public headers.
+RUN set -eux; \
+    git clone --depth=1 --branch "${XYZ_VERSION}" https://github.com/retro-vault/xyz.git /tmp/xyz; \
+    make -C /tmp/xyz/src/xc/xlink all; \
+    make -C /tmp/xyz/src/xc/xdbg all; \
+    install -d /usr/local/bin /usr/local/lib /usr/local/include/xdbg /usr/local/include/xdbgstub; \
+    install -m 0755 /tmp/xyz/bin/bin/xlink /usr/local/bin/xlink; \
+    install -m 0755 /tmp/xyz/bin/bin/xdbg /usr/local/bin/xdbg; \
+    install -m 0755 /tmp/xyz/bin/bin/xdbg-z80 /usr/local/bin/xdbg-z80; \
+    install -m 0644 /tmp/xyz/bin/lib/libxdbg.a /usr/local/lib/libxdbg.a; \
+    install -m 0644 /tmp/xyz/bin/lib/libxdbg_cli.a /usr/local/lib/libxdbg_cli.a; \
+    install -m 0644 /tmp/xyz/bin/lib/libxdbg_dap.a /usr/local/lib/libxdbg_dap.a; \
+    install -m 0644 /tmp/xyz/bin/lib/libxdbg_mi.a /usr/local/lib/libxdbg_mi.a; \
+    install -m 0644 /tmp/xyz/bin/lib/libxdbgstub.a /usr/local/lib/libxdbgstub.a; \
+    cp -a /tmp/xyz/include/xdbg/. /usr/local/include/xdbg/; \
+    cp -a /tmp/xyz/include/xdbgstub/. /usr/local/include/xdbgstub/; \
+    strip /usr/local/bin/xlink /usr/local/bin/xdbg /usr/local/bin/xdbg-z80; \
+    rm -rf /tmp/xyz
+
 WORKDIR /work
 
 # Sanity check printouts
@@ -108,5 +129,17 @@ RUN set -e; \
     command -v sdasz80 && command -v sdldz80; \
     echo "Checking uCsim sz80:"; \
     command -v sz80; \
+    echo "Checking xyz tools:"; \
+    command -v xlink && command -v xdbg && command -v xdbg-z80; \
+    xlink --help >/dev/null; \
+    xdbg --help >/dev/null; \
+    xdbg-z80 --help >/dev/null; \
+    test -f /usr/local/lib/libxdbg.a; \
+    test -f /usr/local/lib/libxdbg_cli.a; \
+    test -f /usr/local/lib/libxdbg_dap.a; \
+    test -f /usr/local/lib/libxdbg_mi.a; \
+    test -f /usr/local/lib/libxdbgstub.a; \
+    test -f /usr/local/include/xdbg/xdbg.hpp; \
+    test -f /usr/local/include/xdbgstub/xdbgstub.hpp; \
     echo "Checking DDD:"; \
     command -v ddd

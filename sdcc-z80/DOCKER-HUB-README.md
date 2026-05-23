@@ -10,6 +10,8 @@ It is intended as a lean, reusable base for retro Z80 projects and for higher-le
 - `sdasz80`
 - `sdldz80`
 - `uCsim` with the `sz80` wrapper
+- `xlink`, `xdbg`, and `xdbg-z80`
+- `libxdbg*.a`, `libxdbgstub.a`, and the `xdbg` / `xdbgstub` headers in `/usr/local`
 - `make`
 - `git`
 
@@ -49,7 +51,9 @@ docker run --rm \
   - `_CODE` defaults to `0x0100` instead of `0x0200`, which matches the standard CP/M program load address.
   - `_DATA` is no longer forced to `0x8000`; it now follows `_CODE` by default unless you override it with `--data-loc`.
   - You can still override both with standard SDCC flags such as `--code-loc <addr>` and `--data-loc <addr>`.
-- Modern SDCC no longer ships `sdcdb`, so source-level GDB-style debugging is not currently part of this image.
+- Modern SDCC no longer ships `sdcdb`, but this image includes the `retro-vault/xyz`
+  debugger pieces (`xdbg` and `xdbg-z80`). Terminal `xdbg` is the most reliable
+  workflow; DDD compatibility is best-effort rather than full GDB parity.
 
 ## Related images
 

@@ -9,6 +9,8 @@ SDCC Z80-only cross-compiler environment and the Z80 simulator. Intended for bar
 - [SDCC](https://sdcc.sourceforge.net/) 4.5.0 (Z80-family targets only)
 - `sdasz80` / `sdldz80` (assembler and linker)
 - `uCsim` with `sz80` wrapper (Z80 simulator)
+- `xlink`, `xdbg`, and `xdbg-z80` from [retro-vault/xyz](https://github.com/retro-vault/xyz)
+- `libxdbg*.a`, `libxdbgstub.a`, and the `xdbg` / `xdbgstub` public headers in `/usr/local`
 - [DDD](https://www.gnu.org/software/ddd/) 3.4.x (graphical front-end for gdb/sdcdb)
 - Build tools: `make`, `git`
 
@@ -45,13 +47,18 @@ docker run --rm -u $(id -u):$(id -g) -v "$PWD":/work -w /work \
 
 ### Graphical debugging with DDD (X11)
 
-Modern SDCC releases no longer ship **`sdcdb`**, the GDB-style debugger that DDD uses. Because of this, there is **no GDB-compatible source-level debugger for Z80** in this image right now. DDD requires a GDB-like backend; the bundled **uCsim/`sz80`** simulator is **not** GDB-compatible, so DDD cannot drive it.
+Modern SDCC releases no longer ship **`sdcdb`**, but this image now includes `xdbg` and `xdbg-z80` from `retro-vault/xyz`.
 
-We’re actively working on a replacement (either a `.cdb` → GDB bridge or an equivalent debugger). 
+The most reliable workflow is running `xdbg` directly in a terminal. DDD can also be pointed at `xdbg` as a best-effort GDB-like frontend for common operations, but it is not a full GDB replacement yet.
 
-**Thank you for your patience** while we build this.
+The bundled **uCsim/`sz80`** simulator is still separate and is not driven by DDD directly.
 
 ## Changelog
+
+### 1.2.0
+- Added Alpine-native `retro-vault/xyz` host tools to the standard `/usr/local` paths:
+  `xlink`, `xdbg`, `xdbg-z80`, `libxdbg*.a`, `libxdbgstub.a`, and the
+  `xdbg` / `xdbgstub` headers.
 
 ### 1.1.0
 - Patched SDCC default segment locations for Z80:
