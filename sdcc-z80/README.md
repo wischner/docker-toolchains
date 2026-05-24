@@ -55,6 +55,12 @@ The bundled **uCsim/`sz80`** simulator is still separate and is not driven by DD
 
 ## Changelog
 
+### 1.5.0
+- Updated the bundled `retro-vault/xyz` host tools from `v1.2.0` to `v1.3.0`.
+
+### 1.3.0
+- Updated the bundled `retro-vault/xyz` host tools from `v1.1.0` to `v1.2.0`.
+
 ### 1.2.0
 - Added Alpine-native `retro-vault/xyz` host tools to the standard `/usr/local` paths:
   `xlink`, `xdbg`, `xdbg-z80`, `libxdbg*.a`, `libxdbgstub.a`, and the

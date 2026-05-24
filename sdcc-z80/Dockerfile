@@ -1,9 +1,9 @@
 # SDCC Z80-only toolchain with uCsim sz80 (single-stage Alpine)
 FROM alpine:3.20
 
-ARG IMG_VERSION=1.2.0
+ARG IMG_VERSION=1.5.0
 ARG SDCC_VERSION=4.5.0
-ARG XYZ_VERSION=v1.1.0
+ARG XYZ_VERSION=v1.3.0
 
 LABEL org.opencontainers.image.title="sdcc-z80" \
       org.opencontainers.image.description="SDCC Z80-only toolchain with uCsim sz80 (single-stage, includes make/git)." \
