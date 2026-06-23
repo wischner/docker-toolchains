@@ -33,6 +33,10 @@ This repository is **actively developed**. Next steps:
   Small Device C Compiler (Z80 backend) plus `uCsim` Z80 simulator.  
   *Lean Z80 C toolchain for classic 8‑bit targets.*
 
+- [**XCC Z80**](./xcc-z80)
+  Ubuntu-based packaged XYZ `xtools` prefix with `xcc`, `xas`, `xld`, and `xgdb`.
+  *Use the already-built `retro-vault/xyz` Z80 compiler suite directly in a light Ubuntu image.*
+
 - [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)
   Z80 toolchain variant tailored for **ZX Spectrum** builds.
   *Convenient defaults/structure for Spectrum projects.*
@@ -101,6 +105,12 @@ cmake --build build -j
 ### SDCC Z80
 ```bash
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80:latest   sdcc -mz80 -o hello.ihx hello.c
+```
+
+### XCC Z80
+```bash
+# Build a relocatable XL image with xcc
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80:latest   xcc hello.c -o hello.xl
 ```
 
 ### SDCC Z80 – Iskra Delta Partner
