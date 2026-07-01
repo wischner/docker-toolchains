@@ -3,13 +3,13 @@
 `xcc-z80-idp` is a Docker image for **Iskra Delta Partner** development built on
 top of [`xcc-z80`](../xcc-z80), the packaged XYZ Z80 compiler suite image.
 
-Current image version: `1.0.0`
+Current image version: `1.0.1`
 
 ## What the image contains
 
 Today this image is intentionally small. It includes:
 
-- everything from `wischner/xcc-z80:1.8.0`
+- everything from `wischner/xcc-z80:1.9.2`
 - a reserved Partner-specific root at `/opt/idp`
 - placeholder include and library directories at `/opt/idp/include` and `/opt/idp/lib`
 - a staging directory at `/opt/idp/libraries`
@@ -43,7 +43,7 @@ Open a shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/xcc-z80-idp:1.0.0 \
+  wischner/xcc-z80-idp:1.0.1 \
   bash
 ```
 
@@ -53,7 +53,7 @@ Compile a simple XCC program:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/xcc-z80-idp:1.0.0 \
+  wischner/xcc-z80-idp:1.0.1 \
   xcc hello.c -o hello.xl
 ```
 
@@ -63,7 +63,7 @@ Build a fixed-address flat binary:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/xcc-z80-idp:1.0.0 \
+  wischner/xcc-z80-idp:1.0.1 \
   xcc --oformat=binary -Ttext=0x8000 hello.c -o hello.bin
 ```
 

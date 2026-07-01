@@ -1,8 +1,8 @@
 # XCC Z80 for Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:1.8.0
+ARG BASE_IMAGE=wischner/xcc-z80:1.9.2
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.0.1
 
 LABEL org.opencontainers.image.title="xcc-z80-idp" \
       org.opencontainers.image.description="XCC Z80 toolchain scaffold for Iskra Delta Partner layered on the packaged XYZ compiler suite." \
