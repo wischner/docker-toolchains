@@ -37,6 +37,10 @@ This repository is **actively developed**. Next steps:
   Ubuntu-based packaged XYZ `xtools` prefix with `xcc`, `xas`, `xld`, and `xgdb`.
   *Use the already-built `retro-vault/xyz` Z80 compiler suite directly in a light Ubuntu image.*
 
+- [**XCC Z80 – Iskra Delta Partner**](./xcc-z80-idp)
+  XCC-based Iskra Delta Partner image layered on the packaged XYZ Z80 toolchain.
+  *A clean scaffold for upcoming Partner-specific headers, libraries, and utilities.*
+
 - [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)
   Z80 toolchain variant tailored for **ZX Spectrum** builds.
   *Convenient defaults/structure for Spectrum projects.*
@@ -111,6 +115,12 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80:latest   sd
 ```bash
 # Build a relocatable XL image with xcc
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80:latest   xcc hello.c -o hello.xl
+```
+
+### XCC Z80 – Iskra Delta Partner
+```bash
+# Use the XCC-based Partner scaffold
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80-idp:latest   xcc hello.c -o hello.xl
 ```
 
 ### SDCC Z80 – Iskra Delta Partner

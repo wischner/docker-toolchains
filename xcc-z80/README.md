@@ -4,14 +4,15 @@ This image is part of **Wischner Ltd. Toolchains**.
 
 ## What it is
 
-A lightweight **Ubuntu-based Z80 toolchain** that packages the published
-Debian package from the latest `retro-vault/xyz` GitHub release.
+A lightweight **Ubuntu-based Z80 toolchain** that installs the published
+large-model Linux bundle (`x-l-linux.zip`) from the `retro-vault/xyz` GitHub
+releases.
 
 In practice this gives you:
 
-- `xcc` as the C11 compiler driver
+- `xcc` as the full-model C23 compiler driver
 - `xas`, `xld`, `xar`, and `xobjcopy`
-- `xgdb` and `xgdb-z80` for debugging
+- `xgdb` and `xemu` for debugging, plus an `xgdb-z80` compatibility alias
 - a staged Z80 target runtime under `z80/include` and `z80/lib`
 
 ## Installed components
@@ -24,7 +25,7 @@ In practice this gives you:
 The image just adds `/opt/x/bin` to `PATH`. No extra environment variables are
 required. It runs as a non-root user by default. For compatibility with older
 revisions of this image, `/opt/xtools` is also available as a symlink to
-`/opt/x`.
+`/opt/x`, and `/opt/x/bin/xgdb-z80` is kept as an alias to upstream `xemu`.
 
 If you want files created on a bind mount to match your host UID/GID
 exactly, add `-u $(id -u):$(id -g)` to `docker run`.
@@ -58,21 +59,20 @@ docker run --rm -it \
   xcc --oformat=binary -Ttext=0x8000 hello.c -o hello.bin
 ```
 
-## SDK staging
+## Upstream bundle
 
-The image build does **not** compile `retro-vault/xyz` itself. Instead,
-`Makefile.toolchain` downloads the latest GitHub release Debian package
-(`x_*_amd64.deb`) into [`sdk`](./sdk) as `x.deb`, and the Dockerfile installs
-that package during the image build. As part of the same step, it also syncs
-[`build.args`](./build.args) so `IMG_VERSION` matches the upstream three-part
-release version, for example `1.7.2` from `x_1.7.2-1_amd64.deb`.
+The image build does **not** compile `retro-vault/xyz` itself. The Dockerfile
+downloads the pinned upstream GitHub release bundle directly at build time and
+installs it under `/opt/x`.
 
-By default it tracks the current latest release. To stage a specific tag
-instead, override `XYZ_VERSION` when preparing locally:
+For this image we intentionally pin the **large** Linux bundle so the staged
+libc keeps full `double` and `long long` support:
 
-```bash
-make -f Makefile.toolchain prepare XYZ_VERSION=vX.Y.Z
+```text
+XYZ_VERSION=v1.9.1
+X_DIST=x-l-linux.zip
 ```
 
-That keeps Docker rebuilds fast, avoids manually curating individual files, and
-follows the upstream package layout under `/opt/x`.
+Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,
+and can be overridden with normal Docker build arguments if you need to test a
+different upstream tag later.

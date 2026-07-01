@@ -107,18 +107,23 @@ ENV HAIKU_SOURCE=${HAIKU_TOOLCHAIN_PATH}/haiku
 ENV HAIKU_SYSROOT=${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/sysroot
 ENV HAIKU_REVISION=auto
 
-# Build Haiku 'package' tool to extract HPKG files
-# We need a minimal Haiku build configuration to build the package tool
-RUN cd ${HAIKU_TOOLCHAIN_PATH}/build \
- \
- && echo "Configuring Haiku build for package tool..." \
- && ./haiku/configure \
-        --cross-tools-source ./buildtools \
-        --cross-tools-prefix ${HAIKU_TOOLCHAIN_PATH}/build/cross-tools-x86_64/bin/x86_64-unknown-haiku- \
- \
- && echo "Building host package tool..." \
+# Match Haiku's upstream Docker flow by routing the sysroot's /boot/system to
+# a real package root before building the host-side package tool.
+RUN mkdir -p "${HAIKU_SYSROOT}/boot" /system \
+ && if [ -e "${HAIKU_SYSROOT}/boot/system" ] && [ ! -L "${HAIKU_SYSROOT}/boot/system" ]; then \
+      rm -rf "${HAIKU_SYSROOT}/boot/system"; \
+    fi \
+ && if [ ! -e "${HAIKU_SYSROOT}/boot/system" ]; then \
+      ln -s /system "${HAIKU_SYSROOT}/boot/system"; \
+    fi
+
+# Build Haiku 'package' tool to extract HPKG files.
+RUN echo "Building host package tool..." \
  && cd ${HAIKU_TOOLCHAIN_PATH}/haiku \
- && jam -q -j"$(nproc)" -sHAIKU_OUTPUT_DIR=${HAIKU_TOOLCHAIN_PATH}/build "<build>package" \
+ && JAM_JOBS="$(nproc)" \
+ && if [ "$JAM_JOBS" -gt 8 ]; then JAM_JOBS=8; fi \
+ && echo "Running jam with ${JAM_JOBS} jobs" \
+ && jam -j"${JAM_JOBS}" -sHAIKU_OUTPUT_DIR=${HAIKU_TOOLCHAIN_PATH}/build "<build>package" \
  && cd ${HAIKU_TOOLCHAIN_PATH}/build \
  \
  && echo "Locating host 'package' tool..." \

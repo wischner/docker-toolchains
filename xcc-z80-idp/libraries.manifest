@@ -1,0 +1,8 @@
+# Placeholder manifest for future Iskra Delta Partner bundles layered on xcc-z80-idp.
+#
+# Add one entry per library or SDK component when we decide what to include.
+# Suggested fields:
+# - name:
+# - source:
+# - destination:
+# - notes:

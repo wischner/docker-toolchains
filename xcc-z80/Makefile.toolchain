@@ -4,15 +4,14 @@ SDK_DIR ?= sdk
 BUILD_ARGS_FILE ?= build.args
 XYZ_REPO ?= retro-vault/xyz
 XYZ_VERSION ?= latest
-XYZ_DEB_ARCH ?= amd64
+X_MODEL ?= l
+X_OS ?= linux
 
 prepare:
 	@set -e; \
 	stage_dir="$(SDK_DIR)"; \
 	mkdir -p "$$stage_dir"; \
 	find "$$stage_dir" -mindepth 1 ! -name '.gitignore' -exec rm -rf {} +; \
-	tmp_dir="$$(mktemp -d)"; \
-	trap 'rm -rf "$$tmp_dir"' EXIT; \
 	if [ "$(XYZ_VERSION)" = "latest" ]; then \
 	  rel_url="https://api.github.com/repos/$(XYZ_REPO)/releases/latest"; \
 	else \
@@ -21,22 +20,18 @@ prepare:
 	echo "Syncing $(XYZ_REPO) ($(XYZ_VERSION)) from $$rel_url"; \
 	rel_json="$$(curl -fsSL "$$rel_url")"; \
 	tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
-	asset_url="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"browser_download_url":[[:space:]]*"\([^"]*_$(XYZ_DEB_ARCH)\.deb\)".*/\1/p' | head -n1)"; \
-	if [ -z "$$asset_url" ]; then \
-	  echo "No $(XYZ_DEB_ARCH) Debian package asset found for $(XYZ_REPO) ($$tag)"; \
-	  exit 1; \
-	fi; \
-	pkg_version="$$(printf '%s\n' "$$asset_url" | sed -n 's#.*/x_\([^/]*\)_$(XYZ_DEB_ARCH)\.deb#\1#p' | head -n1)"; \
-	[ -n "$$pkg_version" ] || { echo "Could not derive package version from $$asset_url"; exit 1; }; \
-	img_version="$${pkg_version%%-*}"; \
-	[ -n "$$img_version" ] || { echo "Could not derive image version from $$pkg_version"; exit 1; }; \
-	curl -fsSL -o "$$tmp_dir/x.deb" "$$asset_url"; \
-	mv "$$tmp_dir/x.deb" "$$stage_dir/x.deb"; \
-	printf 'IMG_VERSION=%s\n' "$$img_version" > "$(BUILD_ARGS_FILE)"; \
+	[ -n "$$tag" ] || { echo "Could not resolve release tag"; exit 1; }; \
+	asset_name="x-$(X_MODEL)-$(X_OS).zip"; \
+	asset_url="$$(printf '%s\n' "$$rel_json" | sed -n "s/.*\"browser_download_url\":[[:space:]]*\"\\([^\"]*\/$${asset_name}\\)\".*/\\1/p" | head -n1)"; \
+	[ -n "$$asset_url" ] || { echo "No $$asset_name asset found for $(XYZ_REPO) ($$tag)"; exit 1; }; \
+	img_version="$${tag#v}"; \
+	[ -n "$$img_version" ] || { echo "Could not derive image version from $$tag"; exit 1; }; \
+	printf 'IMG_VERSION=%s\nXYZ_VERSION=%s\nX_DIST=%s\n' "$$img_version" "$$tag" "$$asset_name" > "$(BUILD_ARGS_FILE)"; \
 	printf '%s\n' "$$asset_url" > "$$stage_dir/.source"; \
-	printf '%s\n' "$${tag:-unknown}" > "$$stage_dir/.version"; \
+	printf '%s\n' "$$tag" > "$$stage_dir/.version"; \
+	printf '%s\n' "$$asset_name" > "$$stage_dir/.asset"; \
 	date -u +'%Y-%m-%dT%H:%M:%SZ' > "$$stage_dir/.prepared_at"; \
-	echo "Staged Debian package $$tag into $$stage_dir/x.deb"; \
+	echo "Resolved $$asset_name from $$tag"; \
 	echo "Synced $(BUILD_ARGS_FILE) to $$img_version"
 
 build:

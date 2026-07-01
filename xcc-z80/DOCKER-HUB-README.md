@@ -1,20 +1,21 @@
 # XCC Z80 toolchain
 
 Ubuntu-based Z80 development image that installs the published
-[X Compiler Suite](https://quinzee.xyz/x) Debian package from the
-`retro-vault/xyz` GitHub release.
+large-model Linux bundle (`x-l-linux.zip`) from the
+`retro-vault/xyz` GitHub release of the
+[X Compiler Suite](https://quinzee.xyz/x).
 
 Official project page: https://quinzee.xyz/x
 
 Inside the image you get:
 
-- `xcc` for C11 compilation
+- `xcc` for full-model C23 compilation
 - `xas` for assembly
 - `xld` for linking
 - `xopt` for post-generation assembly optimization
 - `xar` for static libraries
 - `xobjcopy` for object and archive conversion
-- `xgdb` and `xgdb-z80` for source-level debugging
+- `xgdb` and `xemu` for source-level debugging, plus an `xgdb-z80` compatibility alias
 - target headers and runtime in `/opt/x/z80/include` and `/opt/x/z80/lib`
 - host-side SDK headers and libraries in `/opt/x/include` and `/opt/x/lib`
 
@@ -255,10 +256,11 @@ docker run --rm -it \
   xobjcopy --strip-debug main.rel main-stripped.rel
 ```
 
-## xgdb and xgdb-z80
+## xgdb and xemu
 
-`xgdb` is the debugger frontend. `xgdb-z80` is the bundled remote target and
-emulator that speaks the GDB remote protocol.
+`xgdb` is the debugger frontend. Upstream `xemu` is the bundled remote target
+and emulator that speaks the GDB remote protocol. For compatibility with older
+image revisions, `xgdb-z80` is also available as an alias to `xemu`.
 
 Build with debug information:
 
@@ -278,7 +280,7 @@ docker run --rm -it \
   -v "$PWD":/work -w /work \
   -p 9000:9000 \
   wischner/xcc-z80:latest \
-  xgdb-z80 --listen 0.0.0.0:9000
+  xemu --listen 0.0.0.0:9000
 ```
 
 Connect the debugger frontend to the running target:
