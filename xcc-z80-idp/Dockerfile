@@ -1,5 +1,5 @@
 # XCC Z80 for Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:1.9.2
+ARG BASE_IMAGE=wischner/xcc-z80:1.9.9
 FROM ${BASE_IMAGE}
 
 ARG IMG_VERSION=1.0.1

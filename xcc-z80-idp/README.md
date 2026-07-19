@@ -9,7 +9,7 @@ Current image version: `1.0.1`
 
 Today this image is intentionally small. It includes:
 
-- everything from `wischner/xcc-z80:1.9.2`
+- everything from `wischner/xcc-z80:1.9.9`
 - a reserved Partner-specific root at `/opt/idp`
 - placeholder include and library directories at `/opt/idp/include` and `/opt/idp/lib`
 - a staging directory at `/opt/idp/libraries`

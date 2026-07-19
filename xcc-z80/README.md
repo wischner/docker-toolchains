@@ -69,7 +69,7 @@ For this image we intentionally pin the **large** Linux bundle so the staged
 libc keeps full `double` and `long long` support:
 
 ```text
-XYZ_VERSION=v1.9.6
+XYZ_VERSION=v1.9.9
 X_DIST=x-l-linux.zip
 ```
 

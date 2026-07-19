@@ -1,9 +1,9 @@
 # XCC Z80 toolchain on lightweight Ubuntu
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=1.9.6
+ARG IMG_VERSION=1.9.9
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=v1.9.6
+ARG XYZ_VERSION=v1.9.9
 ARG X_DIST=x-l-linux.zip
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite large-model Linux bundle with xcc, xas, xld, xgdb, xemu, headers, and Z80 runtime libraries." \
