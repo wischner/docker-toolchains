@@ -1,0 +1,70 @@
+#!/bin/sh
+
+expect_platform=0
+for arg in "$@"; do
+    if [ "$expect_platform" -eq 1 ]; then
+        case "$arg" in
+            cpm3|emu) ;;
+            *)
+                printf 'xcc-z80-idp: unsupported platform: %s (use cpm3 or emu)\n' "$arg" >&2
+                exit 2
+                ;;
+        esac
+        expect_platform=0
+        continue
+    fi
+
+    case "$arg" in
+        --platform)
+            expect_platform=1
+            ;;
+        --platform=*)
+            platform="${arg#--platform=}"
+            case "$platform" in
+                cpm3|emu) ;;
+                *)
+                    printf 'xcc-z80-idp: unsupported platform: %s (use cpm3 or emu)\n' "$platform" >&2
+                    exit 2
+                    ;;
+            esac
+            ;;
+    esac
+done
+
+if [ "$expect_platform" -eq 1 ]; then
+    printf 'xcc-z80-idp: --platform requires cpm3 or emu\n' >&2
+    exit 2
+fi
+
+has_gpx=0
+has_ugpx=0
+expect_library=0
+for arg in "$@"; do
+    if [ "$expect_library" -eq 1 ]; then
+        case "$arg" in
+            gpx) has_gpx=1 ;;
+            ugpx) has_ugpx=1 ;;
+        esac
+        expect_library=0
+        continue
+    fi
+
+    case "$arg" in
+        -l)
+            expect_library=1
+            ;;
+        -lgpx|*/libgpx.a|libgpx.a|*/libgpx.lib|libgpx.lib|*/gpx.lib|gpx.lib)
+            has_gpx=1
+            ;;
+        -lugpx|*/libugpx.a|libugpx.a|*/libugpx.lib|libugpx.lib|*/ugpx.lib|ugpx.lib)
+            has_ugpx=1
+            ;;
+    esac
+done
+
+if [ "$has_gpx" -eq 1 ] && [ "$has_ugpx" -eq 1 ]; then
+    printf 'xcc-z80-idp: libgpx and libugpx are mutually exclusive; link only one\n' >&2
+    exit 2
+fi
+
+exec /opt/x/bin/xld --platform=cpm3 "$@"

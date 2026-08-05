@@ -1,73 +1,155 @@
 # XCC Z80 for Iskra Delta Partner
 
-`xcc-z80-idp` is a Docker image for **Iskra Delta Partner** development built on
-top of [`xcc-z80`](../xcc-z80), the packaged XYZ Z80 compiler suite image.
+`xcc-z80-idp` is the ready-to-use Iskra Delta Partner development image built
+on [`xcc-z80`](../xcc-z80). It uses XCC's native CP/M 3 runtime by default and
+adds the Partner SDK, full and micro graphics libraries, and disk/font host
+tools.
 
-Current image version: `1.0.1`
+Current image version: `1.1.0`
 
-## What the image contains
+## Included components
 
-Today this image is intentionally small. It includes:
+- `wischner/xcc-z80:1.9.9`
+- XCC's native CP/M 3 and emulator runtimes; no bare-metal `none` platform
+- XEMU 1.9.9 with Partner-compatible RAM banking enabled by default
+- [Partner libgpx](https://github.com/retro-vault/libgpx) `v0.2.0`, rebuilt
+  with `xas`/`xar` as an independent `libgpx.a`
+- [idp-udev](https://github.com/iskra-delta/idp-udev) `v1.0.1`: only μgpx,
+  rebuilt with XCC as `libugpx.a`; μlibc and μsdcc are excluded
+- Latest [idp-sdk](https://github.com/iskra-delta/idp-sdk) `main` at image
+  build time, built with XCC
+- [snatch](https://github.com/retro-vault/snatch) `v1.0.0`, including its
+  plugins
+- [cpmdisk](https://github.com/iskra-delta/cpmdisk) `v1.1.0`
 
-- everything from `wischner/xcc-z80:1.9.9`
-- a reserved Partner-specific root at `/opt/idp`
-- placeholder include and library directories at `/opt/idp/include` and `/opt/idp/lib`
-- a staging directory at `/opt/idp/libraries`
-- a checked-in [`libraries.manifest`](./libraries.manifest) to track the next libraries we add
+The idp-sdk build deliberately contains only the XCC-built SDK archive and
+public headers. It does **not** include `sdkinit.rel`, `libsdcc-z80.lib`,
+`libcpm3-z80.lib`, or the SDCC CP/M startup object. Applications initialize
+only the SDK subsystems they choose to use.
 
-That means the image already works as a normal `xcc-z80` environment while
-giving us a clean place to layer in Partner-specific runtime libraries, headers,
-and tooling next.
+Only idp-udev's public `ugpx.h` and XCC-built μgpx archive are packaged. Its
+root μlibc headers, μlibc library, μsdcc library, and CRT are excluded because
+XCC supplies the C and CP/M 3 runtimes.
 
-## Toolchain layout
+## Supported platforms
 
-Inherited XCC tools live under:
+The image's `xcc` and `xld` commands add `--platform=cpm3` automatically. A
+plain link therefore uses XCC's CP/M 3 startup code, `libcpm3.a`, and CP/M 3
+linker script and produces a `.com`-style binary starting at `0x0100`.
 
-- `/opt/x/bin`
-- `/opt/x/include`
-- `/opt/x/lib`
-- `/opt/x/z80/include`
-- `/opt/x/z80/lib`
+Pass `--platform=emu` to compile or link for XEMU instead. The command wrappers
+accept only `cpm3` and `emu`. The `none` platform payload and its equivalent
+unsuffixed aliases are removed from the image.
 
-Partner-specific content will live under:
+## Headers and libraries
 
-- `/opt/idp/include`
-- `/opt/idp/lib`
-- `/opt/idp/libraries`
+XCC and XLD discover the installed Partner content through their standard
+target paths:
 
-## Using the image
+| Component | Header path | Library path | Link option |
+|---|---|---|---|
+| idp-sdk | `/opt/x/z80/include/partner/` | `/opt/x/z80/lib/libsdk.a` | `-lsdk` |
+| Partner libgpx | `/opt/x/z80/include/libgpx.h` | `/opt/x/z80/lib/libgpx.a` | `-lgpx` |
+| idp-udev μgpx | `/opt/x/z80/include/ugpx.h` | `/opt/x/z80/lib/libugpx.a` | `-lugpx` |
 
-Open a shell:
+Only idp-sdk's public `include/partner` tree is packaged; its internal
+`lib/include/hw` build headers are deliberately excluded. The canonical public
+headers and libraries live below `/opt/idp/include` and `/opt/idp/lib`; entries
+in the XCC directories are symlinks. All three archives are GNU-format archives
+created by XCC's `xar`. XCC's host-development headers under `/opt/x/include`
+are also excluded; the required Z80 target headers remain under
+`/opt/x/z80/include`.
+
+Use the SDK library without any automatic SDK startup code:
+
+```bash
+xcc app.c -lsdk -o app.com
+```
+
+Use libgpx independently:
+
+```bash
+xcc graphics.c -lgpx -o graphics.com
+```
+
+Use the smaller μgpx alternative:
+
+```bash
+xcc micro-graphics.c -lugpx -o micro-graphics.com
+```
+
+`libgpx` and `libugpx` are alternatives and must never be linked into the same
+program. The image's `xcc` and `xld` wrappers reject a link containing both
+`-lgpx` and `-lugpx`.
+
+Use the SDK with either graphics library, for example:
+
+```bash
+xcc desktop.c -lsdk -lgpx -o desktop.com
+```
+
+No `-I`, `-L`, or `--platform=cpm3` option is required for these examples.
+
+## Partner-compatible emulation
+
+XEMU defaults to `/etc/xemu/partner.conf`, which models Partner's two 48 KiB
+RAM banks at `0x0000–0xBFFF` and the 16 KiB common region at
+`0xC000–0xFFFF`. Physical bank 1 is selected by any `IN` or `OUT` in
+`0x88–0x8F`; physical bank 2 is selected by `0x90–0x97`. Bank 1 is active at
+startup.
+
+XEMU 1.9.9 is rebuilt with a narrow downstream patch because Partner selects
+the bank from the port address and ignores the transferred byte. A local
+`./xemu.conf` or explicit `xemu --config FILE` overrides the image default.
+The default models Partner RAM banking, not the full peripheral set or ROM
+overlay.
+
+Build and run an emulator binary:
+
+```bash
+xcc --platform=emu --oformat=binary app.c -o app.bin
+xemu --run --load-bin app.bin --origin 0x0000 --pc 0x0000
+```
+
+## Host tools
+
+`snatch` and `cpmdisk` are both directly available on `PATH`:
+
+```bash
+snatch --help
+cpmdisk create partner.dsk fdd
+cpmdisk add partner.dsk app.com
+```
+
+The snatch executable and its runtime plugins are installed at `/opt/snatch`;
+its development headers are not packaged. `SNATCH_PLUGIN_DIR` points to
+`/opt/snatch/plugins`. The cpmdisk executable and the `libcpmdisk.so` shared
+object it needs at runtime are installed at `/opt/cpmdisk`; cpmdisk development
+headers are not packaged. The published host-tool assets currently make this
+image an x86-64 image.
+
+## Quick start
 
 ```bash
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
-  -v "$(pwd)":/work -w /work \
-  wischner/xcc-z80-idp:1.0.1 \
+  -v "$PWD":/work -w /work \
+  wischner/xcc-z80-idp:1.1.0 \
+  xcc app.c -lsdk -o app.com
+```
+
+Open an interactive shell:
+
+```bash
+docker run --rm -it \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD":/work -w /work \
+  wischner/xcc-z80-idp:1.1.0 \
   bash
 ```
 
-Compile a simple XCC program:
-
-```bash
-docker run --rm -it \
-  --user "$(id -u):$(id -g)" \
-  -v "$(pwd)":/work -w /work \
-  wischner/xcc-z80-idp:1.0.1 \
-  xcc hello.c -o hello.xl
-```
-
-Build a fixed-address flat binary:
-
-```bash
-docker run --rm -it \
-  --user "$(id -u):$(id -g)" \
-  -v "$(pwd)":/work -w /work \
-  wischner/xcc-z80-idp:1.0.1 \
-  xcc --oformat=binary -Ttext=0x8000 hello.c -o hello.bin
-```
-
-## Next step
-
-No Iskra Delta Partner libraries are bundled yet. This image is the base
-scaffold we will extend when you decide which Partner SDK pieces to add.
+Versioned component refs live in [`build.args`](./build.args), while
+[`libraries.manifest`](./libraries.manifest) records the installed XCC target
+libraries. idp-sdk intentionally follows its latest `main`; the exact commit
+resolved during a build is recorded inside the image at
+`/opt/idp/share/metadata/idp-sdk.version`.
