@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:1.9.9
+ARG BASE_IMAGE=wischner/xcc-z80:2.0.1
 
 # Build Partner target libraries with XCC so the installed archives are
 # self-contained and use the same object/archive formats as the base image.
@@ -81,12 +81,12 @@ RUN set -eux; \
     test ! -e /opt/idp/lib/libsdcc-z80.lib; \
     rm -rf "${tmp_dir}" /tmp/idp-sdk
 
-# XEMU 1.9.9 can model Partner's RAM windows, but upstream port rules derive
+# XEMU 2.0.1 can model Partner's RAM windows, but upstream port rules derive
 # selectors from the transferred byte. Partner selects its banks by the I/O
 # port address and ignores that byte, so add fixed selector values for IN/OUT.
 FROM ${BASE_IMAGE} AS emulator-builder
 
-ARG XTOOLS_REF=v1.9.9
+ARG XYZ_VERSION=2.0.1
 
 USER root
 
@@ -97,8 +97,9 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends binutils g++ make patch; \
     rm -rf /var/lib/apt/lists/*; \
     tmp_dir="$(mktemp -d)"; \
+    xyz_tag="v${XYZ_VERSION#v}"; \
     curl -fsSL -o "${tmp_dir}/xyz.tar.gz" \
-      "https://github.com/retro-vault/xyz/archive/refs/tags/${XTOOLS_REF}.tar.gz"; \
+      "https://github.com/retro-vault/xyz/archive/refs/tags/${xyz_tag}.tar.gz"; \
     mkdir -p "${tmp_dir}/xyz" "${tmp_dir}/build" "${tmp_dir}/dist"; \
     tar -xzf "${tmp_dir}/xyz.tar.gz" -C "${tmp_dir}/xyz" --strip-components=1; \
     patch -d "${tmp_dir}/xyz" -p1 < /tmp/xemu-partner.patch; \
@@ -108,15 +109,15 @@ RUN set -eux; \
       DIST_DIR="${tmp_dir}/dist" \
       HOST_BIN_DIR="${tmp_dir}/dist/bin" \
       PUBLIC_LIB_DIR="${tmp_dir}/dist/lib" \
-      XTOOLS_VERSION="${XTOOLS_REF#v}"; \
+      XTOOLS_VERSION="${XYZ_VERSION#v}"; \
     install -m 0755 "${tmp_dir}/dist/bin/xemu" /opt/xemu-partner; \
     /opt/xemu-partner --version; \
     rm -rf "${tmp_dir}"
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.1.0
-ARG XTOOLS_REF=v1.9.9
+ARG IMG_VERSION=2.0.1
+ARG XYZ_VERSION=2.0.1
 ARG LIBGPX_VERSION=v0.2.0
 ARG IDP_UDEV_VERSION=v1.0.1
 ARG SNATCH_VERSION=v1.0.0
@@ -147,7 +148,12 @@ COPY xemu-partner.conf /etc/xemu/partner.conf
 # Install the published host tools and their required runtime payloads.
 # The upstream release assets currently target Linux x86_64.
 RUN set -eux; \
+    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
+    test "$(sed 's/^v//' /opt/x/.version)" = "${XYZ_VERSION#v}"; \
     test "$(uname -m)" = "x86_64"; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends cmake git make; \
+    rm -rf /var/lib/apt/lists/*; \
     tmp_dir="$(mktemp -d)"; \
     snatch_release="${SNATCH_VERSION#v}"; \
     snatch_asset="snatch-linux-x86_64-${snatch_release}.tar.gz"; \
@@ -210,6 +216,12 @@ RUN set -eux; \
     test "$(command -v xld)" = /usr/local/bin/xld; \
     test "$(command -v snatch)" = /usr/bin/snatch; \
     test "$(command -v cpmdisk)" = /usr/bin/cpmdisk; \
+    command -v make; \
+    command -v cmake; \
+    command -v git; \
+    make --version >/dev/null; \
+    cmake --version >/dev/null; \
+    git --version >/dev/null; \
     snatch --help >/dev/null; \
     cpmdisk --help >/dev/null; \
     test ! -e /opt/snatch/include; \

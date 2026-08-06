@@ -5,13 +5,14 @@ on [`xcc-z80`](../xcc-z80). It uses XCC's native CP/M 3 runtime by default and
 adds the Partner SDK, full and micro graphics libraries, and disk/font host
 tools.
 
-Current image version: `1.1.0`
+Current image version: `2.0.1`
 
 ## Included components
 
-- `wischner/xcc-z80:1.9.9`
+- `wischner/xcc-z80:2.0.1`
 - XCC's native CP/M 3 and emulator runtimes; no bare-metal `none` platform
-- XEMU 1.9.9 with Partner-compatible RAM banking enabled by default
+- XEMU 2.0.1 with Partner-compatible RAM banking enabled by default
+- GNU Make, CMake, and Git for project builds and source control
 - [Partner libgpx](https://github.com/retro-vault/libgpx) `v0.2.0`, rebuilt
   with `xas`/`xar` as an independent `libgpx.a`
 - [idp-udev](https://github.com/iskra-delta/idp-udev) `v1.0.1`: only μgpx,
@@ -98,7 +99,7 @@ RAM banks at `0x0000–0xBFFF` and the 16 KiB common region at
 `0x88–0x8F`; physical bank 2 is selected by `0x90–0x97`. Bank 1 is active at
 startup.
 
-XEMU 1.9.9 is rebuilt with a narrow downstream patch because Partner selects
+XEMU 2.0.1 is rebuilt with a narrow downstream patch because Partner selects
 the bank from the port address and ignores the transferred byte. A local
 `./xemu.conf` or explicit `xemu --config FILE` overrides the image default.
 The default models Partner RAM banking, not the full peripheral set or ROM
@@ -111,11 +112,14 @@ xcc --platform=emu --oformat=binary app.c -o app.bin
 xemu --run --load-bin app.bin --origin 0x0000 --pc 0x0000
 ```
 
-## Host tools
+## Host and build tools
 
-`snatch` and `cpmdisk` are both directly available on `PATH`:
+GNU Make, CMake, Git, `snatch`, and `cpmdisk` are directly available on `PATH`:
 
 ```bash
+make --version
+cmake --version
+git --version
 snatch --help
 cpmdisk create partner.dsk fdd
 cpmdisk add partner.dsk app.com
@@ -134,7 +138,7 @@ image an x86-64 image.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:1.1.0 \
+  wischner/xcc-z80-idp:2.0.1 \
   xcc app.c -lsdk -o app.com
 ```
 
@@ -144,7 +148,7 @@ Open an interactive shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:1.1.0 \
+  wischner/xcc-z80-idp:2.0.1 \
   bash
 ```
 

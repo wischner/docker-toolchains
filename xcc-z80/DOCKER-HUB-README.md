@@ -1,8 +1,7 @@
 # XCC Z80 toolchain
 
-Ubuntu-based Z80 development image that installs the published
-large-model Linux bundle (`x-l-linux.zip`) from the
-`retro-vault/xyz` GitHub release of the
+Ubuntu-based Z80 development image that builds the large-model toolchain from
+the pinned `retro-vault/xyz` Git tag of the
 [X Compiler Suite](https://quinzee.xyz/x).
 
 Official project page: https://quinzee.xyz/x

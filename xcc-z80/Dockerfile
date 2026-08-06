@@ -1,10 +1,48 @@
+# syntax=docker/dockerfile:1
+
 # XCC Z80 toolchain on lightweight Ubuntu
+ARG IMG_VERSION=2.0.1
+ARG XYZ_REPO=retro-vault/xyz
+ARG XYZ_VERSION=2.0.1
+
+# Build the large-model toolchain locally. xcc-z80-idp depends on this image,
+# so its build must not require the same version to be published first.
+FROM ubuntu:24.04 AS xyz-builder
+
+ARG IMG_VERSION
+ARG XYZ_REPO
+ARG XYZ_VERSION
+
+RUN set -eux; \
+    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends binutils ca-certificates g++ git make; \
+    rm -rf /var/lib/apt/lists/*; \
+    tag="v${XYZ_VERSION#v}"; \
+    git clone --depth=1 --branch "${tag}" \
+      "https://github.com/${XYZ_REPO}.git" /tmp/xyz; \
+    make -C /tmp/xyz/x -j"$(nproc)" x \
+      REPO_ROOT=/tmp/xyz \
+      Y_ROOT=/tmp/xyz/y \
+      BUILD_DIR=/tmp/xyz-build \
+      DIST_DIR=/opt/x \
+      OUT_DIR=/tmp/xyz-out \
+      Z_DIST_DIR=/tmp/xyz-z \
+      BUILD=release \
+      ENABLE_SANITIZERS=0 \
+      X_MODEL=L \
+      PACKAGE_NAME=x-l; \
+    rm -rf /opt/x/pkg; \
+    printf '%s\n' "${tag}" > /opt/x/.version; \
+    printf '%s\n' "https://github.com/${XYZ_REPO}/tree/${tag}" > /opt/x/.source; \
+    test -x /opt/x/bin/xcc; \
+    /opt/x/bin/xcc --version
+
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=1.9.9
+ARG IMG_VERSION=2.0.1
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=v1.9.9
-ARG X_DIST=x-l-linux.zip
+ARG XYZ_VERSION=2.0.1
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite large-model Linux bundle with xcc, xas, xld, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \
@@ -17,31 +55,19 @@ ENV HOME=/home/ubuntu \
     XTOOLS_ROOT=/opt/x \
     PATH="/opt/x/bin:${PATH}"
 
-# Install the upstream large-model Linux bundle, then preserve previous path and command aliases.
+# Install the source-built large-model prefix, then preserve previous path and
+# command aliases.
+COPY --from=xyz-builder /opt/x/ /opt/x/
+
 RUN set -eux; \
+    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates curl libasan8 libstdc++6 libubsan1 unzip; \
+    apt-get install -y --no-install-recommends ca-certificates curl libstdc++6; \
     rm -rf /var/lib/apt/lists/*; \
-    if [ "${XYZ_VERSION}" = "latest" ]; then \
-      rel_json="$(curl -fsSL "https://api.github.com/repos/${XYZ_REPO}/releases/latest")"; \
-      tag="$(printf '%s\n' "${rel_json}" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
-    else \
-      tag="${XYZ_VERSION}"; \
-    fi; \
-    [ -n "${tag}" ] || { echo "Could not resolve X Compiler Suite release tag"; exit 1; }; \
-    asset_url="https://github.com/${XYZ_REPO}/releases/download/${tag}/${X_DIST}"; \
-    bundle_dir="/tmp/${X_DIST%.zip}"; \
-    curl -fsSL -o /tmp/x.zip "${asset_url}"; \
-    unzip -q /tmp/x.zip -d /tmp; \
-    test -d "${bundle_dir}"; \
-    rm -rf /opt/x; \
-    mkdir -p /opt/x /etc/profile.d; \
-    cp -a "${bundle_dir}/." /opt/x/; \
+    test "$(sed 's/^v//' /opt/x/.version)" = "${XYZ_VERSION#v}"; \
+    mkdir -p /etc/profile.d; \
     printf '%s\n' 'export PATH=/opt/x/bin:$PATH' > /etc/profile.d/x.sh; \
     chmod 0644 /etc/profile.d/x.sh; \
-    printf '%s\n' "${tag}" > /opt/x/.version; \
-    printf '%s\n' "${asset_url}" > /opt/x/.source; \
-    rm -rf /tmp/x.zip "${bundle_dir}"; \
     ln -sfn /opt/x /opt/xtools; \
     test -x /opt/x/bin/xcc; \
     test -x /opt/x/bin/xas; \

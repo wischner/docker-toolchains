@@ -4,9 +4,8 @@ This image is part of **Wischner Ltd. Toolchains**.
 
 ## What it is
 
-A lightweight **Ubuntu-based Z80 toolchain** that installs the published
-large-model Linux bundle (`x-l-linux.zip`) from the `retro-vault/xyz` GitHub
-releases.
+A lightweight **Ubuntu-based Z80 toolchain** that builds the large-model
+toolchain from the pinned `retro-vault/xyz` Git tag.
 
 In practice this gives you:
 
@@ -59,20 +58,21 @@ docker run --rm -it \
   xcc --oformat=binary -Ttext=0x8000 hello.c -o hello.bin
 ```
 
-## Upstream bundle
+## Upstream source
 
-The image build does **not** compile `retro-vault/xyz` itself. The Dockerfile
-downloads the pinned upstream GitHub release bundle directly at build time and
-installs it under `/opt/x`.
+The Dockerfile compiles `retro-vault/xyz` in a builder stage and copies only
+the resulting toolchain prefix into the final image. This lets dependent images
+build before an equivalent release bundle or Docker image has been published.
 
 For this image we intentionally pin the **large** Linux bundle so the staged
 libc keeps full `double` and `long long` support:
 
 ```text
-XYZ_VERSION=v1.9.9
-X_DIST=x-l-linux.zip
+IMG_VERSION=2.0.1
+XYZ_VERSION=2.0.1
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,
 and can be overridden with normal Docker build arguments if you need to test a
-different upstream tag later.
+different upstream tag later. `IMG_VERSION` and `XYZ_VERSION` are deliberately
+kept identical so an image tag states the installed compiler version directly.

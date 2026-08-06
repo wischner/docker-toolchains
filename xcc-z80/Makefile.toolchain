@@ -1,38 +1,21 @@
 .PHONY: prepare build
 
-SDK_DIR ?= sdk
 BUILD_ARGS_FILE ?= build.args
 XYZ_REPO ?= retro-vault/xyz
-XYZ_VERSION ?= latest
-X_MODEL ?= l
-X_OS ?= linux
 
 prepare:
 	@set -e; \
-	stage_dir="$(SDK_DIR)"; \
-	mkdir -p "$$stage_dir"; \
-	find "$$stage_dir" -mindepth 1 ! -name '.gitignore' -exec rm -rf {} +; \
-	if [ "$(XYZ_VERSION)" = "latest" ]; then \
-	  rel_url="https://api.github.com/repos/$(XYZ_REPO)/releases/latest"; \
-	else \
-	  rel_url="https://api.github.com/repos/$(XYZ_REPO)/releases/tags/$(XYZ_VERSION)"; \
-	fi; \
-	echo "Syncing $(XYZ_REPO) ($(XYZ_VERSION)) from $$rel_url"; \
-	rel_json="$$(curl -fsSL "$$rel_url")"; \
-	tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
-	[ -n "$$tag" ] || { echo "Could not resolve release tag"; exit 1; }; \
-	asset_name="x-$(X_MODEL)-$(X_OS).zip"; \
-	asset_url="$$(printf '%s\n' "$$rel_json" | sed -n "s/.*\"browser_download_url\":[[:space:]]*\"\\([^\"]*\/$${asset_name}\\)\".*/\\1/p" | head -n1)"; \
-	[ -n "$$asset_url" ] || { echo "No $$asset_name asset found for $(XYZ_REPO) ($$tag)"; exit 1; }; \
-	img_version="$${tag#v}"; \
-	[ -n "$$img_version" ] || { echo "Could not derive image version from $$tag"; exit 1; }; \
-	printf 'IMG_VERSION=%s\nXYZ_VERSION=%s\nX_DIST=%s\n' "$$img_version" "$$tag" "$$asset_name" > "$(BUILD_ARGS_FILE)"; \
-	printf '%s\n' "$$asset_url" > "$$stage_dir/.source"; \
-	printf '%s\n' "$$tag" > "$$stage_dir/.version"; \
-	printf '%s\n' "$$asset_name" > "$$stage_dir/.asset"; \
-	date -u +'%Y-%m-%dT%H:%M:%SZ' > "$$stage_dir/.prepared_at"; \
-	echo "Resolved $$asset_name from $$tag"; \
-	echo "Synced $(BUILD_ARGS_FILE) to $$img_version"
+	img_version="$$(sed -n 's/^IMG_VERSION=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
+	xyz_version="$$(sed -n 's/^XYZ_VERSION=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
+	[ -n "$$img_version" ]; \
+	[ "$$img_version" = "$$xyz_version" ] || { \
+	  echo "IMG_VERSION and XYZ_VERSION must match" >&2; exit 1; \
+	}; \
+	tag="v$${xyz_version#v}"; \
+	echo "Checking $(XYZ_REPO) $$tag"; \
+	git ls-remote --exit-code --tags \
+	  "https://github.com/$(XYZ_REPO).git" "refs/tags/$$tag" >/dev/null; \
+	echo "Building X Compiler Suite $$xyz_version from source"
 
 build:
 	@true

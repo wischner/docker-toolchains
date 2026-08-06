@@ -37,6 +37,11 @@ print-versions:
 build-all: $(addprefix build-,$(TOOLCHAINS))
 push-all:  $(addprefix push-,$(TOOLCHAINS))
 
+# The Partner image layers on the local XCC image. Build the base first so a
+# standalone Partner build does not depend on an already-published Docker Hub
+# tag, and so build-all processes the images in dependency order.
+build-xcc-z80-idp: build-xcc-z80
+
 # Build: tag :latest and :<effective version>, pass all build.args (except IMG_VERSION)
 build-%:
 	@set -e; \

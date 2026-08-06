@@ -1,7 +1,7 @@
 # `xcc-z80-idp` image contents
 
 This document inventories the toolchain and application payload intentionally
-installed in `wischner/xcc-z80-idp:1.1.0`. The image is based on Ubuntu 24.04
+installed in `wischner/xcc-z80-idp:2.0.1`. The image is based on Ubuntu 24.04
 for Linux x86-64. Ubuntu's standard runtime files, packages, and transitive
 shared-library dependencies are not enumerated file by file.
 
@@ -9,8 +9,9 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 1.1.0 | This package |
-| XCC Z80 toolchain | 1.9.9 | Inherited from `wischner/xcc-z80:1.9.9` |
+| Image | 2.0.1 | This package |
+| XCC Z80 toolchain | 2.0.1 | Inherited from `wischner/xcc-z80:2.0.1` |
+| Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
 | Partner `libgpx` | 0.2.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
 | IDP μgpx | 1.0.1 | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
@@ -59,11 +60,12 @@ The image defines these toolchain-specific environment variables:
 | `SNATCH_PLUGIN_DIR` | `/opt/snatch/plugins` |
 
 `/usr/local/bin` and `/opt/x/bin` are on `PATH`, so the wrapped compiler and
-linker, all other XCC tools, `snatch`, and `cpmdisk` can be invoked directly.
+linker, all other XCC tools, GNU Make, CMake, Git, `snatch`, and `cpmdisk` can
+be invoked directly.
 
 ## XCC Z80 toolchain
 
-The complete XCC 1.9.9 suite is installed in `/opt/x/bin`:
+The complete XCC 2.0.1 suite is installed in `/opt/x/bin`:
 
 | Command | Purpose |
 | --- | --- |
@@ -135,7 +137,7 @@ The two installed platform variants are:
 
 ### Partner-compatible XEMU banking
 
-XEMU remains version 1.9.9, with a small downstream extension that allows a
+XEMU remains version 2.0.1, with a small downstream extension that allows a
 memory-map port rule to assign a fixed selector value on either `IN` or `OUT`.
 This is necessary because Partner selects RAM banks from the port address and
 ignores the byte transferred.
@@ -228,6 +230,12 @@ Link it with `-lsdk`. The image deliberately does not inject SDK initialization
 code. Programs initialize only the subsystems they use, such as calling the
 console initialization routine before using console services.
 
+## Build tools
+
+GNU Make, CMake, and Git are installed from Ubuntu 24.04 and remain available
+in the final image. This allows a mounted project to configure, build, and use
+source-control operations without installing extra host packages.
+
 ## Snatch
 
 Snatch's executable and runtime plugins are installed under `/opt/snatch`, with
@@ -318,7 +326,7 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
 ## Filesystem layout
 
 ```text
-/opt/x/                         XCC 1.9.9 host and Z80 toolchain
+/opt/x/                         XCC 2.0.1 host and Z80 toolchain
   bin/                          compiler, assembler, linker, and tools
   lib/                          XCC host static libraries
   share/doc/                    tool documentation
@@ -343,6 +351,9 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
 /usr/local/bin/xld              CP/M 3-default linker wrapper
 /usr/bin/snatch                 Snatch command link
 /usr/bin/cpmdisk                cpmdisk command link
+/usr/bin/make                   GNU Make
+/usr/bin/cmake                  CMake
+/usr/bin/git                    Git
 /work                           default working directory
 ```
 
@@ -384,6 +395,9 @@ xemu --run --load-bin app.bin --origin 0x0000 --pc 0x0000
 Run the host utilities directly:
 
 ```sh
+make --version
+cmake --version
+git --version
 snatch --help
 cpmdisk --help
 ```
@@ -405,8 +419,7 @@ The following files and components are deliberately not included:
   `/opt/x/z80/include` remain installed.
 - The XCC `none` platform, including `crt0-none.*`, `libnone.a`,
   `linker-none.*`, and the equivalent unsuffixed bare-metal aliases.
-- Source trees, intermediate build objects, and builder-only tools such as
-  `make`.
+- Source trees and intermediate build objects.
 
 XCC's own `/opt/x/z80/lib/libcpm3.a` is present by design and is the CP/M 3
 runtime selected by the image's default platform wrappers.
