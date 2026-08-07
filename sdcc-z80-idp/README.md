@@ -39,7 +39,8 @@ During image build:
 - its full `include/` tree replaces the SDCC Z80 include directory
 - its `libsdcc-z80.lib`, `libcpm3-z80.lib`, and `libsdk.lib` archives are unpacked and merged into `z80.lib`
 - its `crt0*.rel` startup object is normalized to `crt0.rel`
-- `ugpx` is fetched separately from `iskra-delta/idp-udev`
+- `ugpx` is fetched separately from the latest `iskra-delta/idp-udev` `main` revision
+- the exact `idp-udev` commit is recorded in `libraries/ugpx/.version`
 - `ugpx` is installed as its own standalone `ugpx.lib`, not merged into `z80.lib`
 
 That means:
@@ -247,9 +248,9 @@ sdcc-z80-idp/
 `libraries.manifest` format:
 
 ```text
-# <github_repo> [release_tag_or_latest]
+# <github_repo> [release_tag_or_latest_or_main-latest]
 iskra-delta/idp-sdk latest
-iskra-delta/idp-udev latest
+iskra-delta/idp-udev main-latest
 ```
 
 ## Building the image
@@ -263,9 +264,9 @@ make build-sdcc-z80-idp
 The build does this automatically:
 
 - prepares `sdcc-z80-idp/libraries/`
-- fetches the latest configured release bundles
+- fetches the latest configured release bundles and branch revisions
 - uses `idp-sdk` as the source of the merged runtime, startup object, and headers
-- fetches the latest `ugpx` release payload separately
+- fetches the latest `ugpx` sources from `idp-udev` `main` and builds them with SDCC
 - builds the Docker image
 
 ## License

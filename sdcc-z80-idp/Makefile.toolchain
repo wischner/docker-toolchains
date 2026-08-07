@@ -29,15 +29,24 @@ prepare:
 	  dst="$(LIBRARIES_DST)/$$name"; \
 	  mkdir -p "$$dst"; \
 	  tmp_dir="$$(mktemp -d)"; \
-	  if [ "$$version" = "latest" ]; then \
+	  if [ "$$repo" = "$(UGPX_REPO)" ] && [ "$$version" = "main-latest" ]; then \
+	    ref="main"; \
+	    rel_url="https://api.github.com/repos/$$repo/commits/$$ref"; \
+	  elif [ "$$version" = "latest" ]; then \
 	    rel_url="https://api.github.com/repos/$$repo/releases/latest"; \
 	  else \
 	    rel_url="https://api.github.com/repos/$$repo/releases/tags/$$version"; \
 	  fi; \
 	  echo "Syncing $$repo ($$version) from $$rel_url"; \
 	  rel_json="$$(curl -fsSL "$$rel_url")"; \
-	  tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
-	  asset_url="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"browser_download_url":[[:space:]]*"\([^"]*\.tar\.gz\)".*/\1/p' | head -n1)"; \
+	  if [ "$$repo" = "$(UGPX_REPO)" ] && [ "$$version" = "main-latest" ]; then \
+	    tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/^[[:space:]]*"sha":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
+	    [ -n "$$tag" ] || { echo "Could not resolve $$repo $$ref commit"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    asset_url="https://github.com/$$repo/archive/$$tag.tar.gz"; \
+	  else \
+	    tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
+	    asset_url="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"browser_download_url":[[:space:]]*"\([^"]*\.tar\.gz\)".*/\1/p' | head -n1)"; \
+	  fi; \
 	  if [ -z "$$asset_url" ]; then \
 	    echo "No .tar.gz asset found for $$repo ($$tag)"; \
 	    rm -rf "$$tmp_dir"; \
@@ -46,11 +55,11 @@ prepare:
 	  curl -fsSL -o "$$tmp_dir/release.tar.gz" "$$asset_url"; \
 	  if [ "$$repo" = "$(UGPX_REPO)" ]; then \
 	    tar -xzf "$$tmp_dir/release.tar.gz" -C "$$tmp_dir"; \
-	    src_root="$$(find "$$tmp_dir" -mindepth 1 -maxdepth 1 -type d -name 'libidpudev-*' | head -n1)"; \
-	    [ -f "$$src_root/lib/ugpx.lib" ] || { echo "Missing lib/ugpx.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    [ -f "$$src_root/include/gpx/ugpx.h" ] || { echo "Missing include/gpx/ugpx.h in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    mkdir -p "$$dst/lib" "$$dst/include/gpx"; \
-	    cp "$$src_root/lib/ugpx.lib" "$$dst/lib/ugpx.lib"; \
+	    src_root="$$(find "$$tmp_dir" -mindepth 1 -maxdepth 1 -type d \( -name 'idp-udev-*' -o -name 'libidpudev-*' \) | head -n1)"; \
+	    [ -f "$$src_root/src/ugpx/Makefile" ] || { echo "Missing src/ugpx/Makefile in $$repo revision $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    [ -f "$$src_root/include/gpx/ugpx.h" ] || { echo "Missing include/gpx/ugpx.h in $$repo revision $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    mkdir -p "$$dst/include/gpx"; \
+	    cp -a "$$src_root/src/ugpx" "$$dst/src"; \
 	    cp "$$src_root/include/gpx/ugpx.h" "$$dst/include/gpx/ugpx.h"; \
 	    printf '%s\n' "separate" > "$$dst/.merge_policy"; \
 	  elif [ "$$repo" = "$(IDP_SDK_REPO)" ]; then \
