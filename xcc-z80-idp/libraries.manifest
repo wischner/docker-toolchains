@@ -1,6 +1,6 @@
 # Libraries installed for XCC (source/ref, installed archive, public headers)
 retro-vault/libgpx v0.2.0 /opt/idp/lib/libgpx.a /opt/idp/include/libgpx.h
-iskra-delta/idp-udev v1.0.1 /opt/idp/lib/libugpx.a /opt/idp/include/ugpx.h
+iskra-delta/idp-udev main-latest /opt/idp/lib/libugpx.a /opt/idp/include/ugpx.h
 iskra-delta/idp-sdk main-latest /opt/idp/lib/libsdk.a /opt/idp/include/partner
 
 # idp-sdk and idp-udev's ugpx are built with XCC. idp-sdk's SDCC and

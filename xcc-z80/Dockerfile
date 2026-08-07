@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.0.1
+ARG IMG_VERSION=2.0.2
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.0.1
+ARG XYZ_VERSION=2.0.2
 
 # Build the large-model toolchain locally. xcc-z80-idp depends on this image,
 # so its build must not require the same version to be published first.
@@ -40,9 +40,9 @@ RUN set -eux; \
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.0.1
+ARG IMG_VERSION=2.0.2
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.0.1
+ARG XYZ_VERSION=2.0.2
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite large-model Linux bundle with xcc, xas, xld, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \

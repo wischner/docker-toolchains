@@ -1,7 +1,7 @@
 # `xcc-z80-idp` image contents
 
 This document inventories the toolchain and application payload intentionally
-installed in `wischner/xcc-z80-idp:2.0.1`. The image is based on Ubuntu 24.04
+installed in `wischner/xcc-z80-idp:2.0.2`. The image is based on Ubuntu 24.04
 for Linux x86-64. Ubuntu's standard runtime files, packages, and transitive
 shared-library dependencies are not enumerated file by file.
 
@@ -9,11 +9,11 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 2.0.1 | This package |
-| XCC Z80 toolchain | 2.0.1 | Inherited from `wischner/xcc-z80:2.0.1` |
+| Image | 2.0.2 | This package |
+| XCC Z80 toolchain | 2.0.2 | Inherited from `wischner/xcc-z80:2.0.2` |
 | Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
 | Partner `libgpx` | 0.2.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
-| IDP μgpx | 1.0.1 | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
+| IDP μgpx | Latest `main` at image build time | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
 | Snatch | 1.0.0 | [retro-vault/snatch](https://github.com/retro-vault/snatch) |
 | CP/M disk tool | 1.1.0 | [iskra-delta/cpmdisk](https://github.com/iskra-delta/cpmdisk) |
@@ -22,8 +22,9 @@ Installed component revisions are also recorded in `/opt/idp/share/metadata`.
 The XCC version and source metadata are stored in `/opt/x/.version` and
 `/opt/x/.source`.
 
-idp-sdk intentionally follows the current tip of `main` instead of a pinned
-commit. The exact commit resolved for a particular image build is stored in
+idp-udev and idp-sdk intentionally follow the current tip of `main` instead of
+pinned commits. The exact commits resolved for a particular image build are
+stored in `/opt/idp/share/metadata/idp-udev.version` and
 `/opt/idp/share/metadata/idp-sdk.version`.
 
 ## Runtime defaults
@@ -65,7 +66,7 @@ be invoked directly.
 
 ## XCC Z80 toolchain
 
-The complete XCC 2.0.1 suite is installed in `/opt/x/bin`:
+The complete XCC 2.0.2 suite is installed in `/opt/x/bin`:
 
 | Command | Purpose |
 | --- | --- |
@@ -137,7 +138,7 @@ The two installed platform variants are:
 
 ### Partner-compatible XEMU banking
 
-XEMU remains version 2.0.1, with a small downstream extension that allows a
+XEMU remains version 2.0.2, with a small downstream extension that allows a
 memory-map port rule to assign a fixed selector value on either `IN` or `OUT`.
 This is necessary because Partner selects RAM banks from the port address and
 ignores the byte transferred.
@@ -326,7 +327,7 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
 ## Filesystem layout
 
 ```text
-/opt/x/                         XCC 2.0.1 host and Z80 toolchain
+/opt/x/                         XCC 2.0.2 host and Z80 toolchain
   bin/                          compiler, assembler, linker, and tools
   lib/                          XCC host static libraries
   share/doc/                    tool documentation

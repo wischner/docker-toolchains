@@ -1,13 +1,13 @@
 # XCC Z80 for Iskra Delta Partner
 
 `wischner/xcc-z80-idp` is a Linux x86-64 development image for the Iskra
-Delta Partner. It provides XCC Z80 2.0.1, the public Partner SDK, two graphics
+Delta Partner. It provides XCC Z80 2.0.2, the public Partner SDK, two graphics
 library choices, a Partner-compatible XEMU memory map, Snatch, and cpmdisk.
 
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.0.1
+export IMAGE=wischner/xcc-z80-idp:2.0.2
 ```
 
 ## Quick start
@@ -56,17 +56,18 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 
 | Component | Version or policy |
 | --- | --- |
-| XCC Z80 | 2.0.1 |
+| XCC Z80 | 2.0.2 |
 | XCC targets | `cpm3` (default) and `emu` |
 | Build tools | GNU Make, CMake, and Git |
 | IDP SDK | Latest `main` at image build time |
 | Partner libgpx | 0.2.0 |
-| idp-udev ugpx | 1.0.1 |
+| idp-udev ugpx | Latest `main` at image build time |
 | Snatch | 1.0.0, executable and plugins only |
 | cpmdisk | 1.1.0, executable and runtime library only |
 
-The resolved idp-sdk revision is recorded in
-`/opt/idp/share/metadata/idp-sdk.version`; it is not pinned in the image
+The resolved idp-udev and idp-sdk revisions are recorded in
+`/opt/idp/share/metadata/idp-udev.version` and
+`/opt/idp/share/metadata/idp-sdk.version`; they are not pinned in the image
 source.
 
 ## Partner SDK and graphics libraries

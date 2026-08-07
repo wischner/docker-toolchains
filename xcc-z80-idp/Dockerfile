@@ -1,19 +1,20 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:2.0.1
+ARG BASE_IMAGE=wischner/xcc-z80:2.0.2
 
 # Build Partner target libraries with XCC so the installed archives are
 # self-contained and use the same object/archive formats as the base image.
 FROM ${BASE_IMAGE} AS library-builder
 
 ARG LIBGPX_VERSION=v0.2.0
-ARG IDP_UDEV_VERSION=v1.0.1
+ARG IDP_UDEV_REF=main
 
 USER root
 
-# Follow idp-sdk's current main branch. Keeping the Git directory lets the
-# build record the resolved revision without pinning the image source to it.
+# Follow idp-udev and idp-sdk's current main branches. Keeping their Git
+# directories lets the build record the exact revisions included in the image.
+ADD --keep-git-dir=true https://github.com/iskra-delta/idp-udev.git#${IDP_UDEV_REF} /tmp/idp-udev
 ADD --keep-git-dir=true https://github.com/iskra-delta/idp-sdk.git#main /tmp/idp-sdk
 
 RUN set -eux; \
@@ -36,27 +37,24 @@ RUN set -eux; \
     mkdir -p /opt/idp/share/licenses/libgpx; \
     install -m 0644 "${tmp_dir}/libgpx/LICENSE" /opt/idp/share/licenses/libgpx/LICENSE; \
     printf '%s\n' "${LIBGPX_VERSION}" > /opt/idp/share/metadata/libgpx.version; \
-    curl -fsSL -o "${tmp_dir}/idp-udev.tar.gz" \
-      "https://github.com/iskra-delta/idp-udev/archive/refs/tags/${IDP_UDEV_VERSION}.tar.gz"; \
-    mkdir -p "${tmp_dir}/idp-udev" "${tmp_dir}/idp-udev-obj"; \
-    tar -xzf "${tmp_dir}/idp-udev.tar.gz" -C "${tmp_dir}/idp-udev" --strip-components=1; \
-    for src in "${tmp_dir}"/idp-udev/src/ugpx/*.c; do \
+    mkdir -p "${tmp_dir}/idp-udev-obj"; \
+    for src in /tmp/idp-udev/src/ugpx/*.c; do \
       name="$(basename "${src}" .c)"; \
       xcc -std=c11 -Os \
-        -I"${tmp_dir}/idp-udev/include/gpx" \
+        -I/tmp/idp-udev/include/gpx \
         -c "${src}" -o "${tmp_dir}/idp-udev-obj/${name}.rel"; \
     done; \
-    for src in "${tmp_dir}"/idp-udev/src/ugpx/*.s; do \
+    for src in /tmp/idp-udev/src/ugpx/*.s; do \
       name="$(basename "${src}" .s)"; \
-      xas -g -I "${tmp_dir}/idp-udev/src/ugpx" \
+      xas -g -I /tmp/idp-udev/src/ugpx \
         -o "${tmp_dir}/idp-udev-obj/${name}.rel" "${src}"; \
     done; \
     xar --mode=gnu rcs /opt/idp/lib/libugpx.a "${tmp_dir}"/idp-udev-obj/*.rel; \
     ln -s libugpx.a /opt/idp/lib/libugpx.lib; \
-    install -m 0644 "${tmp_dir}/idp-udev/include/gpx/ugpx.h" /opt/idp/include/ugpx.h; \
+    install -m 0644 /tmp/idp-udev/include/gpx/ugpx.h /opt/idp/include/ugpx.h; \
     mkdir -p /opt/idp/share/licenses/idp-udev; \
-    install -m 0644 "${tmp_dir}/idp-udev/LICENSE" /opt/idp/share/licenses/idp-udev/LICENSE; \
-    printf '%s\n' "${IDP_UDEV_VERSION}" > /opt/idp/share/metadata/idp-udev.version; \
+    install -m 0644 /tmp/idp-udev/LICENSE /opt/idp/share/licenses/idp-udev/LICENSE; \
+    git -C /tmp/idp-udev rev-parse HEAD > /opt/idp/share/metadata/idp-udev.version; \
     test ! -e /opt/idp/lib/libulibc.a; \
     test ! -e /opt/idp/lib/ulibc.lib; \
     test ! -e /opt/idp/lib/libusdcc.a; \
@@ -79,14 +77,14 @@ RUN set -eux; \
     git -C /tmp/idp-sdk rev-parse HEAD > /opt/idp/share/metadata/idp-sdk.version; \
     test ! -e /opt/idp/lib/libcpm3-z80.lib; \
     test ! -e /opt/idp/lib/libsdcc-z80.lib; \
-    rm -rf "${tmp_dir}" /tmp/idp-sdk
+    rm -rf "${tmp_dir}" /tmp/idp-udev /tmp/idp-sdk
 
-# XEMU 2.0.1 can model Partner's RAM windows, but upstream port rules derive
+# XEMU 2.0.2 can model Partner's RAM windows, but upstream port rules derive
 # selectors from the transferred byte. Partner selects its banks by the I/O
 # port address and ignores that byte, so add fixed selector values for IN/OUT.
 FROM ${BASE_IMAGE} AS emulator-builder
 
-ARG XYZ_VERSION=2.0.1
+ARG XYZ_VERSION=2.0.2
 
 USER root
 
@@ -116,10 +114,9 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.0.1
-ARG XYZ_VERSION=2.0.1
+ARG IMG_VERSION=2.0.2
+ARG XYZ_VERSION=2.0.2
 ARG LIBGPX_VERSION=v0.2.0
-ARG IDP_UDEV_VERSION=v1.0.1
 ARG SNATCH_VERSION=v1.0.0
 ARG CPMDISK_VERSION=v1.1.0
 
@@ -200,6 +197,7 @@ RUN set -eux; \
       /opt/x/z80/lib/linker-none.ld \
       /opt/x/z80/lib/linker-none.lk; \
     rm -rf /opt/x/include; \
+    printf '%s\n' 'export PATH=/usr/local/bin:/opt/x/bin:$PATH' > /etc/profile.d/x.sh; \
     mkdir -p /home/ubuntu/.config/x; \
     ln -s /etc/xemu/partner.conf /home/ubuntu/.config/x/xemu.conf; \
     chown -R ubuntu:ubuntu /home/ubuntu/.config; \
@@ -214,6 +212,8 @@ WORKDIR /work
 RUN set -eux; \
     test "$(command -v xcc)" = /usr/local/bin/xcc; \
     test "$(command -v xld)" = /usr/local/bin/xld; \
+    test "$(sh -lc 'command -v xcc')" = /usr/local/bin/xcc; \
+    test "$(sh -lc 'command -v xld')" = /usr/local/bin/xld; \
     test "$(command -v snatch)" = /usr/bin/snatch; \
     test "$(command -v cpmdisk)" = /usr/bin/cpmdisk; \
     command -v make; \
@@ -278,9 +278,12 @@ RUN set -eux; \
     test -s /tmp/idp-smoke.com; \
     printf '%s\n' \
       '#include <ugpx.h>' \
+      'static unsigned char glyph[] = { 0 };' \
       'int main(void) {' \
       '    rect_t box = { 0, 0, 15, 15 };' \
       '    ginit(RES_1024x256);' \
+      '    gsetcolor(CO_FORE);' \
+      '    gputglyph(glyph, 0, 0);' \
       '    gdrawrect(&box);' \
       '    gexit();' \
       '    return 0;' \
@@ -288,6 +291,8 @@ RUN set -eux; \
       > /tmp/ugpx-smoke.c; \
     xcc /tmp/ugpx-smoke.c -lugpx -o /tmp/ugpx-smoke.com; \
     test -s /tmp/ugpx-smoke.com; \
+    sh -lc 'xcc /tmp/ugpx-smoke.c -lugpx -o /tmp/ugpx-login-smoke.com'; \
+    test -s /tmp/ugpx-login-smoke.com; \
     ! xcc /tmp/ugpx-smoke.c -lgpx -lugpx -o /tmp/mixed-gpx-smoke.com 2>/dev/null; \
     ! xcc -Wl,-lgpx,-lugpx --version 2>/dev/null; \
     ! xld -lgpx -lugpx --version 2>/dev/null; \
@@ -304,7 +309,8 @@ RUN set -eux; \
       --origin 0xc000 --pc 0xc000 --max-steps 1000; \
     rm -f \
       /tmp/idp-smoke.c /tmp/idp-smoke.com \
-      /tmp/ugpx-smoke.c /tmp/ugpx-smoke.com /tmp/mixed-gpx-smoke.com \
+      /tmp/ugpx-smoke.c /tmp/ugpx-smoke.com /tmp/ugpx-login-smoke.com \
+      /tmp/mixed-gpx-smoke.com \
       /tmp/emu-smoke.c /tmp/emu-smoke.bin \
       /tmp/none-smoke.bin /tmp/partner-bank-smoke.bin; \
     xcc --version

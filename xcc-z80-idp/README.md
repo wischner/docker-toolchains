@@ -5,18 +5,19 @@ on [`xcc-z80`](../xcc-z80). It uses XCC's native CP/M 3 runtime by default and
 adds the Partner SDK, full and micro graphics libraries, and disk/font host
 tools.
 
-Current image version: `2.0.1`
+Current image version: `2.0.2`
 
 ## Included components
 
-- `wischner/xcc-z80:2.0.1`
+- `wischner/xcc-z80:2.0.2`
 - XCC's native CP/M 3 and emulator runtimes; no bare-metal `none` platform
-- XEMU 2.0.1 with Partner-compatible RAM banking enabled by default
+- XEMU 2.0.2 with Partner-compatible RAM banking enabled by default
 - GNU Make, CMake, and Git for project builds and source control
 - [Partner libgpx](https://github.com/retro-vault/libgpx) `v0.2.0`, rebuilt
   with `xas`/`xar` as an independent `libgpx.a`
-- [idp-udev](https://github.com/iskra-delta/idp-udev) `v1.0.1`: only μgpx,
-  rebuilt with XCC as `libugpx.a`; μlibc and μsdcc are excluded
+- Latest [idp-udev](https://github.com/iskra-delta/idp-udev) `main` at image
+  build time: only μgpx, rebuilt with XCC as `libugpx.a`; μlibc and μsdcc
+  are excluded
 - Latest [idp-sdk](https://github.com/iskra-delta/idp-sdk) `main` at image
   build time, built with XCC
 - [snatch](https://github.com/retro-vault/snatch) `v1.0.0`, including its
@@ -99,7 +100,7 @@ RAM banks at `0x0000–0xBFFF` and the 16 KiB common region at
 `0x88–0x8F`; physical bank 2 is selected by `0x90–0x97`. Bank 1 is active at
 startup.
 
-XEMU 2.0.1 is rebuilt with a narrow downstream patch because Partner selects
+XEMU 2.0.2 is rebuilt with a narrow downstream patch because Partner selects
 the bank from the port address and ignores the transferred byte. A local
 `./xemu.conf` or explicit `xemu --config FILE` overrides the image default.
 The default models Partner RAM banking, not the full peripheral set or ROM
@@ -138,7 +139,7 @@ image an x86-64 image.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.0.1 \
+  wischner/xcc-z80-idp:2.0.2 \
   xcc app.c -lsdk -o app.com
 ```
 
@@ -148,12 +149,13 @@ Open an interactive shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.0.1 \
+  wischner/xcc-z80-idp:2.0.2 \
   bash
 ```
 
 Versioned component refs live in [`build.args`](./build.args), while
 [`libraries.manifest`](./libraries.manifest) records the installed XCC target
-libraries. idp-sdk intentionally follows its latest `main`; the exact commit
-resolved during a build is recorded inside the image at
+libraries. idp-udev and idp-sdk intentionally follow their latest `main`; the
+exact commits resolved during a build are recorded inside the image at
+`/opt/idp/share/metadata/idp-udev.version` and
 `/opt/idp/share/metadata/idp-sdk.version`.
