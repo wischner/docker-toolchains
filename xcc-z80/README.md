@@ -68,8 +68,8 @@ For this image we intentionally pin the **large** Linux bundle so the staged
 libc keeps full `double` and `long long` support:
 
 ```text
-IMG_VERSION=2.0.2
-XYZ_VERSION=2.0.2
+IMG_VERSION=2.1.0
+XYZ_VERSION=2.1.0
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,
