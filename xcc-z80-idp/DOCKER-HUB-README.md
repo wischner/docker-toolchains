@@ -1,13 +1,13 @@
 # XCC Z80 for Iskra Delta Partner
 
 `wischner/xcc-z80-idp` is a Linux x86-64 development image for the Iskra
-Delta Partner. It provides XCC Z80 2.1.1, the public Partner SDK, two graphics
+Delta Partner. It provides XCC Z80 2.1.4, the public Partner SDK, two graphics
 library choices, a Partner-compatible XEMU memory map, Snatch, and cpmdisk.
 
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.1.1
+export IMAGE=wischner/xcc-z80-idp:2.1.4
 ```
 
 ## Quick start
@@ -56,7 +56,7 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 
 | Component | Version or policy |
 | --- | --- |
-| XCC Z80 | 2.1.1 |
+| XCC Z80 | 2.1.4 |
 | XCC targets | `cpm3` (default) and `emu` |
 | Build tools | GNU Make, CMake, and Git |
 | IDP SDK | Latest `main` at image build time |

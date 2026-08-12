@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.1.1
+ARG IMG_VERSION=2.1.4
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.1.1
+ARG XYZ_VERSION=2.1.4
 
 # Build the large-model toolchain locally. xcc-z80-idp depends on this image,
 # so its build must not require the same version to be published first.
@@ -31,18 +31,24 @@ RUN set -eux; \
       BUILD=release \
       ENABLE_SANITIZERS=0 \
       X_MODEL=L \
+      XCC_VERSION="${XYZ_VERSION#v}" \
+      XLD_VERSION="${XYZ_VERSION#v}" \
+      XTOOLS_VERSION="${XYZ_VERSION#v}" \
+      XOBJCOPY_VERSION="${XYZ_VERSION#v}" \
       PACKAGE_NAME=x-l; \
     rm -rf /opt/x/pkg; \
     printf '%s\n' "${tag}" > /opt/x/.version; \
     printf '%s\n' "https://github.com/${XYZ_REPO}/tree/${tag}" > /opt/x/.source; \
-    test -x /opt/x/bin/xcc; \
-    /opt/x/bin/xcc --version
+    for tool in xcc xld xas xar xopt xobjcopy xgdb xemu; do \
+      test -x "/opt/x/bin/${tool}"; \
+      "/opt/x/bin/${tool}" --version | grep -F " ${XYZ_VERSION#v} "; \
+    done
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.1.1
+ARG IMG_VERSION=2.1.4
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.1.1
+ARG XYZ_VERSION=2.1.4
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite large-model Linux bundle with xcc, xas, xld, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \

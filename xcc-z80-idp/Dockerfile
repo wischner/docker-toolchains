@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:2.1.1
+ARG BASE_IMAGE=wischner/xcc-z80:2.1.4
 
 # Build Partner target libraries with XCC so the installed archives are
 # self-contained and use the same object/archive formats as the base image.
@@ -79,12 +79,12 @@ RUN set -eux; \
     test ! -e /opt/idp/lib/libsdcc-z80.lib; \
     rm -rf "${tmp_dir}" /tmp/idp-udev /tmp/idp-sdk
 
-# XEMU 2.1.1 can model Partner's RAM windows, but upstream port rules derive
+# XEMU 2.1.4 can model Partner's RAM windows, but upstream port rules derive
 # selectors from the transferred byte. Partner selects its banks by the I/O
 # port address and ignores that byte, so add fixed selector values for IN/OUT.
 FROM ${BASE_IMAGE} AS emulator-builder
 
-ARG XYZ_VERSION=2.1.1
+ARG XYZ_VERSION=2.1.4
 
 USER root
 
@@ -114,8 +114,8 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.1.1
-ARG XYZ_VERSION=2.1.1
+ARG IMG_VERSION=2.1.4
+ARG XYZ_VERSION=2.1.4
 ARG LIBGPX_VERSION=v0.2.0
 ARG SNATCH_VERSION=v1.0.0
 ARG CPMDISK_VERSION=v1.1.0
