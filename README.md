@@ -4,6 +4,7 @@ This repository contains a collection of **cross-compilation toolchains** packag
 Each image provides a ready-to-use compiler and related tools for retrocomputing, embedded, or bare‑metal development.
 
 All images are published under the `wischner` namespace on Docker Hub.
+Every image includes Python 3, available as `python3`.
 
 > **Tip:** Pin specific tags (e.g. `:1.1.0`) instead of `:latest` to get repeatable builds.
 
@@ -93,13 +94,13 @@ Each image mounts your current working directory into `/work` inside the contain
 
 ### ARM bare‑metal (generic)
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi:1.1.0   arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -o app.elf app.c
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi:1.2.0   arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -o app.elf app.c
 ```
 
 ### Raspberry Pi Pico / Pico W (RP2040)
 ```bash
 # Interactive shell (with USB passthrough for flashing/debug)
-docker run --rm -it   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 bash
+docker run --rm -it   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 bash
 
 # Build a project (SDK baked at /opt/pico-sdk)
 cmake -S . -B build -DPICO_SDK_PATH=/opt/pico-sdk -DPICO_BOARD=pico_w

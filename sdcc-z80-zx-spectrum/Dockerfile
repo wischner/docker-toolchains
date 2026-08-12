@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.2
+ARG IMG_VERSION=1.2.0
 
 LABEL org.opencontainers.image.title="sdcc-z80-zx-spectrum" \
       org.opencontainers.image.description="SDCC Z80 toolchain + ZX Spectrum helpers built on Alpine" \

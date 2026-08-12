@@ -1,7 +1,7 @@
 # GCC m68k-elf bare-metal toolchain on Alpine (single-stage)
 FROM alpine:3.20
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.1.0
 ARG BINUTILS_VER=2.42
 ARG GCC_VER=13.2.0
 
@@ -18,7 +18,7 @@ ENV PREFIX=/opt/m68k-elf \
 
 # Build + runtime tools and libs needed by GCC
 RUN apk add --no-cache \
-    bash ca-certificates wget curl tar xz bzip2 \
+    bash ca-certificates wget curl tar xz bzip2 python3 \
     build-base gmp-dev mpfr-dev mpc1-dev isl-dev zlib-dev \
     texinfo flex bison ncurses-dev
 

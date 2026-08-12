@@ -1,7 +1,7 @@
 # SDCC Z80-only toolchain with uCsim sz80 (single-stage Alpine)
 FROM alpine:3.20
 
-ARG IMG_VERSION=1.5.0
+ARG IMG_VERSION=1.6.0
 ARG SDCC_VERSION=4.5.0
 ARG XYZ_VERSION=v1.3.0
 
@@ -20,7 +20,7 @@ RUN apk add --no-cache \
     build-base bison flex zlib-dev boost-dev mawk \
     readline-dev ncurses-dev \
     ca-certificates wget xz bzip2 tar linux-headers \
-    make git libstdc++ libgcc \
+    make git python3 libstdc++ libgcc \
     readline ncurses \
     motif motif-dev \
     libx11 libx11-dev libxext libxext-dev libxt libxt-dev \

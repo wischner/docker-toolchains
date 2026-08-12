@@ -1,7 +1,7 @@
 # GCC x86_64 Linux X11 development toolchain (Ubuntu 22.04)
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.1.0
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-x11" \
       org.opencontainers.image.description="GCC x86_64 Linux X11 development base with Mesa/OpenGL plus image and font tooling." \
@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     make \
     git \
+    python3 \
     gdb \
     valgrind \
     file \

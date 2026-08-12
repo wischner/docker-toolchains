@@ -68,7 +68,7 @@ COPY --from=xyz-builder /opt/x/ /opt/x/
 RUN set -eux; \
     test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates curl libstdc++6; \
+    apt-get install -y --no-install-recommends ca-certificates curl libstdc++6 python3; \
     rm -rf /var/lib/apt/lists/*; \
     test "$(sed 's/^v//' /opt/x/.version)" = "${XYZ_VERSION#v}"; \
     mkdir -p /etc/profile.d; \

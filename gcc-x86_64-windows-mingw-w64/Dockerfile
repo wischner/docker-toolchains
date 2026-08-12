@@ -1,7 +1,7 @@
 # GCC x86_64 Windows MinGW-w64 cross-compilation toolchain (Ubuntu 22.04)
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.1.0
 ARG MINGW_TRIPLET=x86_64-w64-mingw32
 
 LABEL org.opencontainers.image.title="gcc-x86_64-windows-mingw-w64" \
@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     make \
     git \
+    python3 \
     gdb \
     file \
     ca-certificates \

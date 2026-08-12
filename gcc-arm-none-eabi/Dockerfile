@@ -1,7 +1,7 @@
 # ARM bare-metal toolchain (arm-none-eabi) + OpenOCD on Ubuntu
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.1.0
+ARG IMG_VERSION=1.2.0
 
 LABEL org.opencontainers.image.title="gcc-arm-none-eabi" \
       org.opencontainers.image.description="ARM bare-metal toolchain (arm-none-eabi) with newlib, GDB, OpenOCD, and build tools on Ubuntu 22.04." \

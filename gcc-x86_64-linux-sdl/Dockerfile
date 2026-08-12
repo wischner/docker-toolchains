@@ -1,8 +1,8 @@
 # GCC x86_64 Linux SDL development toolchain (Ubuntu 22.04)
-ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.0.0
+ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.2.0
 ARG SDL3_VERSION=3.2.0
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-sdl" \

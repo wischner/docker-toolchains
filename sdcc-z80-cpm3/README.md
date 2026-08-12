@@ -65,7 +65,7 @@ Typical uses:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   bash
 ```
 
@@ -88,7 +88,7 @@ Compile:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   sdcc -o hello.ihx hello.c
 ```
 
@@ -98,7 +98,7 @@ Convert to a CP/M `.com` file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   sdobjcopy -I ihex -O binary hello.ihx hello.com
 ```
 
@@ -110,7 +110,7 @@ Create an empty floppy image:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   cpmdisk create cpm3-floppy.img idpfdd --label CPM3 --datestamp
 ```
 
@@ -120,7 +120,7 @@ Add a compiled file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   cpmdisk add cpm3-floppy.img -u 0 hello.com
 ```
 
@@ -130,7 +130,7 @@ Inspect the result:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   cpmdisk info cpm3-floppy.img
 ```
 
@@ -138,7 +138,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.0.0 \
+  wischner/sdcc-z80-cpm3:1.1.0 \
   cpmdisk list cpm3-floppy.img -u 0
 ```
 

@@ -2,7 +2,7 @@
 
 This image is part of **Wischner Ltd. Toolchains** and extends `wischner/gcc-arm-none-eabi`.
 
-> **Pin your tags.** Use versioned tags such as `:1.1.0` for both the base image and the Pico image to keep builds reproducible.
+> **Pin your tags.** Use versioned tags such as `:1.2.0` for both the base image and the Pico image to keep builds reproducible.
 
 ## What it is
 
@@ -40,7 +40,7 @@ docker run --rm -it \
   --privileged \
   -v /dev/bus/usb:/dev/bus/usb \
   -v "$PWD":/work -w /work \
-  wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 \
   bash
 ```
 
@@ -52,7 +52,7 @@ docker run --rm -it \
   --privileged \
   -v /dev/bus/usb:/dev/bus/usb \
   -v "$PWD":/work -w /work \
-  wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 \
   bash
 ```
 
@@ -62,7 +62,7 @@ docker run --rm -it \
 docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
-  wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 \
   bash -c "cmake -S . -B build -DPICO_SDK_PATH=$PICO_SDK_PATH -DPICO_BOARD=pico_w && cmake --build build -j"
 ```
 
@@ -112,10 +112,10 @@ Example:
 
 ```bash
 docker build \
-  --build-arg BASE_IMAGE=wischner/gcc-arm-none-eabi:1.1.0 \
+  --build-arg BASE_IMAGE=wischner/gcc-arm-none-eabi:1.2.0 \
   --build-arg PICO_SDK_REF=2.1.0 \
   --build-arg PICO_EXTRAS_REF=2.1.0 \
-  -t wischner/gcc-arm-none-eabi-rpi-pico:1.1.0 .
+  -t wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 .
 ```
 
 ## Notes

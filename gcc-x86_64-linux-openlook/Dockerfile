@@ -1,8 +1,8 @@
 # GCC x86_64 Linux OpenLook / XView development toolchain (Ubuntu 22.04)
-ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.0.0
+ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.1.0
 ARG XVIEW_BASE_URL=https://sourceforge.net/projects/openlook/files/XView-base/STABLE-1.0/xview-base.tar.gz/download
 ARG XVIEW_EXTRAS_URL=https://sourceforge.net/projects/openlook/files/XView-lib-extras/STABLE-1.0/xview-lib-extras.tar.gz/download
 

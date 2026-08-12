@@ -1,10 +1,10 @@
 # wischner/gcc-arm-none-eabi-rpi-pico
 # Extends the Ubuntu-based arm-none-eabi image with Pico/Pico W conveniences.
 
-ARG BASE_IMAGE=wischner/gcc-arm-none-eabi:1.1.0
+ARG BASE_IMAGE=wischner/gcc-arm-none-eabi:1.2.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.1.0
+ARG IMG_VERSION=1.2.0
 ARG UID=1000
 ARG GID=1000
 

@@ -117,7 +117,7 @@ SNATCH_PLUGIN_DIR=/opt/snatch/plugins
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   bash
 ```
 
@@ -140,7 +140,7 @@ Compile:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   sdcc -o hello.ihx hello.c
 ```
 
@@ -150,7 +150,7 @@ Convert to a CP/M `.com` file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   sdobjcopy -I ihex -O binary hello.ihx hello.com
 ```
 
@@ -175,7 +175,7 @@ Compile and link:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   sdcc -o demo.ihx demo.c -l ugpx
 ```
 
@@ -187,7 +187,7 @@ Create an empty floppy image:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   cpmdisk create partner-floppy.img idpfdd --label PARTNER --datestamp
 ```
 
@@ -197,7 +197,7 @@ Add a compiled file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   cpmdisk add partner-floppy.img -u 0 hello.com
 ```
 
@@ -207,7 +207,7 @@ Inspect the result:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   cpmdisk info partner-floppy.img
 ```
 
@@ -215,7 +215,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   cpmdisk list partner-floppy.img -u 0
 ```
 
@@ -225,7 +225,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.2.0 \
+  wischner/sdcc-z80-idp:1.9.0 \
   snatch --help
 ```
 

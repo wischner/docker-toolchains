@@ -149,7 +149,7 @@ RUN set -eux; \
     test "$(sed 's/^v//' /opt/x/.version)" = "${XYZ_VERSION#v}"; \
     test "$(uname -m)" = "x86_64"; \
     apt-get update; \
-    apt-get install -y --no-install-recommends cmake git make; \
+    apt-get install -y --no-install-recommends cmake git make python3; \
     rm -rf /var/lib/apt/lists/*; \
     tmp_dir="$(mktemp -d)"; \
     snatch_release="${SNATCH_VERSION#v}"; \

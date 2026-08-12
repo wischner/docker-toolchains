@@ -7,18 +7,25 @@ LIB_SRC ?= $(GEMIX_ROOT)/bin
 
 prepare:
 	@set -e; \
+	source_ready=1; \
 	for dir in "$(INCLUDE_SRC)" "$(LIB_SRC)"; do \
 	  if [ ! -d "$$dir" ]; then \
-	    echo "Missing GEMix source directory: $$dir"; \
-	    exit 1; \
+	    source_ready=0; \
 	  fi; \
 	done; \
 	for lib in libaes.so libvdi.so libplatform_linux.so librasta.so; do \
 	  if [ ! -f "$(LIB_SRC)/$$lib" ]; then \
-	    echo "Missing GEMix library: $(LIB_SRC)/$$lib"; \
-	    exit 1; \
+	    source_ready=0; \
 	  fi; \
 	done; \
+	if [ "$$source_ready" -eq 0 ]; then \
+	  test -n "$$(find "$(SDK_DIR)/include" -type f -print -quit 2>/dev/null)"; \
+	  for lib in libaes.so libvdi.so libplatform_linux.so librasta.so; do \
+	    test -f "$(SDK_DIR)/lib/$$lib"; \
+	  done; \
+	  echo "GEMix source tree is incomplete; using the already-staged SDK in $(SDK_DIR)"; \
+	  exit 0; \
+	fi; \
 	mkdir -p "$(SDK_DIR)/include" "$(SDK_DIR)/lib"; \
 	find "$(SDK_DIR)/include" -mindepth 1 -delete; \
 	find "$(SDK_DIR)/lib" -mindepth 1 -delete; \

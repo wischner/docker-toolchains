@@ -2,7 +2,7 @@
 
 This image is part of **Wischner Ltd. Toolchains**.
 
-> **Pin your tags.** Use a versioned tag such as `:1.1.0` instead of `:latest` for repeatable builds.
+> **Pin your tags.** Use a versioned tag such as `:1.2.0` instead of `:latest` for repeatable builds.
 
 ## What it is
 
@@ -43,14 +43,14 @@ You do not need to enter the container permanently. Run the toolchain directly f
 # Interactive shell
 docker run --rm -it \
   -v "$PWD":/work -w /work \
-  wischner/gcc-arm-none-eabi:1.1.0 \
+  wischner/gcc-arm-none-eabi:1.2.0 \
   bash
 
 # Compile a simple Cortex-M program
 docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
-  wischner/gcc-arm-none-eabi:1.1.0 \
+  wischner/gcc-arm-none-eabi:1.2.0 \
   arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -Os \
     -ffunction-sections -fdata-sections \
     -Wl,--gc-sections -nostartfiles -specs=nosys.specs \
@@ -93,8 +93,8 @@ Example:
 
 ```bash
 docker build \
-  --build-arg IMG_VERSION=1.1.0 \
-  -t wischner/gcc-arm-none-eabi:1.1.0 .
+  --build-arg IMG_VERSION=1.2.0 \
+  -t wischner/gcc-arm-none-eabi:1.2.0 .
 ```
 
 ## Support and contributions

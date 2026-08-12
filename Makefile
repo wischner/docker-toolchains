@@ -37,9 +37,17 @@ print-versions:
 build-all: $(addprefix build-,$(TOOLCHAINS))
 push-all:  $(addprefix push-,$(TOOLCHAINS))
 
-# The Partner image layers on the local XCC image. Build the base first so a
-# standalone Partner build does not depend on an already-published Docker Hub
-# tag, and so build-all processes the images in dependency order.
+# Build base image targets before their derived toolchains so dependency
+# changes are validated in order.
+build-gcc-arm-none-eabi-rpi-pico: build-gcc-arm-none-eabi
+build-gcc-x86_64-gemix: build-gcc-x86_64-linux-x11
+build-gcc-x86_64-linux-gnustep: build-gcc-x86_64-linux-x11
+build-gcc-x86_64-linux-motif: build-gcc-x86_64-linux-x11
+build-gcc-x86_64-linux-openlook: build-gcc-x86_64-linux-x11
+build-gcc-x86_64-linux-sdl: build-gcc-x86_64-linux-x11
+build-sdcc-z80-cpm3: build-sdcc-z80
+build-sdcc-z80-idp: build-sdcc-z80
+build-sdcc-z80-zx-spectrum: build-sdcc-z80
 build-xcc-z80-idp: build-xcc-z80
 
 # Build: tag :latest and :<effective version>, pass all build.args (except IMG_VERSION)

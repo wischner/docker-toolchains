@@ -1,7 +1,7 @@
 # Haiku OS build tools (cross-compilation toolchain) on Ubuntu
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.0.0
+ARG IMG_VERSION=1.2.0
 ARG HAIKU_COMMIT=master
 ARG HAIKU_PACKAGE_MIRROR=https://eu.hpkg.haiku-os.org
 ARG HAIKU_PACKAGE_BRANCH=master
@@ -120,6 +120,10 @@ RUN mkdir -p "${HAIKU_SYSROOT}/boot" /system \
 # Build Haiku 'package' tool to extract HPKG files.
 RUN echo "Building host package tool..." \
  && cd ${HAIKU_TOOLCHAIN_PATH}/haiku \
+ && RPATTERN_SOURCE=src/kits/storage/sniffer/RPattern.cpp \
+ && if ! grep -q '^#include <cstddef>$' "$RPATTERN_SOURCE"; then \
+      sed -i '/#include "Data.h"/i#include <cstddef>' "$RPATTERN_SOURCE"; \
+    fi \
  && JAM_JOBS="$(nproc)" \
  && if [ "$JAM_JOBS" -gt 8 ]; then JAM_JOBS=8; fi \
  && echo "Running jam with ${JAM_JOBS} jobs" \
@@ -190,8 +194,8 @@ RUN . /etc/profile.d/haiku-package.sh 2>/dev/null || true \
  && test -n "${RESOLVED_VERSION}" \
  && test -n "${RESOLVED_REVISION}" \
  && printf 'HAIKU_PACKAGE_VERSION=%s\nHAIKU_REVISION=%s\n' "${RESOLVED_VERSION}" "${RESOLVED_REVISION}" > /opt/haiku-buildtools/haiku-package-info.env \
- && haiku-package extract -C "${SYS_SYSTEM}" "$HAIKU_HPKG" \
- && haiku-package extract -C "${SYS_SYSTEM}" "$HAIKU_DEVEL_HPKG" \
+ && (cd "${SYS_SYSTEM}" && haiku-package extract "$HAIKU_HPKG") \
+ && (cd "${SYS_SYSTEM}" && haiku-package extract "$HAIKU_DEVEL_HPKG") \
  && rm -rf /tmp/hpkgs \
  && echo "Sysroot overlay ready at: ${SYS_SYSTEM}"
 
