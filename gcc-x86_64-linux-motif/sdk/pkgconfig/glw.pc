@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: Mesa GLw for Open Motif
+Description: Mesa OpenGL widget library with Motif dependencies
+Version: 8.0.0
+Requires: xm gl
+Libs: -L${libdir} -lGLw
+Cflags: -I${includedir}

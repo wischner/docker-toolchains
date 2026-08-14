@@ -7,11 +7,14 @@ It is designed for legacy Motif applications, UIL-based workflows, and Motif/Ope
 ## What is included
 
 - everything from `wischner/gcc-x86_64-linux-x11`
-- Open Motif development files
+- all Open Motif public headers
+- shared and static Xm, Mrm, Uil, and GLw libraries
 - the `uil` User Interface Language compiler
 - the `mwm` Motif Window Manager
 - legacy X bitmap resources
-- GLw headers for Motif/OpenGL widgets
+- pkg-config modules for every shared and static component
+- CMake imported targets for every shared and static component
+- Xvfb, Xephyr, and a self-contained `motif-xephyr` test helper
 
 ## What this image is for
 
@@ -30,8 +33,19 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-motif:latest \
-  gcc -o app main.c -lXm -lXt -lX11
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs xm)'
 ```
+
+CMake consumers can use:
+
+```cmake
+find_package(Motif CONFIG REQUIRED)
+target_link_libraries(app PRIVATE Motif::Xm)
+```
+
+Targets are provided for `Xm`, `Mrm`, `Uil`, `GLw`, and the aggregate
+`Motif` SDK. Append `_static` for the static target, for example
+`Motif::Mrm_static`.
 
 Compile a UIL file:
 
@@ -54,6 +68,17 @@ docker run --rm -it \
 ```
 
 ## Running GUI applications
+
+Run an application in a fully contained Xephyr session managed by `mwm`:
+
+```bash
+docker run --rm \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-motif:latest \
+  motif-xephyr ./app
+```
+
+Or connect to the host X server:
 
 ```bash
 docker run --rm -it \

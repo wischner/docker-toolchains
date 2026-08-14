@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: Open Motif SDK
+Description: Complete Open Motif shared-library development stack
+Version: 2.3.8
+Requires: uil mrm glw xm
+Libs:
+Cflags: -I${includedir}

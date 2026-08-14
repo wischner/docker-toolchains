@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: Open Motif Mrm (static)
+Description: Open Motif Resource Manager using static Motif archives
+Version: 2.3.8
+Requires: xm-static
+Libs: ${libdir}/libMrm.a
+Cflags: -I${includedir}

@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: Mesa GLw for Open Motif (static)
+Description: Mesa OpenGL widget library using static GLw and Xm archives
+Version: 8.0.0
+Requires: xm-static gl
+Libs: ${libdir}/libGLw.a
+Cflags: -I${includedir}

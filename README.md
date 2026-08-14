@@ -63,7 +63,7 @@ This repository is **actively developed**. Next steps:
   *Native X11/OpenGL development and reusable Linux desktop base image.*
 
 - [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)
-  GCC x86_64 toolchain layered on the X11 image with **Open Motif**, `uil`, `mwm`, and GLw headers.
+  GCC x86_64 toolchain layered on the X11 image with the complete shared/static **Open Motif** SDK, `uil`, `mwm`, GLw, CMake/pkg-config metadata, and contained Xephyr testing.
   *Native Motif desktop development and legacy X11 GUI maintenance.*
 
 - [**GCC x86_64 Linux GNUstep**](./gcc-x86_64-linux-gnustep)
@@ -147,10 +147,13 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-x11
 ### GCC x86_64 Linux Open Motif
 ```bash
 # Compile a Motif application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   gcc -o app main.c -lXm -lXt -lX11
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs xm)'
 
 # Compile a UIL file
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   uil layout.uil -o layout.uid
+
+# Run the resulting GUI under mwm in a contained Xephyr session
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   motif-xephyr ./app
 ```
 
 ### GCC x86_64 Linux GNUstep

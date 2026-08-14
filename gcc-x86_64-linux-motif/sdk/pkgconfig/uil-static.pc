@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: Open Motif Uil (static)
+Description: Open Motif UIL callable compiler interface using static Motif archives
+Version: 2.3.8
+Requires: mrm-static
+Libs: ${libdir}/libUil.a
+Cflags: -I${includedir}

@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/x86_64-linux-gnu
+includedir=${prefix}/include
+
+Name: Open Motif Xm (static)
+Description: Open Motif widget toolkit using the static Xm archive
+Version: 2.3.8
+Requires: xt x11 xext xft xmu xrender fontconfig freetype2 libjpeg libpng zlib
+Libs: ${libdir}/libXm.a -lm
+Cflags: -I${includedir}

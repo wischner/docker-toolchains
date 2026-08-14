@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+nested_display="${MOTIF_DISPLAY:-:2}"
+parent_display="${MOTIF_PARENT_DISPLAY:-:99}"
+screen="${MOTIF_SCREEN:-1024x768}"
+parent_pid=""
+xephyr_pid=""
+wm_pid=""
+
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    stop_process "$wm_pid"
+    stop_process "$xephyr_pid"
+    stop_process "$parent_pid"
+    exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+stop_process() {
+    local pid=$1
+    local attempt
+    if [[ -z "$pid" ]]; then
+        return
+    fi
+    kill "$pid" 2>/dev/null || true
+    for attempt in $(seq 1 20); do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            wait "$pid" 2>/dev/null || true
+            return
+        fi
+        sleep 0.05
+    done
+    kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+}
+
+wait_for_display() {
+    local display=$1
+    local attempt
+    for attempt in $(seq 1 100); do
+        if timeout 1s xdpyinfo -display "$display" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 0.1
+    done
+    echo "Timed out waiting for X display $display" >&2
+    return 1
+}
+
+# Xephyr needs a parent X server. Supply a headless parent automatically in
+# CI and on machines without a reachable DISPLAY.
+if [[ -z "${DISPLAY:-}" ]] || ! timeout 1s xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    Xvfb "$parent_display" -screen 0 "${screen}x24" -nolisten tcp -noreset &
+    parent_pid=$!
+    wait_for_display "$parent_display"
+    export DISPLAY="$parent_display"
+fi
+
+Xephyr "$nested_display" -ac -br -noreset -screen "$screen" -nolisten tcp &
+xephyr_pid=$!
+wait_for_display "$nested_display"
+
+DISPLAY="$nested_display" mwm &
+wm_pid=$!
+sleep 0.5
+kill -0 "$wm_pid"
+
+export DISPLAY="$nested_display"
+if (( $# > 0 )); then
+    "$@"
+else
+    wait "$wm_pid"
+fi
