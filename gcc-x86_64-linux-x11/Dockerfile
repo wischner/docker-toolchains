@@ -1,7 +1,7 @@
 # GCC x86_64 Linux X11 development toolchain (Ubuntu 22.04)
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.1.0
+ARG IMG_VERSION=1.1.1
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-x11" \
       org.opencontainers.image.description="GCC x86_64 Linux X11 development base with Mesa/OpenGL plus image and font tooling." \
@@ -42,6 +42,10 @@ RUN apt-get update && apt-get install -y \
     x11-utils \
     x11-xserver-utils \
     xauth \
+    # Headless and nested X servers for integration testing
+    xvfb \
+    xserver-xephyr \
+    xfonts-utils \
     # OpenGL (Mesa)
     libgl1-mesa-dev \
     libglu1-mesa-dev \
@@ -77,6 +81,8 @@ RUN echo "=== Compiler ===" && gcc --version && g++ --version \
  && echo "=== pkg-config ===" && pkg-config --version \
  && echo "=== GDB ===" && gdb --version | head -1 \
  && echo "=== X11 ===" && pkg-config --modversion x11 \
+ && echo "=== X11 test servers ===" && command -v Xvfb && command -v Xephyr \
+ && echo "=== X11 font tools ===" && command -v mkfontdir \
  && echo "=== Xrender ===" && pkg-config --modversion xrender \
  && echo "=== Xft ===" && pkg-config --modversion xft \
  && echo "=== OpenGL ===" && pkg-config --modversion gl \

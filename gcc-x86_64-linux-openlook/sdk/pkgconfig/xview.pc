@@ -1,0 +1,12 @@
+prefix=/usr/openwin
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: XView
+Description: XView OPEN LOOK user-interface toolkit
+Version: 1.0.0
+Requires: olgx x11 libtirpc
+Libs: -L${libdir} -lxview
+Libs.private: -lm -lutil
+Cflags: -I${includedir}

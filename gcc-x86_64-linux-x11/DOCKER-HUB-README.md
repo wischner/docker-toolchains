@@ -12,6 +12,8 @@ It is designed both as a practical end-user image for X11 projects and as the ba
 - Git
 - X11 development libraries
 - common X11 runtime tools
+- Xephyr and Xvfb for nested/headless X11 integration tests
+- X11 bitmap-font indexing tools
 - Mesa OpenGL, GLU, EGL, and `mesa-utils`
 - image libraries for PNG, JPEG, TIFF, WebP, and SVG
 - image tools such as ImageMagick, Netpbm, Ghostscript, and librsvg

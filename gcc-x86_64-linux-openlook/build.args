@@ -1,2 +1,4 @@
-IMG_VERSION=1.1.0
-BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.0
+IMG_VERSION=1.1.1
+BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.1
+OPENLOOK_REPOSITORY=https://github.com/retro-vault/open-look.git
+OPENLOOK_REVISION=24f59f6a9d952d0091719f3f7f0c0b8877cf1c6f

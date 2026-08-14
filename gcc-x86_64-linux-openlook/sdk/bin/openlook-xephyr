@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+nested_display="${OPENLOOK_DISPLAY:-:2}"
+parent_display="${OPENLOOK_PARENT_DISPLAY:-:99}"
+screen="${OPENLOOK_SCREEN:-1024x768}"
+parent_pid=""
+xephyr_pid=""
+wm_pid=""
+
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    if [[ -n "$wm_pid" ]]; then
+        kill "$wm_pid" 2>/dev/null || true
+        wait "$wm_pid" 2>/dev/null || true
+    fi
+    if [[ -n "$xephyr_pid" ]]; then
+        kill "$xephyr_pid" 2>/dev/null || true
+        wait "$xephyr_pid" 2>/dev/null || true
+    fi
+    if [[ -n "$parent_pid" ]]; then
+        kill "$parent_pid" 2>/dev/null || true
+        wait "$parent_pid" 2>/dev/null || true
+    fi
+    exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+wait_for_display() {
+    local display=$1
+    local attempt
+    for attempt in $(seq 1 100); do
+        if xdpyinfo -display "$display" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 0.1
+    done
+    echo "Timed out waiting for X display $display" >&2
+    return 1
+}
+
+# Xephyr is a nested server. Supply a headless parent automatically when this
+# tool is used in CI or from a host without a reachable DISPLAY.
+if [[ -z "${DISPLAY:-}" ]] || ! xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    Xvfb "$parent_display" -screen 0 "${screen}x24" -nolisten tcp -noreset &
+    parent_pid=$!
+    wait_for_display "$parent_display"
+    export DISPLAY="$parent_display"
+fi
+
+Xephyr "$nested_display" -ac -br -noreset -screen "$screen" -nolisten tcp &
+xephyr_pid=$!
+wait_for_display "$nested_display"
+
+for font_dir in \
+    "$OPENWINHOME/share/fonts/openlook/bdf/misc" \
+    "$OPENWINHOME/share/fonts/openlook/bdf/75dpi" \
+    "$OPENWINHOME/share/fonts/openlook/bdf/100dpi"; do
+    if [[ -d "$font_dir" ]]; then
+        DISPLAY="$nested_display" xset +fp "$font_dir"
+    fi
+done
+DISPLAY="$nested_display" xset fp rehash
+
+if [[ -f "$OPENWINHOME/lib/app-defaults/Olwm" ]]; then
+    DISPLAY="$nested_display" xrdb -merge "$OPENWINHOME/lib/app-defaults/Olwm"
+fi
+
+DISPLAY="$nested_display" olwm &
+wm_pid=$!
+sleep 0.5
+kill -0 "$wm_pid"
+
+export DISPLAY="$nested_display"
+if (( $# > 0 )); then
+    "$@"
+else
+    wait "$wm_pid"
+fi

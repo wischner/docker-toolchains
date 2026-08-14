@@ -14,6 +14,8 @@ It is intended for native X11/OpenGL development and also serves as the base ima
 - **GDB** and **Valgrind**
 - **Git**
 - **X11** development libraries and common X11 runtime tools
+- **Xephyr** and **Xvfb** for nested/headless X11 integration tests
+- X11 bitmap-font indexing tools (`mkfontdir`, `mkfontscale`)
 - **OpenGL** (Mesa), GLU, EGL, and `mesa-utils`
 - Image development libraries: libpng, libjpeg, libtiff, libwebp, librsvg
 - Image tools: **ImageMagick**, **Netpbm**, **librsvg2-bin**, **Ghostscript**

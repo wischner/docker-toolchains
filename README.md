@@ -59,7 +59,7 @@ This repository is **actively developed**. Next steps:
   *Develop for classic Motorola 68k systems (e.g., Atari ST, Amiga).*
 
 - [**GCC x86_64 Linux X11**](./gcc-x86_64-linux-x11)
-  GCC x86_64 toolchain with **X11**, OpenGL (Mesa), and extra image/font tooling on Ubuntu 22.04.
+  GCC x86_64 toolchain with **X11**, OpenGL (Mesa), image/font tooling, Xephyr, and Xvfb on Ubuntu 22.04.
   *Native X11/OpenGL development and reusable Linux desktop base image.*
 
 - [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)
@@ -71,7 +71,7 @@ This repository is **actively developed**. Next steps:
   *Native GNUstep Foundation/AppKit development and OpenStep-style desktop software maintenance.*
 
 - [**GCC x86_64 Linux OpenLook / XView**](./gcc-x86_64-linux-openlook)
-  GCC x86_64 toolchain layered on the X11 image with **OpenLook**, **XView**, `olwm`, `olvwm`, and SlingShot.
+  GCC x86_64 toolchain layered on the X11 image with the complete CMake-native **OpenLook/XView SDK**, `olwm`, and a self-contained Xephyr test session.
   *Native XView/OpenLook development and maintenance of classic `/usr/openwin` software.*
 
 - [**GCC x86_64 Linux SDL**](./gcc-x86_64-linux-sdl)
@@ -165,10 +165,10 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-gnu
 ### GCC x86_64 Linux OpenLook / XView
 ```bash
 # Compile an XView application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   gcc -o app app.c -I/usr/openwin/include -I/usr/include/tirpc -L/usr/openwin/lib -Wl,-rpath,/usr/openwin/lib -lxview -lolgx -lX11 -lXext -lXmu -lXt -lXpm -ltirpc -lm -lutil
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   bash -lc 'gcc -o app app.c $(pkg-config --cflags --libs xview)'
 
-# Compile an app that uses SlingShot
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   gcc -o app app.c -I/usr/openwin/include -I/usr/include/tirpc -L/usr/openwin/lib -Wl,-rpath,/usr/openwin/lib -lsspkg -lxview -lolgx -lX11 -lXext -lXmu -lXt -lXpm -ltirpc -lm -lutil
+# Run it in the image's headless Xephyr + olwm session
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   openlook-xephyr ./app
 ```
 
 ### GCC x86_64 Linux SDL
