@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.1.0
+ARG IMG_VERSION=1.1.1
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.description="GCC x86_64 GEMix (DRI GEM on Linux) development toolchain layered on the Linux X11 base image." \
@@ -11,17 +11,23 @@ LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
       org.opencontainers.image.version="${IMG_VERSION}"
 
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive \
+    GEM_RESOURCE_DIR=/opt/gemix/share/gem
 
 COPY sdk/ /opt/gemix-sdk/
 
+# The staged hosted SDK predates GEM_RESOURCE_DIR and contains its historical
+# build-tree resource path. Keep one internal alias until that SDK is rebuilt.
 RUN set -eux; \
-    install -d /usr/local/include /usr/local/lib/pkgconfig; \
+    install -d /usr/local/include /usr/local/lib/pkgconfig \
+      /opt/gemix/share/gem/fonts /home/tstih/data/triglav-os/gem; \
     cp -a /opt/gemix-sdk/include/. /usr/local/include/; \
     install -m 0644 /opt/gemix-sdk/lib/libaes.so /usr/local/lib/libaes.so; \
     install -m 0644 /opt/gemix-sdk/lib/libvdi.so /usr/local/lib/libvdi.so; \
     install -m 0644 /opt/gemix-sdk/lib/libplatform_linux.so /usr/local/lib/libplatform_linux.so; \
     install -m 0644 /opt/gemix-sdk/lib/librasta.so /usr/local/lib/librasta.so; \
+    cp -a /opt/gemix-sdk/share/gem/. /opt/gemix/share/gem/; \
+    ln -s /opt/gemix/share/gem /home/tstih/data/triglav-os/gem/bin; \
     printf '%s\n' \
       'prefix=/usr/local' \
       'exec_prefix=${prefix}' \
@@ -110,6 +116,12 @@ RUN set -eux; \
     test -f /usr/local/lib/libvdi.so; \
     test -f /usr/local/lib/libplatform_linux.so; \
     test -f /usr/local/lib/librasta.so; \
+    echo "=== GEMix runtime resources ==="; \
+    test -f "${GEM_RESOURCE_DIR}/alert_icons.rsc"; \
+    test -f "${GEM_RESOURCE_DIR}/cursors.rsc"; \
+    test -f "${GEM_RESOURCE_DIR}/fonts/8x16_z1.fnt"; \
+    test -f "${GEM_RESOURCE_DIR}/fonts/AtariSTHigh.fnt"; \
+    test -L /home/tstih/data/triglav-os/gem/bin; \
     echo "--- Compile tests ---"; \
     printf '#include <gem.h>\n#include <platform/os.h>\n#include <platform/raster.h>\nint main(void){\n  void *p1=(void *)appl_init;\n  void *p2=(void *)v_opnvwk;\n  void *p3=(void *)gem_raster_surface;\n  void *p4=(void *)gem_os_ticks_ms;\n  return (p1 && p2 && p3 && p4) ? 0 : 1;\n}\n' > /tmp/test-gemix.c; \
     gcc -o /tmp/test-gemix /tmp/test-gemix.c $(pkg-config --cflags --libs gemix gemix-platform-linux); \

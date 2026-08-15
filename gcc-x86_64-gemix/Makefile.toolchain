@@ -4,10 +4,40 @@ GEMIX_ROOT ?= /home/tstih/data/triglav-os/gem
 SDK_DIR ?= sdk
 INCLUDE_SRC ?= $(GEMIX_ROOT)/include
 LIB_SRC ?= $(GEMIX_ROOT)/bin
+RESOURCE_SRC ?= $(GEMIX_ROOT)/bin/resources
+GENERATED_RESOURCE_SRC ?= $(GEMIX_ROOT)/build-linux-test
 
 prepare:
 	@set -e; \
 	source_ready=1; \
+	resources_ready=1; \
+	alert_icons_src="$(RESOURCE_SRC)/alert_icons.rsc"; \
+	if [ ! -f "$$alert_icons_src" ]; then \
+	  alert_icons_src="$(GENERATED_RESOURCE_SRC)/alert_icons.rsc"; \
+	fi; \
+	for resource in \
+	  "$(RESOURCE_SRC)/cursors.rsc" \
+	  "$(RESOURCE_SRC)/fonts/8x16_z1.fnt" \
+	  "$(RESOURCE_SRC)/fonts/AtariSTHigh.fnt" \
+	  "$$alert_icons_src"; do \
+	  if [ ! -f "$$resource" ]; then \
+	    resources_ready=0; \
+	  fi; \
+	done; \
+	if [ "$$resources_ready" -eq 1 ]; then \
+	  mkdir -p "$(SDK_DIR)/share/gem"; \
+	  find "$(SDK_DIR)/share/gem" -mindepth 1 -delete; \
+	  cp -a "$(RESOURCE_SRC)/." "$(SDK_DIR)/share/gem/"; \
+	  cp "$$alert_icons_src" "$(SDK_DIR)/share/gem/alert_icons.rsc"; \
+	else \
+	  for resource in \
+	    "$(SDK_DIR)/share/gem/alert_icons.rsc" \
+	    "$(SDK_DIR)/share/gem/cursors.rsc" \
+	    "$(SDK_DIR)/share/gem/fonts/8x16_z1.fnt" \
+	    "$(SDK_DIR)/share/gem/fonts/AtariSTHigh.fnt"; do \
+	    test -f "$$resource"; \
+	  done; \
+	fi; \
 	for dir in "$(INCLUDE_SRC)" "$(LIB_SRC)"; do \
 	  if [ ! -d "$$dir" ]; then \
 	    source_ready=0; \
@@ -23,7 +53,14 @@ prepare:
 	  for lib in libaes.so libvdi.so libplatform_linux.so librasta.so; do \
 	    test -f "$(SDK_DIR)/lib/$$lib"; \
 	  done; \
-	  echo "GEMix source tree is incomplete; using the already-staged SDK in $(SDK_DIR)"; \
+	  for resource in \
+	    "$(SDK_DIR)/share/gem/alert_icons.rsc" \
+	    "$(SDK_DIR)/share/gem/cursors.rsc" \
+	    "$(SDK_DIR)/share/gem/fonts/8x16_z1.fnt" \
+	    "$(SDK_DIR)/share/gem/fonts/AtariSTHigh.fnt"; do \
+	    test -f "$$resource"; \
+	  done; \
+	  echo "GEMix library source is incomplete; using the already-staged libraries in $(SDK_DIR)"; \
 	  exit 0; \
 	fi; \
 	mkdir -p "$(SDK_DIR)/include" "$(SDK_DIR)/lib"; \

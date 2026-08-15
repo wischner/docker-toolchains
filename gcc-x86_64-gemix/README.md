@@ -13,8 +13,13 @@ It extends the X11 toolchain with the current GEMix shared libraries and headers
 - GEMix shared libraries in `/usr/local/lib`:
   `libaes.so`, `libvdi.so`, `libplatform_linux.so`, `librasta.so`
 - GEMix headers in `/usr/local/include`
+- GEMix fonts and runtime resources in `/opt/gemix/share/gem`
 - pkg-config files in `/usr/local/lib/pkgconfig`:
   `gemix.pc`, `gemix-aes.pc`, `gemix-vdi.pc`, `gemix-rasta.pc`, `gemix-platform-linux.pc`
+
+The image sets `GEM_RESOURCE_DIR=/opt/gemix/share/gem`, so GEMix programs can
+use the bundled fonts, cursor resources, and alert icons without mounting a
+separate runtime directory.
 
 ## Using this image as your compiler
 

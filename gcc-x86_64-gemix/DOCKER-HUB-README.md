@@ -7,7 +7,11 @@ Includes:
 - GCC, G++, CMake, pkg-config, gdb, and the X11 base stack
 - GEMix headers in `/usr/local/include`
 - GEMix shared libraries in `/usr/local/lib`
+- GEMix fonts and runtime resources in `/opt/gemix/share/gem`
 - pkg-config entries for `gemix`, `gemix-aes`, `gemix-vdi`, `gemix-rasta`, and `gemix-platform-linux`
+
+`GEM_RESOURCE_DIR` defaults to `/opt/gemix/share/gem`; no separate runtime
+resource mount is required.
 
 Example:
 
