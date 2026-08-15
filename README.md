@@ -59,7 +59,7 @@ This repository is **actively developed**. Next steps:
   *Develop for classic Motorola 68k systems (e.g., Atari ST, Amiga).*
 
 - [**GCC x86_64 Linux X11**](./gcc-x86_64-linux-x11)
-  GCC x86_64 toolchain with **X11**, OpenGL (Mesa), image/font tooling, Xephyr, and Xvfb on Ubuntu 22.04.
+  GCC x86_64 toolchain with **X11**, original **Athena widgets (libXaw)**, OpenGL (Mesa), image/font tooling, Xephyr, and Xvfb on Ubuntu 22.04.
   *Native X11/OpenGL development and reusable Linux desktop base image.*
 
 - [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)

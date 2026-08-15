@@ -10,10 +10,15 @@ It is intended for native X11/OpenGL development and also serves as the base ima
 ## Installed components
 
 - **GCC / G++** (Ubuntu 22.04 default toolchain)
-- **CMake**, **Make**, **pkg-config**
+- **Autoconf**, **Automake**, **libtool**, **CMake**, **Make**, **pkg-config**
 - **GDB** and **Valgrind**
 - **Git**
 - **X11** development libraries and common X11 runtime tools
+- Original **Athena Widget Set (libXaw 1.0.16)** built from source, including
+  ABI 6/7 shared and static libraries, public/private headers, manuals, and
+  `xaw`, `xaw6`, and `xaw7` pkg-config metadata
+- Athena development dependencies: X11/Xext protocols and libraries, Xt,
+  **Xmu** (`libxmu-dev`), and Xpm
 - **Xephyr** and **Xvfb** for nested/headless X11 integration tests
 - X11 bitmap-font indexing tools (`mkfontdir`, `mkfontscale`)
 - **OpenGL** (Mesa), GLU, EGL, and `mesa-utils`
@@ -32,6 +37,16 @@ docker run --rm \
   gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)
 ```
 
+Compile an Athena widget application against the current ABI:
+
+```bash
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-x11:latest \
+  gcc -o app main.c $(pkg-config --cflags --libs xaw)
+```
+
 ## Running X11 applications
 
 ```bash
@@ -41,6 +56,28 @@ docker run --rm -it \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-x11:latest \
   ./app
+```
+
+## Building the image
+
+The source snapshot is bundled at `packages/libXaw-1.0.16.tar.xz`, so normal
+builds require neither the original checkout nor network access:
+
+```bash
+make build-gcc-x86_64-linux-x11
+```
+
+To explicitly refresh the bundled archive from the original local checkout:
+
+```bash
+make -C gcc-x86_64-linux-x11 -f Makefile.toolchain refresh-libxaw
+```
+
+To refresh it from another checkout:
+
+```bash
+make -C gcc-x86_64-linux-x11 -f Makefile.toolchain \
+  refresh-libxaw LIBXAW_ROOT=/path/to/libxaw
 ```
 
 ## Relationship to SDL2 image

@@ -1,0 +1,43 @@
+.PHONY: prepare refresh-libxaw build
+
+LIBXAW_ROOT ?= /home/tstih/data/__lab/libxaw
+LIBXAW_ARCHIVE ?= packages/libXaw-1.0.16.tar.xz
+LIBXAW_CHECKSUM ?= $(LIBXAW_ARCHIVE).sha256
+
+# Normal builds use the bundled, checksummed source snapshot and therefore do
+# not require network access or the original local checkout.
+prepare:
+	@set -e; \
+	test -f "$(LIBXAW_ARCHIVE)"; \
+	test -f "$(LIBXAW_CHECKSUM)"; \
+	(cd "$$(dirname "$(LIBXAW_ARCHIVE)")" && \
+	  sha256sum --check "$$(basename "$(LIBXAW_CHECKSUM)")"); \
+	tar -tJf "$(LIBXAW_ARCHIVE)" configure.ac src/Makefile.am \
+	  include/X11/Xaw/Form.h >/dev/null; \
+	echo "Using bundled libXaw source archive $(LIBXAW_ARCHIVE)"
+
+# Refresh the bundled snapshot explicitly from the supplied checkout. Only
+# tracked files are archived, including tracked working-tree edits; .git and
+# stale build products are excluded.
+refresh-libxaw:
+	@set -e; \
+	test -d "$(LIBXAW_ROOT)/.git"; \
+	test -f "$(LIBXAW_ROOT)/configure.ac"; \
+	test -f "$(LIBXAW_ROOT)/src/Makefile.am"; \
+	tmpdir="$$(mktemp -d)"; \
+	trap 'rm -rf "$$tmpdir"' EXIT INT TERM; \
+	revision="$$(git -C "$(LIBXAW_ROOT)" rev-parse HEAD)"; \
+	epoch="$$(git -C "$(LIBXAW_ROOT)" show -s --format=%ct HEAD)"; \
+	git -C "$(LIBXAW_ROOT)" ls-files -z | LC_ALL=C sort -z > "$$tmpdir/files"; \
+	tar -C "$(LIBXAW_ROOT)" --null -T "$$tmpdir/files" \
+	  --sort=name --mtime="@$$epoch" --owner=0 --group=0 --numeric-owner \
+	  -cJf "$$tmpdir/libXaw.tar.xz"; \
+	install -d "$$(dirname "$(LIBXAW_ARCHIVE)")"; \
+	mv "$$tmpdir/libXaw.tar.xz" "$(LIBXAW_ARCHIVE)"; \
+	(cd "$$(dirname "$(LIBXAW_ARCHIVE)")" && \
+	  sha256sum "$$(basename "$(LIBXAW_ARCHIVE)")" \
+	  > "$$(basename "$(LIBXAW_CHECKSUM)")"); \
+	echo "Refreshed bundled libXaw $$revision from $(LIBXAW_ROOT)"
+
+build:
+	@true
