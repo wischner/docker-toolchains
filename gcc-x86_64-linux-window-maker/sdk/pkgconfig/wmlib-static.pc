@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: wmlib static
+Description: Static Window Maker application-menu protocol client library
+Version: 0.96.0
+Requires: x11
+Libs: ${libdir}/libWMaker.a
+Cflags: -I${includedir}
+

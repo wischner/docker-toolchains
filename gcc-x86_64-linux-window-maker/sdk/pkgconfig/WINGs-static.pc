@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: WINGs static
+Description: Static Window Maker NeXTSTEP-like widget toolkit
+Version: 0.96.0
+Requires: WUtil-static wrlib-static pangoxft
+Libs: ${libdir}/libWINGs.a
+Cflags: -I${includedir}
+

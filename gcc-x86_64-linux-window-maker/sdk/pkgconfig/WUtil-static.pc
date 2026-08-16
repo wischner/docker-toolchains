@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: WUtil static
+Description: Static utility library for WINGs
+Version: 0.96.0
+Libs: ${libdir}/libWUtil.a
+Cflags: -I${includedir}
+

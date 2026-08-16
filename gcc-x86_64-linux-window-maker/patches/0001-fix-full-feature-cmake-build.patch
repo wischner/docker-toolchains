@@ -1,0 +1,69 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index eba2f26..bbcf880 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -174,9 +174,9 @@ if(USE_XINERAMA AND NOT X11_Xinerama_LIB)
+     set(USE_XINERAMA FALSE)
+ endif()
+ 
+-set(USE_XRES FALSE)
+-if(X11_Xres_FOUND AND X11_Xres_LIB)
+-    set(USE_XRES TRUE)
++set(USE_XRES ${X11_XRes_FOUND})
++if(USE_XRES AND NOT X11_XRes_LIB)
++    set(USE_XRES FALSE)
+ endif()
+ 
+ set(USE_RANDR FALSE)
+@@ -200,7 +200,7 @@ if(USE_RANDR)
+     list(APPEND WM_XEXT_LIBS ${X11_Xrandr_LIB})
+ endif()
+ if(USE_XRES)
+-    list(APPEND WM_XEXT_LIBS ${X11_Xres_LIB})
++    list(APPEND WM_XEXT_LIBS ${X11_XRes_LIB})
+ endif()
+ list(REMOVE_DUPLICATES WM_XEXT_LIBS)
+ 
+@@ -228,8 +228,14 @@ if(USE_TIFF)
+ endif()
+ 
+ find_package(GIF)
+-set(USE_GIF ${GIF_FOUND})
+-if(USE_GIF)
++set(USE_GIF 0)
++if(GIF_FOUND)
++    # load_gif.c selects the giflib API from this numeric major version. A
++    # boolean value makes giflib 5 use the old one-argument close function.
++    string(REGEX MATCH "^[0-9]+" USE_GIF "${GIF_VERSION}")
++    if(NOT USE_GIF)
++        set(USE_GIF 5)
++    endif()
+     list(APPEND WM_GFX_LIBS GIF::GIF)
+ endif()
+ 
+@@ -478,6 +485,12 @@ target_include_directories(wmaker_common INTERFACE
+     "${CMAKE_SOURCE_DIR}/lib/wrlib"
+     ${X11_INCLUDE_DIR})
+ target_compile_definitions(wmaker_common INTERFACE _GNU_SOURCE)
++
++# WINGsP.h exposes Pango types when Pango support is enabled. It is included
++# by targets throughout the tree, so publish the necessary include paths.
++if(USE_PANGO)
++    target_include_directories(wmaker_common INTERFACE ${PANGOXFT_INCLUDE_DIRS})
++endif()
+ 
+ # This code predates a lot of modern diagnostics; keep the noise down but do
+ # not silence anything that points at a real defect.
+diff --git a/cmake/config.h.in b/cmake/config.h.in
+index 42db72d..9af925c 100644
+--- a/cmake/config.h.in
++++ b/cmake/config.h.in
+@@ -124,7 +124,7 @@
+ /* Image format libraries                                              */
+ /* ------------------------------------------------------------------ */
+ 
+-#cmakedefine USE_GIF 1
++#cmakedefine USE_GIF @USE_GIF@
+ #cmakedefine USE_JPEG 1
+ #cmakedefine USE_PNG 1
+ #cmakedefine USE_TIFF 1

@@ -44,6 +44,7 @@ build-gcc-x86_64-gemix: build-gcc-x86_64-linux-x11
 build-gcc-x86_64-linux-gnustep: build-gcc-x86_64-linux-x11
 build-gcc-x86_64-linux-motif: build-gcc-x86_64-linux-x11
 build-gcc-x86_64-linux-openlook: build-gcc-x86_64-linux-x11
+build-gcc-x86_64-linux-window-maker: build-gcc-x86_64-linux-x11
 build-gcc-x86_64-linux-sdl: build-gcc-x86_64-linux-x11
 build-sdcc-z80-cpm3: build-sdcc-z80
 build-sdcc-z80-idp: build-sdcc-z80

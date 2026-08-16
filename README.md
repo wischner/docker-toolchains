@@ -74,6 +74,10 @@ This repository is **actively developed**. Next steps:
   GCC x86_64 toolchain layered on the X11 image with the complete CMake-native **OpenLook/XView SDK**, `olwm`, and a self-contained Xephyr test session.
   *Native XView/OpenLook development and maintenance of classic `/usr/openwin` software.*
 
+- [**GCC x86_64 Linux Window Maker / WINGs**](./gcc-x86_64-linux-window-maker)
+  Complete **Window Maker/WINGs** environment layered on the X11 image with pinned source, shared/static SDK libraries, every optional feature, and contained Xephyr testing.
+  *Native WINGs application development and Window Maker desktop maintenance.*
+
 - [**GCC x86_64 Linux SDL**](./gcc-x86_64-linux-sdl)
   GCC x86_64 SDL toolchain layered on the Linux X11 base with SDL2, SDL3, audio, and multimedia support.
   *SDL2 and SDL3 game and multimedia application development.*
@@ -172,6 +176,15 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-ope
 
 # Run it in the image's headless Xephyr + olwm session
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   openlook-xephyr ./app
+```
+
+### GCC x86_64 Linux Window Maker / WINGs
+```bash
+# Compile a WINGs application
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-window-maker:latest   bash -lc 'gcc -o app app.c $(pkg-config --cflags --libs WINGs)'
+
+# Run it in a contained Xephyr + Window Maker session
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-window-maker:latest   window-maker-xephyr ./app
 ```
 
 ### GCC x86_64 Linux SDL

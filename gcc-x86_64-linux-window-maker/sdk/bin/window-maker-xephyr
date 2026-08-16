@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+nested_display="${WINDOW_MAKER_DISPLAY:-:2}"
+parent_display="${WINDOW_MAKER_PARENT_DISPLAY:-:99}"
+screen="${WINDOW_MAKER_SCREEN:-1280x800}"
+user_root="${WINDOW_MAKER_USER_ROOT:-${WMAKER_USER_ROOT:-/tmp/window-maker-$(id -u)/GNUstep}}"
+parent_pid=""
+xephyr_pid=""
+wm_pid=""
+
+stop_process() {
+    local pid=$1
+    local attempt
+    if [[ -z "$pid" ]]; then
+        return
+    fi
+    kill "$pid" 2>/dev/null || true
+    for attempt in $(seq 1 20); do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            wait "$pid" 2>/dev/null || true
+            return
+        fi
+        sleep 0.05
+    done
+    kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+}
+
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    stop_process "$wm_pid"
+    stop_process "$xephyr_pid"
+    stop_process "$parent_pid"
+    exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+wait_for_display() {
+    local display=$1
+    local attempt
+    for attempt in $(seq 1 100); do
+        if timeout 1s xdpyinfo -display "$display" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 0.1
+    done
+    echo "Timed out waiting for X display $display" >&2
+    return 1
+}
+
+if [[ -z "${DISPLAY:-}" ]] || ! timeout 1s xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    Xvfb "$parent_display" -screen 0 "${screen}x24" -nolisten tcp -noreset &
+    parent_pid=$!
+    wait_for_display "$parent_display"
+    export DISPLAY="$parent_display"
+fi
+
+Xephyr "$nested_display" -ac -br -noreset -screen "$screen" -nolisten tcp &
+xephyr_pid=$!
+wait_for_display "$nested_display"
+
+export WMAKER_USER_ROOT="$user_root"
+if [[ ! -f "$WMAKER_USER_ROOT/Defaults/WindowMaker" ]]; then
+    install -d "$WMAKER_USER_ROOT"
+    wmaker.inst --batch >/dev/null
+fi
+
+DISPLAY="$nested_display" wmaker &
+wm_pid=$!
+for attempt in $(seq 1 120); do
+    kill -0 "$wm_pid" 2>/dev/null || {
+        echo "Window Maker exited before it became ready" >&2
+        exit 1
+    }
+    if DISPLAY="$nested_display" timeout 1s xprop -root _NET_SUPPORTING_WM_CHECK \
+        2>/dev/null | grep -q 'window id'; then
+        break
+    fi
+    if [[ "$attempt" -eq 120 ]]; then
+        echo "Window Maker did not become ready on $nested_display" >&2
+        exit 1
+    fi
+    sleep 0.1
+done
+
+export DISPLAY="$nested_display"
+if (( $# > 0 )); then
+    "$@"
+else
+    wait "$wm_pid"
+fi
+

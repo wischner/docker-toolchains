@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: wrlib static
+Description: Static Window Maker image manipulation and conversion library
+Version: 0.96.0
+Requires: x11 xext xinerama xrandr xres xmu xpm libpng libjpeg libtiff-4 libwebp MagickWand
+Libs: ${libdir}/libwraster.a -lgif -lm
+Cflags: -I${includedir}
+
