@@ -1,42 +1,47 @@
 # GCC m68k toolchain
 
-This image is part of **Wischner Ltd. Toolchains**.
-
-## What it is
-GCC cross-compiler for Motorola 68000 (`m68k-elf`) with binutils, tuned for retro/embedded targets.  
-Suitable for bare-metal projects (no OS libc), retrocomputing, and hobbyist systems such as Amiga, Atari ST, or Sega consoles.
+This image is part of **Wischner Ltd. Toolchains**. It provides a current GNU
+C/C++ cross-compiler for the bare-metal `m68k-elf` target.
 
 ## Installed components
-- [GNU Binutils](https://www.gnu.org/software/binutils/) 2.42 (m68k target)
-- [GCC](https://gcc.gnu.org/) 13.x (cross `m68k-elf`)
-- `m68k-elf-gcc`, `m68k-elf-as`, `m68k-elf-ld`, `m68k-elf-objcopy`, `m68k-elf-objdump`
-- Build tools: `make`, `git`
+
+- GNU Binutils 2.46.1
+- GCC/G++ 16.1.0 with C++23 and experimental C++26 language support
+- `m68k-elf-gcc`, `m68k-elf-g++`, `m68k-elf-cpp`
+- the complete prefixed Binutils suite, including `as`, `ld`, `ar`, `nm`,
+  `ranlib`, `objcopy`, `objdump`, `readelf`, `size`, `strings`, and `strip`
+- CMake, GNU Make, Ninja, pkg-config, Git, and Python 3
+
+## Important scope
+
+This is a freestanding compiler. It includes `libgcc`, but deliberately does
+not impose a target operating system, C library, C++ standard library, startup
+files, or linker script. Modern C++ language features work, but facilities such
+as `<vector>` need a target-specific libc/libstdc++ supplied by your project.
+
+Use [`gcc-m68k-amiga`](../gcc-m68k-amiga) for AmigaOS applications; that image
+has the Amiga ABI, NDK, runtimes, and full target libraries.
 
 ## Usage
-Run the container with your sources mounted:
 
 ```bash
-docker run --rm -it -v $(pwd):/work wischner/gcc-m68k:latest
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-m68k:1.2.0 \
+  bash
 ```
 
-Inside the container, compile:
+Compile freestanding C and C++:
 
 ```bash
-m68k-elf-gcc -o hello.elf hello.c
-m68k-elf-objcopy -O binary hello.elf hello.bin
+m68k-elf-gcc -ffreestanding -c startup.c -o startup.o
+m68k-elf-g++ -std=c++23 -ffreestanding -fno-exceptions -fno-rtti \
+  -c main.cpp -o main.o
+m68k-elf-g++ -nostdlib -T target.ld startup.o main.o -lgcc -o app.elf
+m68k-elf-objcopy -O binary app.elf app.bin
 ```
 
-Disassemble:
+## Support
 
-```bash
-m68k-elf-objdump -d hello.elf
-```
-
-> Note: This toolchain does not include libc or startup files — you must supply your own startup code and linker script for your target.
-
-## Support and contributions
-
-For bug reports, feature requests, or questions, please use the issue tracker:  
-[https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)
-
-Contributions are welcome. If you’d like to improve this image, feel free to open a pull request.
+Issues and pull requests are welcome at
+<https://github.com/wischner/docker-toolchains>.

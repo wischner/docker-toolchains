@@ -55,8 +55,14 @@ This repository is **actively developed**. Next steps:
   *CP/M disk image creation and CP/M 3-oriented bundled runtime libraries.*
 
 - [**GCC m68k**](./gcc-m68k)
-  GCC/binutils cross‑compiler targeting **`m68k-elf`**.
-  *Develop for classic Motorola 68k systems (e.g., Atari ST, Amiga).*
+  Modern GCC/G++ 16.1 and Binutils 2.46.1 targeting freestanding **`m68k-elf`**.
+  *Develop bare-metal Motorola 68k systems with C or modern C++.*
+
+- [**GCC m68k AmigaOS**](./gcc-m68k-amiga)
+  Standalone AmigaPorts GCC/G++ 16.1 **`m68k-amigaos`** toolchain with the NDK,
+  runtimes, debugger, all optional SDKs, ADF/HDF/ROM utilities, headless
+  execution, graphics/audio converters, and Shrinkler.
+  *Build, test, convert assets, compress, and package complete AmigaOS projects.*
 
 - [**GCC x86_64 Linux X11**](./gcc-x86_64-linux-x11)
   GCC x86_64 toolchain with **X11**, original **Athena widgets (libXaw)**, OpenGL (Mesa), image/font tooling, Xephyr, and Xvfb on Ubuntu 22.04.
@@ -139,7 +145,15 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80-idp:latest 
 
 ### GCC m68k
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k:latest   m68k-elf-gcc -o hello.elf hello.c
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k:latest   m68k-elf-g++ -std=c++23 -ffreestanding -c hello.cpp -o hello.o
+```
+
+### GCC m68k AmigaOS
+```bash
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k-amiga:latest   m68k-amigaos-g++ -std=c++23 -Os hello.cpp -o hello
+
+# CMake uses the toolchain file exported by the image
+docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k-amiga:latest   bash -lc 'cmake -S . -B build-amiga -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN_FILE" && cmake --build build-amiga -j'
 ```
 
 ### GCC x86_64 Linux X11

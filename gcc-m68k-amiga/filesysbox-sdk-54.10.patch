@@ -1,0 +1,13 @@
+diff --git a/sdk/filesysbox.sdk b/sdk/filesysbox.sdk
+index 53efeb3..56827d2 100644
+--- a/sdk/filesysbox.sdk
++++ b/sdk/filesysbox.sdk
+@@ -7,7 +7,7 @@ include
+ include/sys
+ include/sys/statvfs.h
+ include/fd
+-include/fd/filesysbox_lib.fd
++fd/filesysbox_lib.fd
+ include/pragmas
+ include/pragmas/filesysbox_pragmas.h
+ include/proto
