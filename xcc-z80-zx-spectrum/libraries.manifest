@@ -1,0 +1,4 @@
+# Target libraries added to XCC's normal Z80 search path.
+# Source refs named main-latest are resolved on every Docker build; exact
+# commits are recorded under /opt/zx-spectrum/share/metadata in the image.
+retro-vault/libgpx main-latest /opt/x/z80/lib/libgpx.a /opt/x/z80/include/libgpx.h

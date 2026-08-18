@@ -42,6 +42,11 @@ This repository is **actively developed**. Next steps:
   XCC-based Iskra Delta Partner image layered on the packaged XYZ Z80 toolchain.
   *A clean scaffold for upcoming Partner-specific headers, libraries, and utilities.*
 
+- [**XCC Z80 – ZX Spectrum**](./xcc-z80-zx-spectrum)
+  Medium-model XCC with native ZX RAM/ROM targets, libgpx, Beepolix,
+  ZX Spectrum MCP, and snatch.
+  *A complete compile, package, graphics, music, asset, and headless-emulation workflow.*
+
 - [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)
   Z80 toolchain variant tailored for **ZX Spectrum** builds.
   *Convenient defaults/structure for Spectrum projects.*
@@ -132,6 +137,14 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80:latest   xcc
 ```bash
 # Use the XCC-based Partner scaffold
 docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80-idp:latest   xcc hello.c -o hello.xl
+```
+
+### XCC Z80 – ZX Spectrum
+```bash
+# Build a ZX Spectrum RAM binary with libgpx, then package it as a TAP
+docker run --rm -it -v "$(pwd)":/work -w /work \
+  wischner/xcc-z80-zx-spectrum:latest \
+  sh -lc 'xcc -Os --oformat=binary hello.c -lgpx -o hello.bin && xprog --tap hello.bin -o hello.tap --name HELLO'
 ```
 
 ### SDCC Z80 – Iskra Delta Partner

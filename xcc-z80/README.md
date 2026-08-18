@@ -4,13 +4,15 @@ This image is part of **Wischner Ltd. Toolchains**.
 
 ## What it is
 
-A lightweight **Ubuntu-based Z80 toolchain** that builds the large-model
+A lightweight **Ubuntu-based Z80 toolchain** that builds the medium-model
 toolchain from the pinned `retro-vault/xyz` Git tag.
 
 In practice this gives you:
 
-- `xcc` as the full-model C23 compiler driver
+- `xcc` as the medium-model C23 compiler driver (`float` and 32-bit `long`,
+  without `double`, `long long`, or floating-point stdio)
 - `xas`, `xld`, `xar`, and `xobjcopy`
+- `xprog` for XL process/service images and ZX Spectrum TAP/TZX packaging
 - `xgdb` and `xemu` for debugging, plus an `xgdb-z80` compatibility alias
 - a staged Z80 target runtime under `z80/include` and `z80/lib`
 
@@ -64,12 +66,13 @@ The Dockerfile compiles `retro-vault/xyz` in a builder stage and copies only
 the resulting toolchain prefix into the final image. This lets dependent images
 build before an equivalent release bundle or Docker image has been published.
 
-For this image we intentionally pin the **large** Linux bundle so the staged
-libc keeps full `double` and `long long` support:
+For this image we intentionally build the **medium** model requested for the
+Z80 toolchains. It keeps `float` and 32-bit `long` support while omitting the
+larger `double`, `long long`, and floating-point stdio payloads:
 
 ```text
-IMG_VERSION=2.1.4
-XYZ_VERSION=2.1.4
+IMG_VERSION=2.2.0
+XYZ_VERSION=2.2.0
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,

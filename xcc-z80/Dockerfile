@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.1.4
+ARG IMG_VERSION=2.2.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.1.4
+ARG XYZ_VERSION=2.2.0
 
-# Build the large-model toolchain locally. xcc-z80-idp depends on this image,
+# Build the medium-model toolchain locally. Derived images depend on this image,
 # so its build must not require the same version to be published first.
 FROM ubuntu:24.04 AS xyz-builder
 
@@ -30,27 +30,27 @@ RUN set -eux; \
       Z_DIST_DIR=/tmp/xyz-z \
       BUILD=release \
       ENABLE_SANITIZERS=0 \
-      X_MODEL=L \
+      X_MODEL=M \
       XCC_VERSION="${XYZ_VERSION#v}" \
       XLD_VERSION="${XYZ_VERSION#v}" \
       XTOOLS_VERSION="${XYZ_VERSION#v}" \
       XOBJCOPY_VERSION="${XYZ_VERSION#v}" \
-      PACKAGE_NAME=x-l; \
+      PACKAGE_NAME=x-m; \
     rm -rf /opt/x/pkg; \
     printf '%s\n' "${tag}" > /opt/x/.version; \
     printf '%s\n' "https://github.com/${XYZ_REPO}/tree/${tag}" > /opt/x/.source; \
-    for tool in xcc xld xas xar xopt xobjcopy xgdb xemu; do \
+    for tool in xcc xld xas xar xopt xobjcopy xprog xgdb xemu; do \
       test -x "/opt/x/bin/${tool}"; \
       "/opt/x/bin/${tool}" --version | grep -F " ${XYZ_VERSION#v} "; \
     done
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.1.4
+ARG IMG_VERSION=2.2.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.1.4
+ARG XYZ_VERSION=2.2.0
 LABEL org.opencontainers.image.title="xcc-z80" \
-      org.opencontainers.image.description="Ubuntu-based X Compiler Suite large-model Linux bundle with xcc, xas, xld, xgdb, xemu, headers, and Z80 runtime libraries." \
+      org.opencontainers.image.description="Ubuntu-based X Compiler Suite medium-model Linux bundle with xcc, xas, xld, xprog, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.licenses="GPL-2.0-or-later; see component licenses" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
@@ -61,7 +61,7 @@ ENV HOME=/home/ubuntu \
     XTOOLS_ROOT=/opt/x \
     PATH="/opt/x/bin:${PATH}"
 
-# Install the source-built large-model prefix, then preserve previous path and
+# Install the source-built medium-model prefix, then preserve previous path and
 # command aliases.
 COPY --from=xyz-builder /opt/x/ /opt/x/
 
@@ -78,6 +78,7 @@ RUN set -eux; \
     test -x /opt/x/bin/xcc; \
     test -x /opt/x/bin/xas; \
     test -x /opt/x/bin/xld; \
+    test -x /opt/x/bin/xprog; \
     test -x /opt/x/bin/xgdb; \
     test -x /opt/x/bin/xemu; \
     if [ ! -e /opt/x/bin/xgdb-z80 ]; then ln -s xemu /opt/x/bin/xgdb-z80; fi; \
@@ -90,7 +91,13 @@ RUN set -eux; \
     test -f /opt/x/z80/lib/libc.a; \
     test -f /opt/x/z80/lib/libruntime.a; \
     test -f /opt/x/z80/lib/linker.ld; \
-    test -f /opt/x/z80/lib/linker-cpm3.ld
+    test -f /opt/x/z80/lib/linker-cpm3.ld; \
+    test -f /opt/x/z80/lib/crt0-zx-ram.rel; \
+    test -f /opt/x/z80/lib/crt0-zx-rom.rel; \
+    test -f /opt/x/z80/lib/libzx-ram.a; \
+    test -f /opt/x/z80/lib/libzx-rom.a; \
+    test -f /opt/x/z80/lib/linker-zx-ram.ld; \
+    test -f /opt/x/z80/lib/linker-zx-rom.ld
 
 RUN mkdir -p /work && chown -R ubuntu:ubuntu /work /home/ubuntu
 
@@ -105,22 +112,23 @@ RUN set -eux; \
       '#include <stdio.h>' \
       '#include <stdlib.h>' \
       '_Static_assert(__STDC_VERSION__ >= 202311L, "C23");' \
-      '_Static_assert(sizeof(long long) == 8, "long long");' \
-      '_Static_assert(sizeof(double) == 8, "double");' \
+      '_Static_assert(sizeof(long) == 4, "long");' \
+      '_Static_assert(sizeof(float) == 4, "float");' \
       'int main(void) {' \
-      '    volatile long long n = strtoll("42", 0, 10);' \
-      '    volatile double d = strtod("3.5", 0);' \
+      '    volatile long n = strtol("42", 0, 10);' \
+      '    volatile float f = 3.5f;' \
       '    char buf[32];' \
-      '    snprintf(buf, sizeof buf, "%lld %.1f", n, d);' \
+      '    snprintf(buf, sizeof buf, "%ld", n);' \
+      '    if (f < 3.0f) return 1;' \
       '    return buf[0] == '\''4'\'' ? 0 : 1;' \
       '}' \
-      > /tmp/full-model.c; \
+      > /tmp/medium-model.c; \
     xcc /tmp/hello.c -o /tmp/hello.xl; \
-    xcc /tmp/full-model.c -o /tmp/full-model.xl; \
+    xcc /tmp/medium-model.c -o /tmp/medium-model.xl; \
     xcc -c /tmp/hello.c -o /tmp/hello.rel; \
     xcc --oformat=binary -Ttext=0x8000 /tmp/hello.c -o /tmp/hello.bin; \
     test -s /tmp/hello.bin; \
-    test -s /tmp/full-model.xl; \
+    test -s /tmp/medium-model.xl; \
     test -s /tmp/hello.rel; \
     test -s /tmp/hello.xl; \
     command -v xcc; \
@@ -129,10 +137,12 @@ RUN set -eux; \
     command -v xar; \
     command -v xopt; \
     command -v xobjcopy; \
+    command -v xprog; \
     command -v xgdb; \
     command -v xemu; \
     command -v xgdb-z80; \
     xgdb --help >/dev/null; \
     xemu --help >/dev/null; \
+    xprog --help >/dev/null; \
     xcc --version; \
-    rm -f /tmp/hello.c /tmp/full-model.c /tmp/hello.rel /tmp/hello.xl /tmp/full-model.xl /tmp/hello.bin
+    rm -f /tmp/hello.c /tmp/medium-model.c /tmp/hello.rel /tmp/hello.xl /tmp/medium-model.xl /tmp/hello.bin

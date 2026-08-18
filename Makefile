@@ -50,6 +50,7 @@ build-sdcc-z80-cpm3: build-sdcc-z80
 build-sdcc-z80-idp: build-sdcc-z80
 build-sdcc-z80-zx-spectrum: build-sdcc-z80
 build-xcc-z80-idp: build-xcc-z80
+build-xcc-z80-zx-spectrum: build-xcc-z80
 
 # Build: tag :latest and :<effective version>, pass all build.args (except IMG_VERSION)
 build-%:

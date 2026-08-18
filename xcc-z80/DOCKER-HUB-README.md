@@ -1,6 +1,6 @@
 # XCC Z80 toolchain
 
-Ubuntu-based Z80 development image that builds the large-model toolchain from
+Ubuntu-based Z80 development image that builds the medium-model toolchain from
 the pinned `retro-vault/xyz` Git tag of the
 [X Compiler Suite](https://quinzee.xyz/x).
 
@@ -8,12 +8,14 @@ Official project page: https://quinzee.xyz/x
 
 Inside the image you get:
 
-- `xcc` for full-model C23 compilation
+- `xcc` for medium-model C23 compilation (`float` and 32-bit `long`, without
+  `double`, `long long`, or floating-point stdio)
 - `xas` for assembly
 - `xld` for linking
 - `xopt` for post-generation assembly optimization
 - `xar` for static libraries
 - `xobjcopy` for object and archive conversion
+- `xprog` for XL process/service images and ZX Spectrum TAP/TZX packaging
 - `xgdb` and `xemu` for source-level debugging, plus an `xgdb-z80` compatibility alias
 - target headers and runtime in `/opt/x/z80/include` and `/opt/x/z80/lib`
 - host-side SDK headers and libraries in `/opt/x/include` and `/opt/x/lib`

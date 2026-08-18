@@ -1,0 +1,39 @@
+#!/bin/sh
+
+expect_platform=0
+for arg in "$@"; do
+    if [ "$expect_platform" -eq 1 ]; then
+        case "$arg" in
+            zx-ram|zx-rom) ;;
+            *)
+                printf 'xcc-z80-zx-spectrum: unsupported platform: %s (use zx-ram or zx-rom)\n' "$arg" >&2
+                exit 2
+                ;;
+        esac
+        expect_platform=0
+        continue
+    fi
+
+    case "$arg" in
+        --platform)
+            expect_platform=1
+            ;;
+        --platform=*)
+            platform="${arg#--platform=}"
+            case "$platform" in
+                zx-ram|zx-rom) ;;
+                *)
+                    printf 'xcc-z80-zx-spectrum: unsupported platform: %s (use zx-ram or zx-rom)\n' "$platform" >&2
+                    exit 2
+                    ;;
+            esac
+            ;;
+    esac
+done
+
+if [ "$expect_platform" -eq 1 ]; then
+    printf 'xcc-z80-zx-spectrum: --platform requires zx-ram or zx-rom\n' >&2
+    exit 2
+fi
+
+exec /opt/x/bin/xld --platform=zx-ram "$@"

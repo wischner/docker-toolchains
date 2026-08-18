@@ -1,0 +1,27 @@
+.PHONY: prepare build
+
+BUILD_ARGS_FILE ?= build.args
+
+prepare:
+	@set -e; \
+	base_image="$$(sed -n 's/^BASE_IMAGE=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
+	xyz_version="$$(sed -n 's/^XYZ_VERSION=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
+	[ "$$base_image" = "wischner/xcc-z80:$$xyz_version" ] || { \
+	  echo "BASE_IMAGE must match XYZ_VERSION" >&2; exit 1; \
+	}; \
+	for item in \
+	  "libgpx LIBGPX_REF" \
+	  "beepolix BEEPOLIX_REF" \
+	  "zx-spectrum-mcp ZX_SPECTRUM_MCP_REF" \
+	  "snatch SNATCH_REF"; do \
+	  set -- $$item; \
+	  repo="$$1"; key="$$2"; \
+	  ref="$$(sed -n "s/^$$key=//p" "$(BUILD_ARGS_FILE)" | head -n1)"; \
+	  [ -n "$$ref" ]; \
+	  echo "Checking retro-vault/$$repo#$$ref"; \
+	  git ls-remote --exit-code "https://github.com/retro-vault/$$repo.git" \
+	    "refs/heads/$$ref" "refs/tags/$$ref" "$$ref" | grep -q .; \
+	done
+
+build:
+	@true
