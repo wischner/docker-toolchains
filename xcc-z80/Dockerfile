@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.2.0
+ARG IMG_VERSION=2.3.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.2.0
+ARG XYZ_VERSION=2.3.0
 
 # Build the medium-model toolchain locally. Derived images depend on this image,
 # so its build must not require the same version to be published first.
@@ -46,9 +46,9 @@ RUN set -eux; \
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.2.0
+ARG IMG_VERSION=2.3.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.2.0
+ARG XYZ_VERSION=2.3.0
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite medium-model Linux bundle with xcc, xas, xld, xprog, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \

@@ -71,8 +71,8 @@ Z80 toolchains. It keeps `float` and 32-bit `long` support while omitting the
 larger `double`, `long long`, and floating-point stdio payloads:
 
 ```text
-IMG_VERSION=2.2.0
-XYZ_VERSION=2.2.0
+IMG_VERSION=2.3.0
+XYZ_VERSION=2.3.0
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,
