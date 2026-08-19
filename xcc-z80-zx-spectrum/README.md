@@ -6,11 +6,11 @@ programs and replacement ROMs, packages TAP/TZX files, provides a native ZX
 libgpx library, and includes the Beepolix music tools, ZX Spectrum MCP
 emulator, and snatch asset pipeline.
 
-Current image and XCC version: `2.3.0`.
+Current image and XCC version: `2.3.2`.
 
 ## Complete image contents
 
-### XCC 2.3.0 medium model
+### XCC 2.3.2 medium model
 
 The complete X Compiler Suite is under `/opt/x`, with `/opt/x/bin` on `PATH`:
 
@@ -68,7 +68,7 @@ headers and static libraries for `rsp`, `xbfd`, `xemu`, `xgdb`, `xopt`, and
 
 ### Native ZX Spectrum targets
 
-Two XCC 2.3.0 platforms are ready to use:
+Two XCC 2.3.2 platforms are ready to use:
 
 - `zx-ram` is the default. It produces a program loaded at `0x5CCB`, above
   the standard 48K ROM system variables. The upper 4 KiB is reserved for the
@@ -199,7 +199,7 @@ Mount a project and open a shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.3.0 \
+  wischner/xcc-z80-zx-spectrum:2.3.2 \
   bash
 ```
 
@@ -287,7 +287,7 @@ self-contained payloads remain under `/opt`.
 
 ## How latest upstream revisions are selected
 
-XCC itself is pinned to the latest released tag, `v2.3.0`, so the compiler
+XCC itself is pinned to the latest released tag, `v2.3.2`, so the compiler
 version and Docker image tag remain meaningful and reproducible. libgpx,
 Beepolix, ZX Spectrum MCP, and snatch intentionally follow their current
 `main` branches. Docker BuildKit remote Git `ADD` instructions resolve those
