@@ -2,12 +2,13 @@
 
 `wischner/xcc-z80-idp` is a Linux x86-64 development image for the Iskra
 Delta Partner. It provides XCC Z80 2.3.2, the public Partner SDK, two graphics
-library choices, a Partner-compatible XEMU memory map, Snatch, and cpmdisk.
+library choices, the complete Partner emulator and MCP runtime, a
+Partner-compatible XEMU memory map, Snatch, and cpmdisk.
 
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.3.2
+export IMAGE=wischner/xcc-z80-idp:2.4.0
 ```
 
 ## Quick start
@@ -64,6 +65,7 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 | idp-udev ugpx | Latest `main` at image build time |
 | Snatch | 1.0.0, executable and plugins only |
 | cpmdisk | 1.1.0, executable and runtime library only |
+| Partner emulator and MCP | idp-emu 1.0.0 complete portable runtime |
 
 The resolved idp-udev and idp-sdk revisions are recorded in
 `/opt/idp/share/metadata/idp-udev.version` and
@@ -96,6 +98,32 @@ can be used with either one.
 
 Only public SDK and ugpx headers are installed. There is no automatic SDK
 initialization: applications call the initialization routines they need.
+
+## Partner MCP and full emulator
+
+`idp-mcp` is the preferred Partner runtime for AI clients. It runs invisibly,
+speaks newline-delimited MCP JSON-RPC over stdin/stdout, and exposes bounded
+execution, stepping, registers, memory, I/O, breakpoints, keyboard input,
+screen capture/text, recording, and media mounting.
+
+```bash
+idp-mcp --model gdp
+idp-mcp --list-tools
+```
+
+The complete idp-emu runtime is installed at `/opt/idp-emu`, not just the MCP
+binary. It includes `idp-emu`, `idp-mcp`, `partnerp`, `partnerg`, the Partner
+CMOS seed, CRT and GDP ROMs, Partner P and G system hard-disk seeds, UI assets,
+shared libraries, and upstream documentation. All four commands are on
+`PATH`.
+
+Copy a system disk seed to a writable mounted directory before attaching it
+directly to MCP:
+
+```bash
+cp "$IDP_MCP_GDP_HDD_SEED" ./partner-g.img
+idp-mcp --model gdp --hdd ./partner-g.img
+```
 
 ## Targets and Partner memory banking
 
@@ -192,8 +220,13 @@ Use `COMMAND --help` for full options. Detailed XCC manuals are installed in
 /opt/idp/share/metadata/ resolved source versions
 /opt/snatch/             Snatch executable and runtime plugins
 /opt/cpmdisk/            cpmdisk executable and runtime library
+/opt/idp-emu/            complete Partner emulator and MCP runtime tree
 /usr/bin/snatch          Snatch command
 /usr/bin/cpmdisk         cpmdisk command
+/usr/local/bin/idp-emu   full graphical Partner emulator
+/usr/local/bin/idp-mcp   invisible Partner MCP server
+/usr/local/bin/partnerp  Partner P/CRT system profile
+/usr/local/bin/partnerg  Partner G/GDP system profile
 ```
 
 ## Intentional exclusions
@@ -215,3 +248,4 @@ XCC's Z80 target headers and native CP/M 3 runtime remain installed.
 - [IDP SDK](https://github.com/iskra-delta/idp-sdk)
 - [Snatch](https://github.com/retro-vault/snatch)
 - [cpmdisk](https://github.com/iskra-delta/cpmdisk)
+- [idp-emu and idp-mcp](https://github.com/iskra-delta/idp-emu)

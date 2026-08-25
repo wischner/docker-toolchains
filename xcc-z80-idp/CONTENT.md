@@ -1,7 +1,7 @@
 # `xcc-z80-idp` image contents
 
 This document inventories the toolchain and application payload intentionally
-installed in `wischner/xcc-z80-idp:2.3.2`. The image is based on Ubuntu 24.04
+installed in `wischner/xcc-z80-idp:2.4.0`. The image is based on Ubuntu 24.04
 for Linux x86-64. Ubuntu's standard runtime files, packages, and transitive
 shared-library dependencies are not enumerated file by file.
 
@@ -9,7 +9,7 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 2.3.2 | This package |
+| Image | 2.4.0 | This package |
 | XCC Z80 toolchain | 2.3.2 | Inherited from `wischner/xcc-z80:2.3.2` |
 | Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
 | Partner `libgpx` | 0.2.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
@@ -17,6 +17,7 @@ shared-library dependencies are not enumerated file by file.
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
 | Snatch | 1.0.0 | [retro-vault/snatch](https://github.com/retro-vault/snatch) |
 | CP/M disk tool | 1.1.0 | [iskra-delta/cpmdisk](https://github.com/iskra-delta/cpmdisk) |
+| Partner emulator and MCP | 1.0.0 | [iskra-delta/idp-emu](https://github.com/iskra-delta/idp-emu) |
 
 Installed component revisions are also recorded in `/opt/idp/share/metadata`.
 The XCC version and source metadata are stored in `/opt/x/.version` and
@@ -58,11 +59,17 @@ The image defines these toolchain-specific environment variables:
 | `IDP_ROOT` | `/opt/idp` |
 | `IDP_INCLUDE_DIR` | `/opt/idp/include` |
 | `IDP_LIB_DIR` | `/opt/idp/lib` |
+| `IDP_EMU_ROOT` | `/opt/idp-emu` |
+| `IDP_MCP_ROOT` | `/opt/idp-emu` |
+| `IDP_MCP_CRT_ROM` | `/opt/idp-emu/roms/partner_crt.rom` |
+| `IDP_MCP_GDP_ROM` | `/opt/idp-emu/roms/partner_gdp.rom` |
+| `IDP_MCP_CRT_HDD_SEED` | `/opt/idp-emu/disks/hdd-partner-p-system.img` |
+| `IDP_MCP_GDP_HDD_SEED` | `/opt/idp-emu/disks/hdd-partner-g-system.img` |
 | `SNATCH_PLUGIN_DIR` | `/opt/snatch/plugins` |
 
 `/usr/local/bin` and `/opt/x/bin` are on `PATH`, so the wrapped compiler and
-linker, all other XCC tools, GNU Make, CMake, Git, `snatch`, and `cpmdisk` can
-be invoked directly.
+linker, all other XCC tools, GNU Make, CMake, Git, `snatch`, `cpmdisk`,
+`idp-emu`, `idp-mcp`, `partnerp`, and `partnerg` can be invoked directly.
 
 ## XCC Z80 toolchain
 
@@ -163,6 +170,54 @@ The initial selection is physical bank 1. A project-local `./xemu.conf` or an
 explicit `xemu --config FILE` can replace the image default. This configuration
 models Partner RAM banking; it does not claim to emulate the complete Partner
 peripheral set or boot-ROM overlay.
+
+## Full Partner emulator and MCP runtime
+
+The complete idp-emu 1.0.0 Ubuntu x86-64 portable tree is installed under
+`/opt/idp-emu`. Unlike the smaller XEMU toolchain target described above,
+idp-emu models the Partner chip set, firmware, display boards, keyboard, and
+media controllers. The same machine core is exposed headlessly through
+`idp-mcp` for AI-controlled execution.
+
+Installed commands:
+
+| Command | Purpose |
+| --- | --- |
+| `idp-emu` | Full graphical Partner P/CRT and Partner G/GDP emulator |
+| `idp-mcp` | Invisible, stateful Partner MCP server on stdin/stdout |
+| `partnerp` | CRT/P profile using a writable copy of its system HDD seed |
+| `partnerg` | GDP/G profile using a writable copy of its system HDD seed |
+
+The retained upstream runtime tree is:
+
+```text
+/opt/idp-emu/
+  partner_cmos.bin              initial Partner CMOS/NVRAM seed
+  bin/idp-emu                   graphical emulator
+  bin/idp-mcp                   invisible MCP server
+  bin/partnerp                  Partner P/CRT system launcher
+  bin/partnerg                  Partner G/GDP system launcher
+  shared/                       bundled non-system runtime libraries
+  roms/partner_crt.rom          original CRT firmware
+  roms/partner_gdp.rom          original GDP firmware
+  disks/hdd-partner-p-system.img
+  disks/hdd-partner-g-system.img
+  assets/fonts/Inter.ttf        emulator UI font
+  assets/icons/                 Partner and MCP icons
+  docs/COMMAND-LINE.md
+  docs/PACKAGING.md
+  docs/release-manifest.txt
+```
+
+`idp-mcp` provides bounded run, run-until and step control, exact cycle
+measurement, registers, CPU-visible memory, I/O, signal breakpoints, physical
+keyboard input, CRT/GDP screen text and PNG capture, recording, and live media
+mounting. `idp-mcp --list-tools` prints its full MCP schemas.
+
+System hard disks in `/opt/idp-emu/disks` are immutable seeds. The `partnerp`
+and `partnerg` launchers ask idp-emu to maintain per-user writable copies.
+When attaching one directly to MCP, copy the seed into `/work` first so guest
+writes do not alter the packaged source image.
 
 ## Partner and IDP target libraries
 
@@ -347,9 +402,14 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
 
 /opt/snatch/                    Snatch executable and runtime plugins
 /opt/cpmdisk/                   cpmdisk executable and runtime shared library
+/opt/idp-emu/                   full idp-emu and idp-mcp portable runtime
 /etc/xemu/partner.conf          default Partner RAM banking map
 /usr/local/bin/xcc              CP/M 3-default compiler wrapper
 /usr/local/bin/xld              CP/M 3-default linker wrapper
+/usr/local/bin/idp-emu          full Partner emulator link
+/usr/local/bin/idp-mcp          invisible Partner MCP link
+/usr/local/bin/partnerp         Partner P/CRT profile link
+/usr/local/bin/partnerg         Partner G/GDP profile link
 /usr/bin/snatch                 Snatch command link
 /usr/bin/cpmdisk                cpmdisk command link
 /usr/bin/make                   GNU Make
@@ -401,6 +461,8 @@ cmake --version
 git --version
 snatch --help
 cpmdisk --help
+idp-mcp --version
+idp-mcp --list-tools
 ```
 
 ## Intentional exclusions

@@ -3,6 +3,34 @@
 # XCC Z80 toolchain for the Iskra Delta Partner
 ARG BASE_IMAGE=wischner/xcc-z80:2.3.2
 
+# Stage the complete published idp-emu tree: GUI emulator, headless MCP,
+# launchers, CMOS seed, ROMs, system disks, assets, shared libraries, and docs.
+FROM ubuntu:24.04 AS idp-emu-builder
+
+ARG IDP_EMU_VERSION=v1.0.0
+ARG IDP_EMU_SHA256=becbc1d076e029c7f8cd75e39b11a8287f6b3c17d9ba9b4b8b8bed84a640e3dc
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl libopengl0; \
+    rm -rf /var/lib/apt/lists/*; \
+    tmp_dir="$(mktemp -d)"; \
+    release="${IDP_EMU_VERSION#v}"; \
+    archive="Iskra-Delta-Partner-${release}-Ubuntu-x86_64.tar.gz"; \
+    curl -fsSL -o "${tmp_dir}/${archive}" \
+      "https://github.com/iskra-delta/idp-emu/releases/download/${IDP_EMU_VERSION}/${archive}"; \
+    printf '%s  %s\n' "${IDP_EMU_SHA256}" "${tmp_dir}/${archive}" | sha256sum -c -; \
+    mkdir -p /opt/idp-emu; \
+    tar -xzf "${tmp_dir}/${archive}" -C /opt/idp-emu --strip-components=1; \
+    printf '%s\n' "${IDP_EMU_VERSION}" > /opt/idp-emu/.version; \
+    printf '%s\n' 'https://github.com/iskra-delta/idp-emu' > /opt/idp-emu/.source; \
+    test "$(/opt/idp-emu/bin/idp-mcp --version)" = "idp-mcp ${release}"; \
+    /opt/idp-emu/bin/idp-mcp --list-tools >/dev/null; \
+    /opt/idp-emu/bin/idp-emu --help >/dev/null; \
+    test -f /opt/idp-emu/partner_cmos.bin; \
+    test -f /opt/idp-emu/assets/fonts/Inter.ttf; \
+    rm -rf "${tmp_dir}"
+
 # Build Partner target libraries with XCC so the installed archives are
 # self-contained and use the same object/archive formats as the base image.
 FROM ${BASE_IMAGE} AS library-builder
@@ -114,14 +142,15 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.3.2
+ARG IMG_VERSION=2.4.0
 ARG XYZ_VERSION=2.3.2
 ARG LIBGPX_VERSION=v0.2.0
 ARG SNATCH_VERSION=v1.0.0
 ARG CPMDISK_VERSION=v1.1.0
+ARG IDP_EMU_VERSION=v1.0.0
 
 LABEL org.opencontainers.image.title="xcc-z80-idp" \
-      org.opencontainers.image.description="XCC Z80 CP/M 3 toolchain for Iskra Delta Partner with the Partner SDK, libgpx, ugpx, snatch, and cpmdisk." \
+      org.opencontainers.image.description="XCC Z80 CP/M 3 toolchain for Iskra Delta Partner with the Partner SDK, graphics libraries, host tools, and Partner MCP." \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.licenses="GPL-2.0-or-later; see component licenses" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
@@ -130,6 +159,12 @@ LABEL org.opencontainers.image.title="xcc-z80-idp" \
 ENV IDP_ROOT=/opt/idp \
     IDP_INCLUDE_DIR=/opt/idp/include \
     IDP_LIB_DIR=/opt/idp/lib \
+    IDP_EMU_ROOT=/opt/idp-emu \
+    IDP_MCP_ROOT=/opt/idp-emu \
+    IDP_MCP_CRT_ROM=/opt/idp-emu/roms/partner_crt.rom \
+    IDP_MCP_GDP_ROM=/opt/idp-emu/roms/partner_gdp.rom \
+    IDP_MCP_CRT_HDD_SEED=/opt/idp-emu/disks/hdd-partner-p-system.img \
+    IDP_MCP_GDP_HDD_SEED=/opt/idp-emu/disks/hdd-partner-g-system.img \
     SNATCH_PLUGIN_DIR=/opt/snatch/plugins \
     PATH="/usr/local/bin:/opt/x/bin:${PATH}"
 
@@ -137,6 +172,7 @@ USER root
 
 COPY --from=library-builder /opt/idp/ /opt/idp/
 COPY --from=emulator-builder /opt/xemu-partner /opt/x/bin/xemu
+COPY --from=idp-emu-builder /opt/idp-emu/ /opt/idp-emu/
 COPY --chmod=0755 xcc-cpm3 /usr/local/bin/xcc
 COPY --chmod=0755 xld-cpm3 /usr/local/bin/xld
 COPY libraries.manifest /opt/idp/libraries.manifest
@@ -145,11 +181,10 @@ COPY xemu-partner.conf /etc/xemu/partner.conf
 # Install the published host tools and their required runtime payloads.
 # The upstream release assets currently target Linux x86_64.
 RUN set -eux; \
-    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
     test "$(sed 's/^v//' /opt/x/.version)" = "${XYZ_VERSION#v}"; \
     test "$(uname -m)" = "x86_64"; \
     apt-get update; \
-    apt-get install -y --no-install-recommends cmake git make python3; \
+    apt-get install -y --no-install-recommends cmake git libopengl0 make python3; \
     rm -rf /var/lib/apt/lists/*; \
     tmp_dir="$(mktemp -d)"; \
     snatch_release="${SNATCH_VERSION#v}"; \
@@ -178,6 +213,10 @@ RUN set -eux; \
     install -m 0755 "${cpmdisk_src}/libcpmdisk.so" /opt/cpmdisk/libcpmdisk.so; \
     ln -s /opt/cpmdisk/cpmdisk /usr/bin/cpmdisk; \
     ln -s /opt/cpmdisk/libcpmdisk.so /usr/lib/libcpmdisk.so; \
+    ln -s /opt/idp-emu/bin/idp-emu /usr/local/bin/idp-emu; \
+    ln -s /opt/idp-emu/bin/idp-mcp /usr/local/bin/idp-mcp; \
+    ln -s /opt/idp-emu/bin/partnerp /usr/local/bin/partnerp; \
+    ln -s /opt/idp-emu/bin/partnerg /usr/local/bin/partnerg; \
     ldconfig; \
     printf '%s\n' "${CPMDISK_VERSION}" > /opt/idp/share/metadata/cpmdisk.version; \
     ln -s /opt/idp/include/libgpx.h /opt/x/z80/include/libgpx.h; \
@@ -216,6 +255,10 @@ RUN set -eux; \
     test "$(sh -lc 'command -v xld')" = /usr/local/bin/xld; \
     test "$(command -v snatch)" = /usr/bin/snatch; \
     test "$(command -v cpmdisk)" = /usr/bin/cpmdisk; \
+    test "$(command -v idp-mcp)" = /usr/local/bin/idp-mcp; \
+    test "$(command -v idp-emu)" = /usr/local/bin/idp-emu; \
+    test "$(command -v partnerp)" = /usr/local/bin/partnerp; \
+    test "$(command -v partnerg)" = /usr/local/bin/partnerg; \
     command -v make; \
     command -v cmake; \
     command -v git; \
@@ -224,6 +267,22 @@ RUN set -eux; \
     git --version >/dev/null; \
     snatch --help >/dev/null; \
     cpmdisk --help >/dev/null; \
+    test "$(idp-mcp --version)" = "idp-mcp ${IDP_EMU_VERSION#v}"; \
+    idp-mcp --list-tools >/dev/null; \
+    test -f "${IDP_MCP_CRT_ROM}"; \
+    test -f "${IDP_MCP_GDP_ROM}"; \
+    test -f "${IDP_MCP_CRT_HDD_SEED}"; \
+    test -f "${IDP_MCP_GDP_HDD_SEED}"; \
+    test -f "${IDP_EMU_ROOT}/partner_cmos.bin"; \
+    test -f "${IDP_EMU_ROOT}/assets/fonts/Inter.ttf"; \
+    test -f "${IDP_EMU_ROOT}/assets/icons/mcp.png"; \
+    test -f "${IDP_EMU_ROOT}/docs/COMMAND-LINE.md"; \
+    test -f "${IDP_EMU_ROOT}/docs/PACKAGING.md"; \
+    test -f "${IDP_EMU_ROOT}/docs/release-manifest.txt"; \
+    test -f "${IDP_EMU_ROOT}/.version"; \
+    test -f "${IDP_EMU_ROOT}/.source"; \
+    test -d "${IDP_EMU_ROOT}/shared"; \
+    idp-emu --help >/dev/null; \
     test ! -e /opt/snatch/include; \
     test ! -e /opt/cpmdisk/include; \
     test ! -e /usr/include/cpmdisk; \

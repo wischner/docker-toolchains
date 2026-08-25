@@ -2,10 +2,10 @@
 
 `xcc-z80-idp` is the ready-to-use Iskra Delta Partner development image built
 on [`xcc-z80`](../xcc-z80). It uses XCC's native CP/M 3 runtime by default and
-adds the Partner SDK, full and micro graphics libraries, and disk/font host
-tools.
+adds the Partner SDK, full and micro graphics libraries, disk/font host tools,
+and the complete Partner emulator package with its headless MCP server.
 
-Current image version: `2.3.2`
+Current image version: `2.4.0`
 
 ## Included components
 
@@ -23,6 +23,9 @@ Current image version: `2.3.2`
 - [snatch](https://github.com/retro-vault/snatch) `v1.0.0`, including its
   plugins
 - [cpmdisk](https://github.com/iskra-delta/cpmdisk) `v1.1.0`
+- [idp-emu](https://github.com/iskra-delta/idp-emu) `v1.0.0`: `idp-emu`,
+  `idp-mcp`, `partnerp`, `partnerg`, CMOS seed, CRT/GDP ROMs, Partner P/G
+  system disks, assets, runtime libraries, and documentation
 
 The idp-sdk build deliberately contains only the XCC-built SDK archive and
 public headers. It does **not** include `sdkinit.rel`, `libsdcc-z80.lib`,
@@ -92,7 +95,43 @@ xcc desktop.c -lsdk -lgpx -o desktop.com
 
 No `-I`, `-L`, or `--platform=cpm3` option is required for these examples.
 
-## Partner-compatible emulation
+## Full Partner emulation and MCP
+
+The complete idp-emu 1.0.0 portable runtime is installed under
+`/opt/idp-emu`. `idp-emu` provides cycle-stepped Partner P/CRT and Partner
+G/GDP hardware emulation. `partnerp` and `partnerg` start the corresponding
+model with a per-user writable copy of its packaged system disk.
+
+`idp-mcp` runs the same hardware model invisibly and exposes it to AI clients
+as a stateful MCP server over stdin/stdout. Its tools cover bounded execution,
+stepping and cycle measurement, registers, memory, I/O, breakpoints, keyboard
+input, screen text and PNG capture, video recording, and live media mounting.
+
+Start a ROM-only GDP MCP instance:
+
+```bash
+idp-mcp --model gdp
+```
+
+To boot from the packaged GDP system disk without modifying the read-only
+seed, first copy it into the mounted work directory:
+
+```bash
+cp "$IDP_MCP_GDP_HDD_SEED" ./partner-g.img
+idp-mcp --model gdp --hdd ./partner-g.img
+```
+
+`idp-mcp --list-tools` prints the MCP tool schemas. The server reserves stdout
+for newline-delimited JSON-RPC and sends diagnostics to stderr, so an MCP client
+can launch `/usr/local/bin/idp-mcp` directly inside a running container.
+
+The full upstream runtime layout is retained, including `partner_cmos.bin`,
+both original ROM images, both model-specific system hard disks, the Inter UI
+font, icons, launchers, shared libraries, and command/packaging documentation.
+The paths are rooted at `IDP_EMU_ROOT=/opt/idp-emu`; individual ROM and disk
+seed paths are exported through the `IDP_MCP_*` variables.
+
+## XEMU toolchain target
 
 XEMU defaults to `/etc/xemu/partner.conf`, which models Partner's two 48 KiB
 RAM banks at `0x0000–0xBFFF` and the 16 KiB common region at
@@ -124,6 +163,7 @@ git --version
 snatch --help
 cpmdisk create partner.dsk fdd
 cpmdisk add partner.dsk app.com
+idp-mcp --version
 ```
 
 The snatch executable and its runtime plugins are installed at `/opt/snatch`;
@@ -139,7 +179,7 @@ image an x86-64 image.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.3.2 \
+  wischner/xcc-z80-idp:2.4.0 \
   xcc app.c -lsdk -o app.com
 ```
 
@@ -149,7 +189,7 @@ Open an interactive shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.3.2 \
+  wischner/xcc-z80-idp:2.4.0 \
   bash
 ```
 

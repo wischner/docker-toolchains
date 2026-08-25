@@ -1,8 +1,11 @@
 # SDCC Z80 for Iskra Delta Partner
 
-`sdcc-z80-idp` is a Docker image for building software for the **Iskra Delta Partner** with **SDCC Z80**, packaging files onto Partner-compatible CP/M disks, and using the Partner-oriented runtime and graphics libraries bundled into the image.
+`sdcc-z80-idp` is a Docker image for building software for the **Iskra Delta
+Partner** with **SDCC Z80**, packaging files onto Partner-compatible CP/M
+disks, and running it with the complete Partner emulator or its invisible MCP
+server.
 
-Current image version: `1.2.0`
+Current image version: `1.10.0`
 
 ## What the image contains
 
@@ -14,6 +17,7 @@ Included tools:
 - `ucsim`
 - `cpmdisk`
 - `snatch`
+- `idp-emu`, `idp-mcp`, `partnerp`, `partnerg`
 
 Included runtime content:
 
@@ -28,6 +32,9 @@ Extra application content:
 - `snatch` installed in `/opt/snatch`
 - `snatch` plugins installed in `/opt/snatch/plugins`
 - `SNATCH_PLUGIN_DIR=/opt/snatch/plugins`
+- complete idp-emu 1.0.0 runtime under `/opt/idp-emu`, including the CMOS
+  seed, CRT/GDP ROMs, Partner P/G system hard-disk seeds, UI assets, shared
+  libraries, and upstream documentation
 
 ## How the toolchain is arranged
 
@@ -109,6 +116,56 @@ The image sets:
 SNATCH_PLUGIN_DIR=/opt/snatch/plugins
 ```
 
+### Partner emulator and MCP
+
+[idp-emu](https://github.com/iskra-delta/idp-emu) 1.0.0 is built natively for
+Alpine/musl. The full upstream runtime tree is installed, not only the MCP
+binary:
+
+```text
+/opt/idp-emu/
+  partner_cmos.bin
+  bin/idp-emu
+  bin/idp-mcp
+  bin/partnerp
+  bin/partnerg
+  shared/
+  roms/partner_crt.rom
+  roms/partner_gdp.rom
+  disks/hdd-partner-p-system.img
+  disks/hdd-partner-g-system.img
+  assets/fonts/Inter.ttf
+  assets/icons/
+  docs/
+```
+
+`idp-emu` is the graphical Partner P/CRT and Partner G/GDP emulator.
+`partnerp` and `partnerg` start model-specific system profiles and create
+per-user writable disk copies from the packaged seeds.
+
+`idp-mcp` runs the same cycle-stepped hardware invisibly for AI clients. It
+speaks newline-delimited MCP JSON-RPC over stdin/stdout and exposes bounded
+execution, stepping and cycle measurement, registers, memory, I/O,
+breakpoints, keyboard input, screen text/PNG capture, recording, and media
+mounting.
+
+```bash
+idp-mcp --model gdp
+idp-mcp --list-tools
+```
+
+To boot a system disk through MCP, copy its read-only seed to the mounted work
+directory first:
+
+```bash
+cp "$IDP_MCP_GDP_HDD_SEED" ./partner-g.img
+idp-mcp --model gdp --hdd ./partner-g.img
+```
+
+`IDP_EMU_ROOT` and `IDP_MCP_ROOT` both point to `/opt/idp-emu`; the
+`IDP_MCP_CRT_ROM`, `IDP_MCP_GDP_ROM`, `IDP_MCP_CRT_HDD_SEED`, and
+`IDP_MCP_GDP_HDD_SEED` variables expose the packaged machine resources.
+
 ## Using the image
 
 ### Interactive shell
@@ -117,7 +174,7 @@ SNATCH_PLUGIN_DIR=/opt/snatch/plugins
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   bash
 ```
 
@@ -140,7 +197,7 @@ Compile:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   sdcc -o hello.ihx hello.c
 ```
 
@@ -150,7 +207,7 @@ Convert to a CP/M `.com` file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   sdobjcopy -I ihex -O binary hello.ihx hello.com
 ```
 
@@ -175,7 +232,7 @@ Compile and link:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   sdcc -o demo.ihx demo.c -l ugpx
 ```
 
@@ -187,7 +244,7 @@ Create an empty floppy image:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   cpmdisk create partner-floppy.img idpfdd --label PARTNER --datestamp
 ```
 
@@ -197,7 +254,7 @@ Add a compiled file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   cpmdisk add partner-floppy.img -u 0 hello.com
 ```
 
@@ -207,7 +264,7 @@ Inspect the result:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   cpmdisk info partner-floppy.img
 ```
 
@@ -215,7 +272,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   cpmdisk list partner-floppy.img -u 0
 ```
 
@@ -225,7 +282,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.9.0 \
+  wischner/sdcc-z80-idp:1.10.0 \
   snatch --help
 ```
 

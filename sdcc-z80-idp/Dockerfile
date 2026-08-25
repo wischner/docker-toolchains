@@ -1,23 +1,70 @@
+# syntax=docker/dockerfile:1
+
 # Iskra Delta Partner (IDP) Z80 toolchain on Alpine:
 # - Base: sdcc-z80 (Alpine, includes SDCC + uCsim)
 # - Adds: cpmdisk for Partner-compatible CP/M disk image creation
 # - Replaces SDCC default Z80 includes/libs with library bundles synced into ./libraries
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
+ARG IDP_EMU_VERSION=v1.0.0
+
+# Build the complete idp-emu runtime against musl instead of copying the
+# incompatible Ubuntu/glibc release tree into the Alpine image.
+FROM alpine:3.20 AS idp-emu-builder
+
+ARG IDP_EMU_VERSION
+
+RUN apk add --no-cache \
+    build-base cmake curl-dev git linux-headers make mesa-dev ninja patchelf \
+    libpng-dev python3 sdl2-dev
+
+# Upstream's Linux dependency copier queries glibc's ldconfig cache. Alpine has
+# no such cache; final-image APKs provide the native shared libraries instead.
+RUN set -eux; \
+    git clone --depth=1 --branch "${IDP_EMU_VERSION}" \
+      https://github.com/iskra-delta/idp-emu.git /tmp/idp-emu; \
+    make -C /tmp/idp-emu fetch; \
+    release="${IDP_EMU_VERSION#v}"; \
+    cmake -S /tmp/idp-emu -B /tmp/idp-emu/build -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DIDP_STATIC_RUNTIME=OFF \
+      -DIDP_VERSION="${release}"; \
+    cmake --build /tmp/idp-emu/build --target idp-emu idp-mcp -j"$(nproc)"; \
+    sed -i '1i return()' /tmp/idp-emu/build/fix-linux-rpaths.cmake; \
+    cmake --install /tmp/idp-emu/build --prefix /opt/idp-emu; \
+    printf '%s\n' "${IDP_EMU_VERSION}" > /opt/idp-emu/.version; \
+    printf '%s\n' 'https://github.com/iskra-delta/idp-emu' > /opt/idp-emu/.source; \
+    strip /opt/idp-emu/bin/idp-emu /opt/idp-emu/bin/idp-mcp; \
+    test "$(/opt/idp-emu/bin/idp-mcp --version)" = "idp-mcp ${release}"; \
+    /opt/idp-emu/bin/idp-mcp --list-tools >/dev/null; \
+    /opt/idp-emu/bin/idp-emu --help >/dev/null; \
+    test -f /opt/idp-emu/partner_cmos.bin; \
+    test -f /opt/idp-emu/assets/fonts/Inter.ttf
+
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.9.0
+ARG IMG_VERSION=1.10.0
 ARG CPMDISK_VERSION=latest
 ARG SNATCH_VERSION=latest
+ARG IDP_EMU_VERSION
 
 LABEL org.opencontainers.image.title="sdcc-z80-idp" \
-      org.opencontainers.image.description="SDCC Z80 toolchain for Iskra Delta Partner with cpmdisk and wrapped SDCC Z80 runtime" \
+      org.opencontainers.image.description="SDCC Z80 toolchain for Iskra Delta Partner with wrapped runtime, host tools, and Partner MCP" \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.licenses="GPL-2.0-or-later; see component licenses" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
       org.opencontainers.image.version="${IMG_VERSION}"
 
-# Install dependencies for installing cpmdisk, snatch, and handling library sync
-RUN apk add --no-cache git build-base curl libstdc++ gcompat
+# Install dependencies for cpmdisk, snatch, library sync, and the native MCP.
+RUN apk add --no-cache \
+    git build-base curl gcompat libpng libstdc++ mesa-gl sdl2
+
+COPY --from=idp-emu-builder /opt/idp-emu/ /opt/idp-emu/
+
+RUN set -eux; \
+    ln -s /opt/idp-emu/bin/idp-emu /usr/local/bin/idp-emu; \
+    ln -s /opt/idp-emu/bin/idp-mcp /usr/local/bin/idp-mcp; \
+    ln -s /opt/idp-emu/bin/partnerp /usr/local/bin/partnerp; \
+    ln -s /opt/idp-emu/bin/partnerg /usr/local/bin/partnerg
 
 # Build and install cpmdisk from latest (or pinned) GitHub release tag
 RUN set -e; \
@@ -61,7 +108,13 @@ RUN set -e; \
     rm -rf "${tmp_dir}"
 
 ENV PATH="/opt/sdcc/bin:/opt/snatch:${PATH}" \
-    SNATCH_PLUGIN_DIR="/opt/snatch/plugins"
+    SNATCH_PLUGIN_DIR="/opt/snatch/plugins" \
+    IDP_EMU_ROOT="/opt/idp-emu" \
+    IDP_MCP_ROOT="/opt/idp-emu" \
+    IDP_MCP_CRT_ROM="/opt/idp-emu/roms/partner_crt.rom" \
+    IDP_MCP_GDP_ROM="/opt/idp-emu/roms/partner_gdp.rom" \
+    IDP_MCP_CRT_HDD_SEED="/opt/idp-emu/disks/hdd-partner-p-system.img" \
+    IDP_MCP_GDP_HDD_SEED="/opt/idp-emu/disks/hdd-partner-g-system.img"
 
 # Copy synced library bundles payload
 COPY libraries/ /opt/libraries/
@@ -143,11 +196,29 @@ RUN set -e; \
     cpmdisk --help 2>&1 | head -n2; \
     echo "snatch:"; \
     snatch --help 2>&1 | head -n4; \
+    echo "Partner MCP:"; \
+    idp-mcp --version; \
+    idp-mcp --list-tools >/dev/null; \
     echo "Wrapped SDCC include dir:"; \
     ls -lh /opt/sdcc/share/sdcc/include | head -n 20; \
     echo "Wrapped SDCC lib dir:"; \
     ls -lh /opt/sdcc/share/sdcc/lib/z80 | grep -E 'crt0.rel|z80.lib|ugpx.lib|^total'; \
     test -x /opt/snatch/snatch; \
     test -d /opt/snatch/plugins; \
+    test "$(idp-mcp --version)" = "idp-mcp ${IDP_EMU_VERSION#v}"; \
+    test -f "${IDP_MCP_CRT_ROM}"; \
+    test -f "${IDP_MCP_GDP_ROM}"; \
+    test -f "${IDP_MCP_CRT_HDD_SEED}"; \
+    test -f "${IDP_MCP_GDP_HDD_SEED}"; \
+    test -f "${IDP_EMU_ROOT}/partner_cmos.bin"; \
+    test -f "${IDP_EMU_ROOT}/assets/fonts/Inter.ttf"; \
+    test -f "${IDP_EMU_ROOT}/assets/icons/mcp.png"; \
+    test -f "${IDP_EMU_ROOT}/docs/COMMAND-LINE.md"; \
+    test -f "${IDP_EMU_ROOT}/docs/PACKAGING.md"; \
+    test -f "${IDP_EMU_ROOT}/docs/release-manifest.txt"; \
+    test -f "${IDP_EMU_ROOT}/.version"; \
+    test -f "${IDP_EMU_ROOT}/.source"; \
+    test -d "${IDP_EMU_ROOT}/shared"; \
+    idp-emu --help >/dev/null; \
     test -f /opt/sdcc/share/sdcc/include/gpx/ugpx.h; \
     test -f /opt/sdcc/share/sdcc/lib/z80/ugpx.lib

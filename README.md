@@ -39,8 +39,9 @@ This repository is **actively developed**. Next steps:
   *Use the already-built `retro-vault/xyz` Z80 compiler suite directly in a light Ubuntu image.*
 
 - [**XCC Z80 – Iskra Delta Partner**](./xcc-z80-idp)
-  XCC-based Iskra Delta Partner image layered on the packaged XYZ Z80 toolchain.
-  *A clean scaffold for upcoming Partner-specific headers, libraries, and utilities.*
+  XCC-based Partner toolchain with SDK libraries, host utilities, full idp-emu,
+  and invisible Partner MCP.
+  *Compile, package, emulate, and let AI inspect or run the real Partner hardware model.*
 
 - [**XCC Z80 – ZX Spectrum**](./xcc-z80-zx-spectrum)
   Medium-model XCC with native ZX RAM/ROM targets, libgpx, Beepolix,
@@ -52,8 +53,9 @@ This repository is **actively developed**. Next steps:
   *Convenient defaults/structure for Spectrum projects.*
 
 - [**SDCC Z80 – Iskra Delta Partner**](./sdcc-z80-idp)
-  Z80 toolchain variant tailored for **Iskra Delta Partner** with cpmtools.
-  *CP/M disk image creation and Partner-specific libraries.*
+  SDCC toolchain with Partner SDK/graphics libraries, disk utilities, full
+  idp-emu, and invisible Partner MCP.
+  *A complete Partner compile, package, emulation, and AI-controlled runtime.*
 
 - [**SDCC Z80 – CP/M 3**](./sdcc-z80-cpm3)
   Z80 toolchain variant tailored for **CP/M 3** workflows.
@@ -135,8 +137,13 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80:latest   xcc
 
 ### XCC Z80 – Iskra Delta Partner
 ```bash
-# Use the XCC-based Partner scaffold
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80-idp:latest   xcc hello.c -o hello.xl
+# Compile for Partner CP/M 3
+docker run --rm -it -v "$(pwd)":/work -w /work \
+  wischner/xcc-z80-idp:latest xcc hello.c -o hello.com
+
+# Let an MCP client control the full Partner GDP hardware model
+docker run --rm -i -v "$(pwd)":/work -w /work \
+  wischner/xcc-z80-idp:latest idp-mcp --model gdp
 ```
 
 ### XCC Z80 – ZX Spectrum
@@ -150,10 +157,16 @@ docker run --rm -it -v "$(pwd)":/work -w /work \
 ### SDCC Z80 – Iskra Delta Partner
 ```bash
 # Compile with Partner libraries and headers
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80-idp:latest   idp-sdcc -o program.ihx program.c
+docker run --rm -it -v "$(pwd)":/work -w /work \
+  wischner/sdcc-z80-idp:latest sdcc -o program.ihx program.c
 
 # Create CP/M disk image
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80-idp:latest   mkfs.cpm -f partner disk.img
+docker run --rm -it -v "$(pwd)":/work -w /work \
+  wischner/sdcc-z80-idp:latest cpmdisk create partner.img idpfdd
+
+# Start the invisible Partner MCP server
+docker run --rm -i -v "$(pwd)":/work -w /work \
+  wischner/sdcc-z80-idp:latest idp-mcp --model gdp
 ```
 
 ### GCC m68k
