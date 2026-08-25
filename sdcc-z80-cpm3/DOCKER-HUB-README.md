@@ -1,5 +1,7 @@
 # SDCC Z80 for CP/M 3
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/sdcc-z80-cpm3` is a Docker image for building **CP/M 3 software** with **SDCC Z80**, packaging files onto CP/M disk images, and using a CP/M 3 oriented runtime that is already installed into the standard SDCC search paths.
 
 It extends `wischner/sdcc-z80` with CP/M-specific runtime content and disk image tooling, so it is useful both as a compiler image and as a complete CP/M 3 packaging environment.
@@ -149,7 +151,7 @@ Use `wischner/sdcc-z80-cpm3` when you want CP/M 3 specific runtime content and d
 
 Use `wischner/sdcc-z80` when you only want the generic SDCC Z80 compiler/simulator environment.
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

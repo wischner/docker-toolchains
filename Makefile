@@ -16,9 +16,9 @@ help:
 	@echo "Targets:"
 	@echo "  make list                 # list detected toolchains"
 	@echo "  make build-all            # build all images (:latest and :<per-image IMG_VERSION>)"
-	@echo "  make push-all             # push all images (:latest and :<per-image IMG_VERSION>)"
+	@echo "  make push-all             # push all images and Docker Hub overviews"
 	@echo "  make build-<dir>          # build specific dir"
-	@echo "  make push-<dir>           # push specific dir"
+	@echo "  make push-<dir>           # push image tags and its Docker Hub overview"
 	@echo "  make print-versions       # show effective versions per dir"
 
 list:
@@ -91,7 +91,12 @@ push-%:
 	  docker tag $(ORG)/$$d:latest $(ORG)/$$d:$$EFF; \
 	fi; \
 	echo "==> Pushing $(ORG)/$$d:latest"; docker push $(ORG)/$$d:latest; \
-	echo "==> Pushing $(ORG)/$$d:$$EFF"; docker push $(ORG)/$$d:$$EFF
+	echo "==> Pushing $(ORG)/$$d:$$EFF"; docker push $(ORG)/$$d:$$EFF; \
+	if [ -f "$$d/DOCKER-HUB-README.md" ]; then \
+	  echo "==> Pushing Docker Hub overview for $(ORG)/$$d"; \
+	  ./scripts/push-dockerhub-description.sh \
+	    "$(ORG)/$$d" "$$d/DOCKER-HUB-README.md"; \
+	fi
 
 clean:
 	@echo "Pruning dangling images and builder cache..."

@@ -1,5 +1,7 @@
 # GCC x86_64 Linux Open Motif Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-linux-motif` is a reusable Ubuntu 22.04 based Docker image for **native Linux desktop development with X11 and Open Motif**.
 
 It is designed for legacy Motif applications, UIL-based workflows, and Motif/OpenGL desktop software that still targets classic X11 environments.
@@ -94,7 +96,7 @@ docker run --rm -it \
 - `wischner/gcc-x86_64-linux-x11` for the general X11/OpenGL Linux desktop base
 - `wischner/gcc-x86_64-linux-sdl` for SDL2 and SDL3 Linux desktop development
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

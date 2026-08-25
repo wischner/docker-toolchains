@@ -1,5 +1,7 @@
 # GCC x86_64 Haiku Cross-Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-haiku` is a Docker image for **cross-compiling Haiku applications** from Linux to the `x86_64-unknown-haiku` target.
 
 It includes a full Haiku-oriented cross-toolchain with sysroot, runtime libraries, development headers, and Jam, so it can build and link complete Haiku executables.
@@ -159,7 +161,7 @@ make docker
 - `HAIKU_SOURCE=/opt/haiku-buildtools/haiku`
 - `HAIKU_SYSROOT=/opt/haiku-buildtools/build/cross-tools-x86_64/sysroot`
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

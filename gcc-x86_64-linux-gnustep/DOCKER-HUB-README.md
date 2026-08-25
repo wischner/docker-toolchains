@@ -1,5 +1,7 @@
 # GCC x86_64 Linux GNUstep Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-linux-gnustep` is a reusable Ubuntu 22.04 based Docker image for **native Linux desktop development with X11 and GNUstep**.
 
 It is designed for GNUstep Foundation and AppKit projects, Objective-C and Objective-C++ applications, `gnustep-make` based builds, and classic GNUstep GUI workflows with Gorm and ProjectCenter.
@@ -82,7 +84,7 @@ docker run --rm -it \
 - `wischner/gcc-x86_64-linux-motif` for Open Motif based X11 development
 - `wischner/gcc-x86_64-linux-sdl` for SDL2 and SDL3 Linux desktop development
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

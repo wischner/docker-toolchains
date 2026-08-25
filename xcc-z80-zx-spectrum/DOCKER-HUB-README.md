@@ -1,5 +1,7 @@
 # XCC Z80 for ZX Spectrum
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 Ubuntu 24.04 development image for the ZX Spectrum 48K. It combines the XCC
 2.3.2 medium-model C23 toolchain with native RAM and ROM platforms, the ZX
 backend of libgpx, Beepolix, ZX Spectrum MCP, and snatch.

@@ -1,5 +1,7 @@
 # SDCC Z80 for Iskra Delta Partner
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/sdcc-z80-idp` is a Docker image for **Iskra Delta Partner**
 development with SDCC, CP/M disk tooling, Partner-specific runtime libraries,
 and the complete Partner emulator/MCP package.
@@ -94,7 +96,7 @@ attaching it directly to MCP so the guest writes to the copy.
 - `IDP_MCP_CRT_HDD_SEED=/opt/idp-emu/disks/hdd-partner-p-system.img`
 - `IDP_MCP_GDP_HDD_SEED=/opt/idp-emu/disks/hdd-partner-g-system.img`
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

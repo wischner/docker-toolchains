@@ -1,5 +1,7 @@
 # SDCC Z80 for ZX Spectrum
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/sdcc-z80-zx-spectrum` is a Docker image for **ZX Spectrum development** with SDCC plus Spectrum-specific tooling and emulation support.
 
 It extends the generic Z80 image with Fuse, `libspectrum`, conversion helpers, and a workflow that is friendly to both RAM-loaded and ROM-based Spectrum software.
@@ -66,7 +68,7 @@ docker run --rm -it \
 - This image does not force a Spectrum-specific runtime model on your program.
 - For ROM targets and special hardware initialization, you are expected to provide your own `crt0.rel`.
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

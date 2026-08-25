@@ -1,5 +1,7 @@
 # GCC x86_64 Linux SDL Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-linux-sdl` is a ready-to-use Ubuntu 22.04 Docker image for **SDL-based Linux desktop development**.
 
 It combines the standard GCC/CMake toolchain with X11, Mesa/OpenGL, SDL2, SDL2_image, SDL2_mixer, SDL2_ttf, and SDL3 so you can build modern Linux game and multimedia projects in a reproducible environment.
@@ -76,7 +78,7 @@ docker run --rm -it \
 
 - `wischner/gcc-x86_64-linux-x11` for a non-SDL Linux desktop/X11 base image
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

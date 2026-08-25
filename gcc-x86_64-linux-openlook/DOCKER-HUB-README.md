@@ -1,5 +1,7 @@
 # GCC x86_64 Linux OpenLook / XView Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-linux-openlook` is a reusable Ubuntu 22.04 based Docker image for **native Linux desktop development with X11, OpenLook, and XView**.
 
 It is designed for legacy OpenLook desktop software, XView applications, and
@@ -75,7 +77,7 @@ docker run --rm -it \
 - `wischner/gcc-x86_64-linux-motif` for Open Motif based X11 development
 - `wischner/gcc-x86_64-linux-gnustep` for GNUstep based desktop development
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

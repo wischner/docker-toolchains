@@ -1,5 +1,7 @@
 # GCC x86_64 Windows MinGW-w64 Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-windows-mingw-w64` is a ready-to-use Ubuntu 22.04 Docker image for **cross-compiling Windows x64 applications** from Linux.
 
 It provides the MinGW-w64 GNU toolchain (`x86_64-w64-mingw32-*`) plus practical packaging/signing/testing helpers for CI and release workflows.
@@ -62,7 +64,7 @@ docker run --rm \
 - `wischner/gcc-x86_64-linux-x11`
 - `wischner/gcc-x86_64-linux-sdl`
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

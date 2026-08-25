@@ -1,5 +1,7 @@
 # SDCC Z80 Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/sdcc-z80` is a Docker image for **Z80 C development** with SDCC and the bundled Z80 simulator.
 
 It is intended as a lean, reusable base for retro Z80 projects and for higher-level target-specific images in the Wischner toolchain family.
@@ -61,7 +63,7 @@ docker run --rm \
 - `wischner/sdcc-z80-cpm3`
 - `wischner/sdcc-z80-idp`
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>

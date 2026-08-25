@@ -1,5 +1,7 @@
 # GCC x86_64 Linux Window Maker / WINGs Toolchain
 
+**Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
+
 `wischner/gcc-x86_64-linux-window-maker` is a complete Ubuntu 22.04 based
 Docker image for native **Window Maker** and **WINGs** development.
 
@@ -39,8 +41,7 @@ docker run --rm \
 The source used to build the image remains available through
 `$WINDOW_MAKER_SOURCE` (`/usr/local/src/window-maker`).
 
-## Support
+## CONTRIBUTE
 
-Issues and pull requests are welcome:
+Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>
-

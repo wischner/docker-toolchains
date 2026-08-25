@@ -273,10 +273,15 @@ Build all (tags `:latest` and `:${IMG_VER}`):
 make build-all
 ```
 
-Push all to Docker Hub (override org/version as needed):
+Push all image tags and their matching `DOCKER-HUB-README.md` overviews to
+Docker Hub (override org/version as needed):
 ```bash
 make push-all ORG=wischner IMG_VER=1.1.0
 ```
+
+Overview publishing reuses credentials from `docker login`. In CI, set
+`DOCKERHUB_USERNAME` together with `DOCKERHUB_TOKEN` (or
+`DOCKERHUB_PASSWORD`) instead. The host must provide `curl` and `jq`.
 
 Per‑toolchain build arguments can be placed in `<toolchain>/build.args` (one `KEY=VAL` per line).  
 They are passed automatically as `--build-arg KEY=VAL` during `docker build`.
