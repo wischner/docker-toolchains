@@ -12,7 +12,7 @@ SDCC Z80-only cross-compiler environment and the Z80 simulator. Intended for bar
 - `xlink`, `xdbg`, and `xdbg-z80` from [retro-vault/xyz](https://github.com/retro-vault/xyz)
 - `libxdbg*.a`, `libxdbgstub.a`, and the `xdbg` / `xdbgstub` public headers in `/usr/local`
 - [DDD](https://www.gnu.org/software/ddd/) 3.4.x (graphical front-end for gdb/sdcdb)
-- Build tools: `make`, `git`
+- Build tools: `make`, `git`, `python3`
 
 ## Using this image as your compiler (no interactive shell)
 
@@ -54,6 +54,9 @@ The most reliable workflow is running `xdbg` directly in a terminal. DDD can als
 The bundled **uCsim/`sz80`** simulator is still separate and is not driven by DDD directly.
 
 ## Changelog
+
+### 1.6.0
+- Added Python 3 to the common toolchain environment.
 
 ### 1.5.0
 - Updated the bundled `retro-vault/xyz` host tools from `v1.2.0` to `v1.3.0`.

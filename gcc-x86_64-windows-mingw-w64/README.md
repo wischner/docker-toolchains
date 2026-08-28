@@ -15,6 +15,7 @@ This image provides the canonical `x86_64-w64-mingw32-*` toolchain, CMake/Make w
 - MinGW-w64 development headers and runtime import libraries
 - CMake, Make, pkg-config
 - GDB and GDB MinGW
+- Python 3
 - Wine64 for quick executable smoke tests
 - NSIS installer builder (`makensis`)
 - `osslsigncode` for Authenticode signing workflows

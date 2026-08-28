@@ -3,14 +3,14 @@
 **Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
 
 `wischner/xcc-z80-idp` is a Linux x86-64 development image for the Iskra
-Delta Partner. It provides XCC Z80 2.3.2, the public Partner SDK, two graphics
+Delta Partner. It provides XCC Z80 2.5.0, the public Partner SDK, two graphics
 library choices, the complete Partner emulator and MCP runtime, a
 Partner-compatible XEMU memory map, Snatch, and cpmdisk.
 
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.4.0
+export IMAGE=wischner/xcc-z80-idp:2.5.0
 ```
 
 ## Quick start
@@ -59,15 +59,15 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 
 | Component | Version or policy |
 | --- | --- |
-| XCC Z80 | 2.3.2 |
+| XCC Z80 | 2.5.0 |
 | XCC targets | `cpm3` (default) and `emu` |
 | Build tools | GNU Make, CMake, and Git |
 | IDP SDK | Latest `main` at image build time |
-| Partner libgpx | 0.2.0 |
+| Partner libgpx | current `main` |
 | idp-udev ugpx | Latest `main` at image build time |
 | Snatch | 1.0.0, executable and plugins only |
 | cpmdisk | 1.1.0, executable and runtime library only |
-| Partner emulator and MCP | idp-emu 1.0.0 complete portable runtime |
+| Partner emulator and MCP | idp-emu 1.1.0 complete portable runtime |
 
 The resolved idp-udev and idp-sdk revisions are recorded in
 `/opt/idp/share/metadata/idp-udev.version` and
@@ -251,3 +251,8 @@ XCC's Z80 target headers and native CP/M 3 runtime remain installed.
 - [Snatch](https://github.com/retro-vault/snatch)
 - [cpmdisk](https://github.com/iskra-delta/cpmdisk)
 - [idp-emu and idp-mcp](https://github.com/iskra-delta/idp-emu)
+
+## CONTRIBUTE
+
+Contributions are welcome. Please open an issue or pull request:
+<https://github.com/wischner/docker-toolchains>

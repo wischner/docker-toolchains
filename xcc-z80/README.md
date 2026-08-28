@@ -12,9 +12,11 @@ In practice this gives you:
 - `xcc` as the medium-model C23 compiler driver (`float` and 32-bit `long`,
   without `double`, `long long`, or floating-point stdio)
 - `xas`, `xld`, `xar`, and `xobjcopy`
-- `xprog` for XL process/service images and ZX Spectrum TAP/TZX packaging
+- `xprog` for XL process/service images, ZX Spectrum TAP/TZX packaging, and
+  Amstrad CPC CDT tape and DSK disk packaging
 - `xgdb` and `xemu` for debugging, plus an `xgdb-z80` compatibility alias
-- a staged Z80 target runtime under `z80/include` and `z80/lib`
+- a staged Z80 target runtime under `z80/include` and `z80/lib`, including the
+  `cpm3`, `zx-ram`, `zx-rom`, `cpc-464`, `cpc-664`, and `cpc-6128` platforms
 
 ## Installed components
 
@@ -22,6 +24,7 @@ In practice this gives you:
 - Tool binaries in `/opt/x/bin`
 - Host SDK headers and libs in `/opt/x/include` and `/opt/x/lib`
 - Target headers and runtime in `/opt/x/z80/include` and `/opt/x/z80/lib`
+- Python 3 for build and project scripting
 
 The image just adds `/opt/x/bin` to `PATH`. No extra environment variables are
 required. It runs as a non-root user by default. For compatibility with older
@@ -60,6 +63,20 @@ docker run --rm -it \
   xcc --oformat=binary -Ttext=0x8000 hello.c -o hello.bin
 ```
 
+Build an Amstrad CPC cassette program and wrap it as a `.cdt`:
+
+```bash
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/xcc-z80:latest \
+  sh -c 'xcc -Os --platform=cpc-464 --oformat=binary hello.c -o hello.bin \
+         && xprog --cdt hello.bin --name HELLO -o hello.cdt'
+```
+
+For a complete Amstrad CPC environment with libgpx, an emulator/MCP server,
+and the standard disk, graphics, and compression tools, use
+[`wischner/xcc-z80-cpc`](../xcc-z80-cpc) instead.
+
 ## Upstream source
 
 The Dockerfile compiles `retro-vault/xyz` in a builder stage and copies only
@@ -71,8 +88,8 @@ Z80 toolchains. It keeps `float` and 32-bit `long` support while omitting the
 larger `double`, `long long`, and floating-point stdio payloads:
 
 ```text
-IMG_VERSION=2.3.2
-XYZ_VERSION=2.3.2
+IMG_VERSION=2.5.0
+XYZ_VERSION=2.5.0
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,

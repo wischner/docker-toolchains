@@ -22,5 +22,10 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-gemix:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs gemix)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs gemix)'
 ```
+
+## CONTRIBUTE
+
+Contributions are welcome. Please open an issue or pull request:
+<https://github.com/wischner/docker-toolchains>

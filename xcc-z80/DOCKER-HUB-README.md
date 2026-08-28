@@ -17,10 +17,12 @@ Inside the image you get:
 - `xopt` for post-generation assembly optimization
 - `xar` for static libraries
 - `xobjcopy` for object and archive conversion
-- `xprog` for XL process/service images and ZX Spectrum TAP/TZX packaging
+- `xprog` for XL process/service images, ZX Spectrum TAP/TZX packaging, and
+  Amstrad CPC CDT/DSK packaging
 - `xgdb` and `xemu` for source-level debugging, plus an `xgdb-z80` compatibility alias
 - target headers and runtime in `/opt/x/z80/include` and `/opt/x/z80/lib`
 - host-side SDK headers and libraries in `/opt/x/include` and `/opt/x/lib`
+- Python 3 for build and project scripting
 
 `/opt/x/bin` is already on `PATH`, so the tools are ready to use without extra
 setup. `/opt/xtools` is also kept as a compatibility symlink to `/opt/x`.
@@ -295,3 +297,8 @@ docker run --rm -it \
   wischner/xcc-z80:latest \
   xgdb --exec hello.xl --cdb hello.cdb --remote host.docker.internal:9000
 ```
+
+## CONTRIBUTE
+
+Contributions are welcome. Please open an issue or pull request:
+<https://github.com/wischner/docker-toolchains>

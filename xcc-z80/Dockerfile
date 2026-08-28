@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.3.2
+ARG IMG_VERSION=2.5.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.3.2
+ARG XYZ_VERSION=2.5.0
 
 # Build the medium-model toolchain locally. Derived images depend on this image,
 # so its build must not require the same version to be published first.
@@ -46,9 +46,9 @@ RUN set -eux; \
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.3.2
+ARG IMG_VERSION=2.5.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.3.2
+ARG XYZ_VERSION=2.5.0
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite medium-model Linux bundle with xcc, xas, xld, xprog, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \
@@ -97,7 +97,12 @@ RUN set -eux; \
     test -f /opt/x/z80/lib/libzx-ram.a; \
     test -f /opt/x/z80/lib/libzx-rom.a; \
     test -f /opt/x/z80/lib/linker-zx-ram.ld; \
-    test -f /opt/x/z80/lib/linker-zx-rom.ld
+    test -f /opt/x/z80/lib/linker-zx-rom.ld; \
+    for cpc in cpc-464 cpc-664 cpc-6128; do \
+      test -f "/opt/x/z80/lib/crt0-${cpc}.rel"; \
+      test -f "/opt/x/z80/lib/lib${cpc}.a"; \
+      test -f "/opt/x/z80/lib/linker-${cpc}.ld"; \
+    done
 
 RUN mkdir -p /work && chown -R ubuntu:ubuntu /work /home/ubuntu
 
@@ -127,6 +132,15 @@ RUN set -eux; \
     xcc /tmp/medium-model.c -o /tmp/medium-model.xl; \
     xcc -c /tmp/hello.c -o /tmp/hello.rel; \
     xcc --oformat=binary -Ttext=0x8000 /tmp/hello.c -o /tmp/hello.bin; \
+    for cpc in cpc-464 cpc-664 cpc-6128; do \
+      xcc -Os "--platform=${cpc}" --oformat=binary /tmp/hello.c -o "/tmp/hello-${cpc}.bin"; \
+      test -s "/tmp/hello-${cpc}.bin"; \
+    done; \
+    xprog --cdt /tmp/hello-cpc-464.bin --name HELLO -o /tmp/hello.cdt; \
+    xprog --dsk /tmp/hello-cpc-6128.bin --name HELLO.BIN -o /tmp/hello.dsk; \
+    test -s /tmp/hello.cdt; \
+    test -s /tmp/hello.dsk; \
+    rm -f /tmp/hello-cpc-464.bin /tmp/hello-cpc-664.bin /tmp/hello-cpc-6128.bin /tmp/hello.cdt /tmp/hello.dsk; \
     test -s /tmp/hello.bin; \
     test -s /tmp/medium-model.xl; \
     test -s /tmp/hello.rel; \

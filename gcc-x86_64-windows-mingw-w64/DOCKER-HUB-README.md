@@ -12,6 +12,7 @@ It provides the MinGW-w64 GNU toolchain (`x86_64-w64-mingw32-*`) plus practical 
 - MinGW-w64 binutils and development headers/libs
 - CMake, Make, pkg-config
 - GDB + GDB MinGW
+- Python 3
 - Wine64
 - NSIS (`makensis`)
 - `osslsigncode`

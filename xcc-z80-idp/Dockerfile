@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:2.3.2
+ARG BASE_IMAGE=wischner/xcc-z80:2.5.0
 
 # Stage the complete published idp-emu tree: GUI emulator, headless MCP,
 # launchers, CMOS seed, ROMs, system disks, assets, shared libraries, and docs.
 FROM ubuntu:24.04 AS idp-emu-builder
 
-ARG IDP_EMU_VERSION=v1.0.0
-ARG IDP_EMU_SHA256=becbc1d076e029c7f8cd75e39b11a8287f6b3c17d9ba9b4b8b8bed84a640e3dc
+ARG IDP_EMU_VERSION=v1.1.0
+ARG IDP_EMU_SHA256=7c27201baf6a1014ace95c658a3f13ee07af32ca2df33564394d2075eefc7a3e
 
 RUN set -eux; \
     apt-get update; \
@@ -35,13 +35,15 @@ RUN set -eux; \
 # self-contained and use the same object/archive formats as the base image.
 FROM ${BASE_IMAGE} AS library-builder
 
-ARG LIBGPX_VERSION=v0.2.0
+ARG LIBGPX_REF=main
 ARG IDP_UDEV_REF=main
 
 USER root
 
-# Follow idp-udev and idp-sdk's current main branches. Keeping their Git
-# directories lets the build record the exact revisions included in the image.
+# Follow libgpx, idp-udev, and idp-sdk's current main branches. Keeping their
+# Git directories lets the build record the exact revisions included in the
+# image, and BuildKit re-resolves each ref on every build.
+ADD --keep-git-dir=true https://github.com/retro-vault/libgpx.git#${LIBGPX_REF} /tmp/libgpx
 ADD --keep-git-dir=true https://github.com/iskra-delta/idp-udev.git#${IDP_UDEV_REF} /tmp/idp-udev
 ADD --keep-git-dir=true https://github.com/iskra-delta/idp-sdk.git#main /tmp/idp-sdk
 
@@ -51,20 +53,19 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*; \
     mkdir -p /opt/idp/include /opt/idp/lib /opt/idp/share/licenses /opt/idp/share/metadata; \
     tmp_dir="$(mktemp -d)"; \
-    curl -fsSL -o "${tmp_dir}/libgpx.tar.gz" \
-      "https://github.com/retro-vault/libgpx/archive/refs/tags/${LIBGPX_VERSION}.tar.gz"; \
-    mkdir -p "${tmp_dir}/libgpx" "${tmp_dir}/libgpx-obj"; \
-    tar -xzf "${tmp_dir}/libgpx.tar.gz" -C "${tmp_dir}/libgpx" --strip-components=1; \
-    for src in "${tmp_dir}"/libgpx/src/partner/*.s; do \
+    mkdir -p "${tmp_dir}/libgpx-obj"; \
+    test -d /tmp/libgpx/src/partner; \
+    for src in /tmp/libgpx/src/partner/*.s; do \
       name="$(basename "${src}" .s)"; \
       xas -g -o "${tmp_dir}/libgpx-obj/${name}.rel" "${src}"; \
     done; \
     xar --mode=gnu rcs /opt/idp/lib/libgpx.a "${tmp_dir}"/libgpx-obj/*.rel; \
     ln -s libgpx.a /opt/idp/lib/libgpx.lib; \
-    install -m 0644 "${tmp_dir}/libgpx/include/libgpx.h" /opt/idp/include/libgpx.h; \
+    install -m 0644 /tmp/libgpx/include/libgpx.h /opt/idp/include/libgpx.h; \
     mkdir -p /opt/idp/share/licenses/libgpx; \
-    install -m 0644 "${tmp_dir}/libgpx/LICENSE" /opt/idp/share/licenses/libgpx/LICENSE; \
-    printf '%s\n' "${LIBGPX_VERSION}" > /opt/idp/share/metadata/libgpx.version; \
+    install -m 0644 /tmp/libgpx/LICENSE /opt/idp/share/licenses/libgpx/LICENSE; \
+    git -C /tmp/libgpx rev-parse HEAD > /opt/idp/share/metadata/libgpx.version; \
+    printf '%s\n' 'https://github.com/retro-vault/libgpx' > /opt/idp/share/metadata/libgpx.source; \
     mkdir -p "${tmp_dir}/idp-udev-obj"; \
     for src in /tmp/idp-udev/src/ugpx/*.c; do \
       name="$(basename "${src}" .c)"; \
@@ -105,14 +106,14 @@ RUN set -eux; \
     git -C /tmp/idp-sdk rev-parse HEAD > /opt/idp/share/metadata/idp-sdk.version; \
     test ! -e /opt/idp/lib/libcpm3-z80.lib; \
     test ! -e /opt/idp/lib/libsdcc-z80.lib; \
-    rm -rf "${tmp_dir}" /tmp/idp-udev /tmp/idp-sdk
+    rm -rf "${tmp_dir}" /tmp/libgpx /tmp/idp-udev /tmp/idp-sdk
 
-# XEMU 2.3.2 can model Partner's RAM windows, but upstream port rules derive
+# XEMU 2.5.0 can model Partner's RAM windows, but upstream port rules derive
 # selectors from the transferred byte. Partner selects its banks by the I/O
 # port address and ignores that byte, so add fixed selector values for IN/OUT.
 FROM ${BASE_IMAGE} AS emulator-builder
 
-ARG XYZ_VERSION=2.3.2
+ARG XYZ_VERSION=2.5.0
 
 USER root
 
@@ -142,12 +143,12 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.4.0
-ARG XYZ_VERSION=2.3.2
-ARG LIBGPX_VERSION=v0.2.0
+ARG IMG_VERSION=2.5.0
+ARG XYZ_VERSION=2.5.0
+ARG LIBGPX_REF=main
 ARG SNATCH_VERSION=v1.0.0
 ARG CPMDISK_VERSION=v1.1.0
-ARG IDP_EMU_VERSION=v1.0.0
+ARG IDP_EMU_VERSION=v1.1.0
 
 LABEL org.opencontainers.image.title="xcc-z80-idp" \
       org.opencontainers.image.description="XCC Z80 CP/M 3 toolchain for Iskra Delta Partner with the Partner SDK, graphics libraries, host tools, and Partner MCP." \

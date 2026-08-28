@@ -51,3 +51,8 @@ See the repository README for runtime selection and CPU flags:
 
 Kickstart ROMs and Workbench media are not included. Use licensed media with a
 real Amiga or an external full-system emulator for chipset-level testing.
+
+## CONTRIBUTE
+
+Contributions are welcome. Please open an issue or pull request:
+<https://github.com/wischner/docker-toolchains>

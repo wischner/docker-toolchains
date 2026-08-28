@@ -30,7 +30,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-gemix:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs gemix)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs gemix)'
 ```
 
 Compile when you also need the Linux platform helpers directly:
@@ -40,7 +40,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-gemix:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs gemix gemix-platform-linux)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs gemix gemix-platform-linux)'
 ```
 
 ## Running GEMix applications

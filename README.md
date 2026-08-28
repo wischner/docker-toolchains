@@ -1,22 +1,24 @@
 # Wischner Ltd. Docker Toolchains
 
-This repository contains a collection of **cross-compilation toolchains** packaged as Docker images.  
-Each image provides a ready-to-use compiler and related tools for retrocomputing, embedded, or bare‑metal development.
+This repository contains a collection of native and cross-compilation
+**toolchains packaged as Docker images**. Each image provides a ready-to-use
+compiler and related tools for retrocomputing, embedded, bare-metal, or desktop
+development.
 
 All images are published under the `wischner` namespace on Docker Hub.
 Every image includes Python 3, available as `python3`.
 
-> **Tip:** Pin specific tags (e.g. `:1.1.0`) instead of `:latest` to get repeatable builds.
+> **Tip:** Pin a numbered image tag instead of `:latest` for repeatable builds.
 
 ---
 
-## Project status & roadmap
+## Release policy
 
-This repository is **actively developed**. Next steps:
-- Improve the repository’s **Scout health score**.
-- **Stabilize** the ARM (`gcc-arm-none-eabi`) and **m68k** packages.
-- The **Z80** packages (`sdcc-z80`, `sdcc-z80-zx-spectrum`) are **stable** today.
-- After stabilization, all images will be released as **`2.0.0`**.
+The images are actively maintained and versioned independently. Each
+toolchain's authoritative image version and pinned component revisions live in
+its `build.args`; run `make print-versions` to see all effective image versions.
+The `latest` tag moves with each published release, while numbered tags remain
+available for reproducible builds.
 
 ---
 
@@ -48,6 +50,12 @@ This repository is **actively developed**. Next steps:
   ZX Spectrum MCP, and snatch.
   *A complete compile, package, graphics, music, asset, and headless-emulation workflow.*
 
+- [**XCC Z80 – Amstrad CPC**](./xcc-z80-cpc)
+  Medium-model XCC with native CPC 464/664/6128 firmware targets, CDT and DSK
+  packaging, libgpx, an emulator with an Amstrad CPC MCP, and the standard
+  disk, graphics, and compression tools.
+  *Compile, package, convert, compress, emulate, and let AI drive a real CPC model.*
+
 - [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)
   Z80 toolchain variant tailored for **ZX Spectrum** builds.
   *Convenient defaults/structure for Spectrum projects.*
@@ -74,6 +82,11 @@ This repository is **actively developed**. Next steps:
 - [**GCC x86_64 Linux X11**](./gcc-x86_64-linux-x11)
   GCC x86_64 toolchain with **X11**, original **Athena widgets (libXaw)**, OpenGL (Mesa), image/font tooling, Xephyr, and Xvfb on Ubuntu 22.04.
   *Native X11/OpenGL development and reusable Linux desktop base image.*
+
+- [**GCC x86_64 GEMix**](./gcc-x86_64-gemix)
+  GCC x86_64 toolchain layered on the X11 image with the hosted **GEMix**
+  headers, shared libraries, pkg-config metadata, fonts, and runtime resources.
+  *Build and run DRI GEM applications natively on Linux.*
 
 - [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)
   GCC x86_64 toolchain layered on the X11 image with the complete shared/static **Open Motif** SDK, `uil`, `mwm`, GLw, CMake/pkg-config metadata, and contained Xephyr testing.
@@ -107,17 +120,26 @@ This repository is **actively developed**. Next steps:
 
 ## Usage
 
-Each image mounts your current working directory into `/work` inside the container.
+The examples mount your current working directory at `/work` in the container.
 
 ### ARM bare‑metal (generic)
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi:1.2.0   arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -o app.elf app.c
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi:1.2.0 \
+  arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -Os \
+    -ffunction-sections -fdata-sections \
+    -Wl,--gc-sections -nostartfiles -specs=nosys.specs \
+    -o app.elf app.c
 ```
 
 ### Raspberry Pi Pico / Pico W (RP2040)
 ```bash
 # Interactive shell (with USB passthrough for flashing/debug)
-docker run --rm -it   --privileged -v /dev/bus/usb:/dev/bus/usb   -v "$(pwd)":/work -w /work   wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 bash
+docker run --rm -it --privileged \
+  -v /dev/bus/usb:/dev/bus/usb \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-arm-none-eabi-rpi-pico:1.2.0 bash
 
 # Build a project (SDK baked at /opt/pico-sdk)
 cmake -S . -B build -DPICO_SDK_PATH=/opt/pico-sdk -DPICO_BOARD=pico_w
@@ -126,13 +148,37 @@ cmake --build build -j
 
 ### SDCC Z80
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/sdcc-z80:latest   sdcc -mz80 -o hello.ihx hello.c
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/sdcc-z80:latest \
+  sdcc -mz80 -o hello.ihx hello.c
+```
+
+### SDCC Z80 – ZX Spectrum
+```bash
+# Build a RAM-loaded program and package it as a TAP image
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/sdcc-z80-zx-spectrum:latest \
+  sh -lc 'sdcc --code-loc 0x8000 --no-std-crt0 -DSPECTRUM crt0.rel hello.c && ihx2tap hello.ihx'
+```
+
+### SDCC Z80 – CP/M 3
+```bash
+# Compile a CP/M program and add it to a new disk image
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/sdcc-z80-cpm3:latest \
+  sh -lc 'sdcc -o hello.ihx hello.c && sdobjcopy -I ihex -O binary hello.ihx hello.com && cpmdisk create cpm3.img idpfdd && cpmdisk add cpm3.img -u 0 hello.com'
 ```
 
 ### XCC Z80
 ```bash
 # Build a relocatable XL image with xcc
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/xcc-z80:latest   xcc hello.c -o hello.xl
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/xcc-z80:latest \
+  xcc hello.c -o hello.xl
 ```
 
 ### XCC Z80 – Iskra Delta Partner
@@ -171,90 +217,158 @@ docker run --rm -i -v "$(pwd)":/work -w /work \
 
 ### GCC m68k
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k:latest   m68k-elf-g++ -std=c++23 -ffreestanding -c hello.cpp -o hello.o
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-m68k:latest \
+  m68k-elf-g++ -std=c++23 -ffreestanding -c hello.cpp -o hello.o
 ```
 
 ### GCC m68k AmigaOS
 ```bash
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k-amiga:latest   m68k-amigaos-g++ -std=c++23 -Os hello.cpp -o hello
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-m68k-amiga:latest \
+  m68k-amigaos-g++ -std=c++23 -Os hello.cpp -o hello
 
 # CMake uses the toolchain file exported by the image
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-m68k-amiga:latest   bash -lc 'cmake -S . -B build-amiga -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN_FILE" && cmake --build build-amiga -j'
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-m68k-amiga:latest \
+  bash -lc 'cmake -S . -B build-amiga -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN_FILE" && cmake --build build-amiga -j'
 ```
 
 ### GCC x86_64 Linux X11
 ```bash
 # Compile an X11/OpenGL application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-x11:latest   gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-x11:latest \
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)'
+```
+
+### GCC x86_64 GEMix
+```bash
+# Compile against the complete hosted GEMix SDK
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-gemix:latest \
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs gemix)'
 ```
 
 ### GCC x86_64 Linux Open Motif
 ```bash
 # Compile a Motif application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs xm)'
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-motif:latest \
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs xm)'
 
 # Compile a UIL file
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   uil layout.uil -o layout.uid
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-motif:latest \
+  uil layout.uil -o layout.uid
 
 # Run the resulting GUI under mwm in a contained Xephyr session
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-motif:latest   motif-xephyr ./app
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-motif:latest \
+  motif-xephyr ./app
 ```
 
 ### GCC x86_64 Linux GNUstep
 ```bash
 # Compile a GNUstep Foundation tool
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-gnustep:latest   bash -lc '. /usr/share/GNUstep/Makefiles/GNUstep.sh && gcc -o hello hello.m $(gnustep-config --objc-flags) $(gnustep-config --base-libs)'
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-gnustep:latest \
+  bash -lc '. /usr/share/GNUstep/Makefiles/GNUstep.sh && gcc -o hello hello.m $(gnustep-config --objc-flags) $(gnustep-config --base-libs)'
 
 # Build a GNUstep project with gnustep-make
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-gnustep:latest   bash -lc '. /usr/share/GNUstep/Makefiles/GNUstep.sh && make'
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-gnustep:latest \
+  bash -lc '. /usr/share/GNUstep/Makefiles/GNUstep.sh && make'
 ```
 
 ### GCC x86_64 Linux OpenLook / XView
 ```bash
 # Compile an XView application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   bash -lc 'gcc -o app app.c $(pkg-config --cflags --libs xview)'
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-openlook:latest \
+  bash -lc 'gcc -o app app.c $(pkg-config --cflags --libs xview)'
 
 # Run it in the image's headless Xephyr + olwm session
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-openlook:latest   openlook-xephyr ./app
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-openlook:latest \
+  openlook-xephyr ./app
 ```
 
 ### GCC x86_64 Linux Window Maker / WINGs
 ```bash
 # Compile a WINGs application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-window-maker:latest   bash -lc 'gcc -o app app.c $(pkg-config --cflags --libs WINGs)'
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-window-maker:latest \
+  bash -lc 'gcc -o app app.c $(pkg-config --cflags --libs WINGs)'
 
 # Run it in a contained Xephyr + Window Maker session
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-window-maker:latest   window-maker-xephyr ./app
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-window-maker:latest \
+  window-maker-xephyr ./app
 ```
 
 ### GCC x86_64 Linux SDL
 ```bash
 # Compile an SDL2 application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-sdl:latest \
+  bash -lc 'gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)'
 
 # Compile an SDL3 application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   gcc -o game3 main.c $(pkg-config --cflags --libs sdl3)
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-sdl:latest \
+  bash -lc 'gcc -o game3 main.c $(pkg-config --cflags --libs sdl3)'
 
 # CMake build
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-linux-sdl:latest   bash -c "cmake -S . -B build && cmake --build build -j"
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-sdl:latest \
+  bash -lc 'cmake -S . -B build && cmake --build build -j'
 ```
 
 ### GCC x86_64 Windows MinGW-w64
 ```bash
 # Compile a Windows x64 executable
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-windows-mingw-w64:latest   x86_64-w64-mingw32-gcc -O2 -o hello.exe hello.c
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-windows-mingw-w64:latest \
+  x86_64-w64-mingw32-gcc -O2 -o hello.exe hello.c
 
 # CMake cross-build
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-windows-mingw-w64:latest   bash -c "cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/mingw-w64-x86_64.cmake && cmake --build build-win -j"
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-windows-mingw-w64:latest \
+  bash -lc 'cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/mingw-w64-x86_64.cmake && cmake --build build-win -j'
 ```
 
 ### GCC x86_64 Haiku
 ```bash
 # Compile a Haiku application
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-haiku:latest   x86_64-unknown-haiku-gcc -o app.elf app.c
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-haiku:latest \
+  x86_64-unknown-haiku-gcc -o app.elf app.c
 
 # Build with Jam
-docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-haiku:latest   jam
+docker run --rm -it \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-haiku:latest jam
 ```
 
 ---
@@ -263,20 +377,29 @@ docker run --rm -it   -v "$(pwd)":/work -w /work   wischner/gcc-x86_64-haiku:lat
 
 A generic **Makefile** auto‑discovers subfolders with a `Dockerfile` and builds/pushes them.
 
-List detected toolchains:
+List detected toolchains and their effective versions:
 ```bash
 make list
+make print-versions
 ```
 
-Build all (tags `:latest` and `:${IMG_VER}`):
+Build all images. Each directory's `build.args` supplies its numbered tag, and
+the build also creates `:latest`:
 ```bash
 make build-all
 ```
 
 Push all image tags and their matching `DOCKER-HUB-README.md` overviews to
-Docker Hub (override org/version as needed):
+Docker Hub:
 ```bash
-make push-all ORG=wischner IMG_VER=1.1.0
+make push-all ORG=wischner
+```
+
+Build or push a single image:
+
+```bash
+make build-xcc-z80-idp
+make push-xcc-z80-idp ORG=wischner
 ```
 
 Overview publishing reuses credentials from `docker login`. In CI, set

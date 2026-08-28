@@ -90,7 +90,7 @@ Before launching the emulator GUI from a Linux host using X11, allow local Docke
 
     xhost +SI:localuser:$(whoami)
 
-> You can revoke later with `+SI:localuser:$(whoami)`.
+> You can revoke later with `xhost -SI:localuser:$(whoami)`.
 > As a broader (less strict) alternative: `xhost +local:`.
 
 ### Run in the emulator (X11/Wayland required on the host)

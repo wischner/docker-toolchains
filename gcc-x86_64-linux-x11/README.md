@@ -13,6 +13,7 @@ It is intended for native X11/OpenGL development and also serves as the base ima
 - **Autoconf**, **Automake**, **libtool**, **CMake**, **Make**, **pkg-config**
 - **GDB** and **Valgrind**
 - **Git**
+- **Python 3**
 - **X11** development libraries and common X11 runtime tools
 - Original **Athena Widget Set (libXaw 1.0.16)** built from source, including
   ABI 6/7 shared and static libraries, public/private headers, manuals, and
@@ -34,7 +35,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-x11:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)'
 ```
 
 Compile an Athena widget application against the current ABI:
@@ -44,7 +45,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-x11:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs xaw)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs xaw)'
 ```
 
 ## Running X11 applications

@@ -12,6 +12,7 @@ It is designed both as a practical end-user image for X11 projects and as the ba
 - Autoconf, Automake, libtool, CMake, Make, and pkg-config
 - GDB and Valgrind
 - Git
+- Python 3
 - X11 development libraries
 - original Athena widgets (libXaw 1.0.16), with ABI 6/7 shared and static
   libraries, headers, manuals, and pkg-config metadata
@@ -41,7 +42,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-x11:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs x11 xft gl)'
 ```
 
 Compile an Athena widget application:
@@ -51,7 +52,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-x11:latest \
-  gcc -o app main.c $(pkg-config --cflags --libs xaw)
+  bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs xaw)'
 ```
 
 Interactive shell:

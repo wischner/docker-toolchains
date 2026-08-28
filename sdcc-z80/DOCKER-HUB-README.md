@@ -16,6 +16,7 @@ It is intended as a lean, reusable base for retro Z80 projects and for higher-le
 - `libxdbg*.a`, `libxdbgstub.a`, and the `xdbg` / `xdbgstub` headers in `/usr/local`
 - `make`
 - `git`
+- Python 3
 
 ## What this image is for
 

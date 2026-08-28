@@ -38,7 +38,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-sdl:latest \
-  gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)
+  bash -lc 'gcc -o game main.c $(pkg-config --cflags --libs sdl2 SDL2_image SDL2_mixer SDL2_ttf gl)'
 ```
 
 Compile an SDL3 application:
@@ -48,7 +48,7 @@ docker run --rm \
   -u $(id -u):$(id -g) \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-sdl:latest \
-  gcc -o game3 main.c $(pkg-config --cflags --libs sdl3)
+  bash -lc 'gcc -o game3 main.c $(pkg-config --cflags --libs sdl3)'
 ```
 
 Interactive shell:

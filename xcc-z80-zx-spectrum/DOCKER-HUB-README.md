@@ -3,7 +3,7 @@
 **Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
 
 Ubuntu 24.04 development image for the ZX Spectrum 48K. It combines the XCC
-2.3.2 medium-model C23 toolchain with native RAM and ROM platforms, the ZX
+2.5.0 medium-model C23 toolchain with native RAM and ROM platforms, the ZX
 backend of libgpx, Beepolix, ZX Spectrum MCP, and snatch.
 
 ## Everything installed
@@ -97,7 +97,7 @@ non-root `ubuntu` user in `/work`.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.3.2 \
+  wischner/xcc-z80-zx-spectrum:2.5.0 \
   sh -lc 'xcc -Os --oformat=binary main.c -lgpx -o app.bin && xprog --tap app.bin -o app.tap --name APP'
 ```
 
@@ -161,7 +161,7 @@ snatch \
 
 ## Latest-source policy
 
-XCC is pinned to the current release, `v2.3.2`, and uses the requested medium
+XCC is pinned to the current release, `v2.5.0`, and uses the requested medium
 model. libgpx, Beepolix, ZX Spectrum MCP, and snatch follow their latest `main`
 commits on every build. BuildKit remote Git inputs invalidate their layers
 when those branches advance. Exact resolved commits are recorded in:
@@ -175,3 +175,8 @@ when those branches advance. Exact resolved commits are recorded in:
 
 Component source URLs, licences, and documentation are retained under their
 respective `/opt` prefixes.
+
+## CONTRIBUTE
+
+Contributions are welcome. Please open an issue or pull request:
+<https://github.com/wischner/docker-toolchains>

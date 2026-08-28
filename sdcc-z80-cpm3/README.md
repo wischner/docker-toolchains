@@ -2,7 +2,7 @@
 
 `sdcc-z80-cpm3` is a Docker image for building **CP/M 3** software with **SDCC Z80**, packaging files onto CP/M disk images, and using a CP/M 3-oriented runtime bundled directly into the image.
 
-Current image version: `1.0.0`
+Current image version: `1.1.0`
 
 ## What the image contains
 

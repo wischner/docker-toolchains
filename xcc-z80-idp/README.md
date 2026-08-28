@@ -5,15 +5,15 @@ on [`xcc-z80`](../xcc-z80). It uses XCC's native CP/M 3 runtime by default and
 adds the Partner SDK, full and micro graphics libraries, disk/font host tools,
 and the complete Partner emulator package with its headless MCP server.
 
-Current image version: `2.4.0`
+Current image version: `2.5.0`
 
 ## Included components
 
-- `wischner/xcc-z80:2.3.2`
+- `wischner/xcc-z80:2.5.0`
 - XCC's native CP/M 3 and emulator runtimes; no bare-metal `none` platform
-- XEMU 2.3.2 with Partner-compatible RAM banking enabled by default
+- XEMU 2.5.0 with Partner-compatible RAM banking enabled by default
 - GNU Make, CMake, and Git for project builds and source control
-- [Partner libgpx](https://github.com/retro-vault/libgpx) `v0.2.0`, rebuilt
+- [Partner libgpx](https://github.com/retro-vault/libgpx) current `main`, rebuilt
   with `xas`/`xar` as an independent `libgpx.a`
 - Latest [idp-udev](https://github.com/iskra-delta/idp-udev) `main` at image
   build time: only μgpx, rebuilt with XCC as `libugpx.a`; μlibc and μsdcc
@@ -23,7 +23,7 @@ Current image version: `2.4.0`
 - [snatch](https://github.com/retro-vault/snatch) `v1.0.0`, including its
   plugins
 - [cpmdisk](https://github.com/iskra-delta/cpmdisk) `v1.1.0`
-- [idp-emu](https://github.com/iskra-delta/idp-emu) `v1.0.0`: `idp-emu`,
+- [idp-emu](https://github.com/iskra-delta/idp-emu) `v1.1.0`: `idp-emu`,
   `idp-mcp`, `partnerp`, `partnerg`, CMOS seed, CRT/GDP ROMs, Partner P/G
   system disks, assets, runtime libraries, and documentation
 
@@ -97,7 +97,7 @@ No `-I`, `-L`, or `--platform=cpm3` option is required for these examples.
 
 ## Full Partner emulation and MCP
 
-The complete idp-emu 1.0.0 portable runtime is installed under
+The complete idp-emu 1.1.0 portable runtime is installed under
 `/opt/idp-emu`. `idp-emu` provides cycle-stepped Partner P/CRT and Partner
 G/GDP hardware emulation. `partnerp` and `partnerg` start the corresponding
 model with a per-user writable copy of its packaged system disk.
@@ -139,7 +139,7 @@ RAM banks at `0x0000–0xBFFF` and the 16 KiB common region at
 `0x88–0x8F`; physical bank 2 is selected by `0x90–0x97`. Bank 1 is active at
 startup.
 
-XEMU 2.3.2 is rebuilt with a narrow downstream patch because Partner selects
+XEMU 2.5.0 is rebuilt with a narrow downstream patch because Partner selects
 the bank from the port address and ignores the transferred byte. A local
 `./xemu.conf` or explicit `xemu --config FILE` overrides the image default.
 The default models Partner RAM banking, not the full peripheral set or ROM
@@ -179,7 +179,7 @@ image an x86-64 image.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.4.0 \
+  wischner/xcc-z80-idp:2.5.0 \
   xcc app.c -lsdk -o app.com
 ```
 
@@ -189,7 +189,7 @@ Open an interactive shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.4.0 \
+  wischner/xcc-z80-idp:2.5.0 \
   bash
 ```
 
