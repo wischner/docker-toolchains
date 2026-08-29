@@ -5,15 +5,15 @@ on [`xcc-z80`](../xcc-z80). It uses XCC's native CP/M 3 runtime by default and
 adds the Partner SDK, full and micro graphics libraries, disk/font host tools,
 and the complete Partner emulator package with its headless MCP server.
 
-Current image version: `2.6.0` (XCC Z80 `2.5.0`)
+Current image version: `2.7.0` (XCC Z80 `2.5.0`)
 
 ## Included components
 
-- `wischner/xcc-z80:2.6.0`
+- `wischner/xcc-z80:2.7.0`
 - XCC's native CP/M 3 and emulator runtimes; no bare-metal `none` platform
 - XEMU 2.5.0 with Partner-compatible RAM banking enabled by default
 - GNU Make, CMake, and Git for project builds and source control
-- [Partner libgpx](https://github.com/retro-vault/libgpx) current `main`, rebuilt
+- [Partner libgpx](https://github.com/retro-vault/libgpx) `v0.4.0`, rebuilt
   with `xas`/`xar` as an independent `libgpx.a`
 - Latest [idp-udev](https://github.com/iskra-delta/idp-udev) `main` at image
   build time: only μgpx, rebuilt with XCC as `libugpx.a`; μlibc and μsdcc
@@ -179,7 +179,7 @@ image an x86-64 image.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.6.0 \
+  wischner/xcc-z80-idp:2.7.0 \
   xcc app.c -lsdk -o app.com
 ```
 
@@ -189,7 +189,7 @@ Open an interactive shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-idp:2.6.0 \
+  wischner/xcc-z80-idp:2.7.0 \
   bash
 ```
 

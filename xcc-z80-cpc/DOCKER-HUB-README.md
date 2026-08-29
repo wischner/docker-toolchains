@@ -10,7 +10,7 @@ and the standard CPC disk, graphics, and compression tools.
 ## Quick start
 
 ```bash
-export IMAGE=wischner/xcc-z80-cpc:2.6.0
+export IMAGE=wischner/xcc-z80-cpc:2.7.0
 
 # A 6128 disk program.
 docker run --rm -v "$PWD":/work -w /work $IMAGE sh -c '
@@ -61,7 +61,7 @@ BASIC. Their CRTs, archives, and linker scripts are in `/opt/x/z80/lib` as
 
 ### libgpx
 
-The latest `retro-vault/libgpx` `main` CPC backend is assembled with XCC's
+The `retro-vault/libgpx` `v0.4.0` CPC backend is assembled with XCC's
 `xas` and archived with `xar` under `/opt/cpc`:
 
 ```text

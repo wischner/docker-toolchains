@@ -9,15 +9,15 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 2.4.0 | This package |
-| XCC Z80 toolchain | 2.3.2 | Inherited from `wischner/xcc-z80:2.3.2` |
+| Image | 2.7.0 | This package |
+| XCC Z80 toolchain | 2.5.0 | Inherited from `wischner/xcc-z80:2.7.0` |
 | Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
-| Partner `libgpx` | 0.2.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
+| Partner `libgpx` | 0.4.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
 | IDP μgpx | Latest `main` at image build time | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
 | Snatch | 1.0.0 | [retro-vault/snatch](https://github.com/retro-vault/snatch) |
 | CP/M disk tool | 1.1.0 | [iskra-delta/cpmdisk](https://github.com/iskra-delta/cpmdisk) |
-| Partner emulator and MCP | 1.0.0 | [iskra-delta/idp-emu](https://github.com/iskra-delta/idp-emu) |
+| Partner emulator and MCP | 1.1.0 | [iskra-delta/idp-emu](https://github.com/iskra-delta/idp-emu) |
 
 Installed component revisions are also recorded in `/opt/idp/share/metadata`.
 The XCC version and source metadata are stored in `/opt/x/.version` and

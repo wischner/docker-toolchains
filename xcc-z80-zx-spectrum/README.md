@@ -6,7 +6,7 @@ programs and replacement ROMs, packages TAP/TZX files, provides a native ZX
 libgpx library, and includes the Beepolix music tools, ZX Spectrum MCP
 emulator, and snatch asset pipeline.
 
-Current image version: `2.6.0`. XCC version: `2.5.0`.
+Current image version: `2.7.0`. XCC version: `2.5.0`.
 
 ## Complete image contents
 
@@ -83,10 +83,10 @@ They target the 48K machine; 128K bank switching is not part of these runtimes.
 
 ### ZX Spectrum libgpx
 
-The latest `main` revision of
-[retro-vault/libgpx](https://github.com/retro-vault/libgpx) is resolved at
-every image build. Its hand-written `src/zx` backend is assembled with the
-image's XCC `xas` and archived with `xar`.
+The `v0.4.0` release of
+[retro-vault/libgpx](https://github.com/retro-vault/libgpx) is used. Its
+hand-written `src/zx` backend is assembled with the image's XCC `xas` and
+archived with `xar`.
 
 | Item | Canonical path | XCC search path |
 |---|---|---|
@@ -199,7 +199,7 @@ Mount a project and open a shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.6.0 \
+  wischner/xcc-z80-zx-spectrum:2.7.0 \
   bash
 ```
 
@@ -289,10 +289,10 @@ self-contained payloads remain under `/opt`.
 
 XCC itself is pinned to the latest released tag, `v2.5.0`, so the compiler
 version stays reproducible. The Docker image tag versions the image and moves
-independently when its contents change. libgpx,
-Beepolix, ZX Spectrum MCP, and snatch intentionally follow their current
-`main` branches. Docker BuildKit remote Git `ADD` instructions resolve those
-refs on every build and invalidate cached layers when the upstream commit
+independently when its contents change. libgpx is pinned to its `v0.4.0`
+release tag. Beepolix, ZX Spectrum MCP, and snatch intentionally follow their
+current `main` branches. Docker BuildKit remote Git `ADD` instructions resolve
+those refs on every build and invalidate cached layers when the upstream commit
 changes.
 
 The exact commits included in a built image are recorded in:

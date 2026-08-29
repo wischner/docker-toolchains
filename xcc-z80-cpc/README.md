@@ -145,8 +145,9 @@ libraries and their sources are listed in
 moving ref is recorded under `/opt/cpc/share/metadata` and in the `.version`
 file inside each tool's `/opt` prefix.
 
-`IMG_VERSION`, `XYZ_VERSION`, and the `BASE_IMAGE` tag are deliberately kept
-identical so an image tag states the installed compiler version directly.
+`IMG_VERSION` and the `BASE_IMAGE` tag are deliberately kept identical so the
+image tag states which base toolchain image it was built on. `XYZ_VERSION`
+names the installed compiler release and moves independently.
 
 The CPC firmware ROMs are the freely redistributable English images fetched and
 checksummed by `amstrad-cpc-mcp`'s own `fetch-roms.sh` during the build.

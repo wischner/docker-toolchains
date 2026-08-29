@@ -88,7 +88,7 @@ Z80 toolchains. It keeps `float` and 32-bit `long` support while omitting the
 larger `double`, `long long`, and floating-point stdio payloads:
 
 ```text
-IMG_VERSION=2.6.0
+IMG_VERSION=2.7.0
 XYZ_VERSION=2.5.0
 ```
 

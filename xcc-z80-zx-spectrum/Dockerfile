@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=wischner/xcc-z80:2.6.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.7.0
 
 # Assemble the current ZX Spectrum libgpx backend with XCC itself.
 FROM ${BASE_IMAGE} AS libgpx-builder
 
-ARG LIBGPX_REF=main
+ARG LIBGPX_REF=v0.4.0
 
 USER root
 
@@ -94,9 +94,9 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.6.0
+ARG IMG_VERSION=2.7.0
 ARG XYZ_VERSION=2.5.0
-ARG LIBGPX_REF=main
+ARG LIBGPX_REF=v0.4.0
 ARG BEEPOLIX_REF=main
 ARG ZX_SPECTRUM_MCP_REF=main
 ARG SNATCH_REF=main
