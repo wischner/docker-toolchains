@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=wischner/xcc-z80:2.5.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.6.0
 
 # Assemble the current Amstrad CPC libgpx backend with XCC itself.
 #
@@ -159,7 +159,7 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.5.0
+ARG IMG_VERSION=2.6.0
 ARG XYZ_VERSION=2.5.0
 ARG LIBGPX_REF=main
 ARG AMSTRAD_CPC_MCP_REF=main
@@ -203,7 +203,6 @@ COPY --from=martine-builder /opt/martine/ /opt/martine/
 COPY libraries.manifest /opt/cpc/libraries.manifest
 
 RUN set -eux; \
-    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
     test "$(sed 's/^v//' /opt/x/.version)" = "${XYZ_VERSION#v}"; \
     apt-get update; \
     apt-get install -y --no-install-recommends \

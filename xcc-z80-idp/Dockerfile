@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:2.5.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.6.0
 
 # Stage the complete published idp-emu tree: GUI emulator, headless MCP,
 # launchers, CMOS seed, ROMs, system disks, assets, shared libraries, and docs.
@@ -143,7 +143,7 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.5.0
+ARG IMG_VERSION=2.6.0
 ARG XYZ_VERSION=2.5.0
 ARG LIBGPX_REF=main
 ARG SNATCH_VERSION=v1.0.0

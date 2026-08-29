@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.5.0
+ARG IMG_VERSION=2.6.0
 ARG XYZ_REPO=retro-vault/xyz
 ARG XYZ_VERSION=2.5.0
 
@@ -9,12 +9,10 @@ ARG XYZ_VERSION=2.5.0
 # so its build must not require the same version to be published first.
 FROM ubuntu:24.04 AS xyz-builder
 
-ARG IMG_VERSION
 ARG XYZ_REPO
 ARG XYZ_VERSION
 
 RUN set -eux; \
-    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
     apt-get update; \
     apt-get install -y --no-install-recommends binutils ca-certificates g++ git make; \
     rm -rf /var/lib/apt/lists/*; \
@@ -46,7 +44,7 @@ RUN set -eux; \
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.5.0
+ARG IMG_VERSION=2.6.0
 ARG XYZ_REPO=retro-vault/xyz
 ARG XYZ_VERSION=2.5.0
 LABEL org.opencontainers.image.title="xcc-z80" \
@@ -66,7 +64,6 @@ ENV HOME=/home/ubuntu \
 COPY --from=xyz-builder /opt/x/ /opt/x/
 
 RUN set -eux; \
-    test "${IMG_VERSION}" = "${XYZ_VERSION}"; \
     apt-get update; \
     apt-get install -y --no-install-recommends ca-certificates curl libstdc++6 python3; \
     rm -rf /var/lib/apt/lists/*; \

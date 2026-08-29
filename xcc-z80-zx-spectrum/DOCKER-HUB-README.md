@@ -97,7 +97,7 @@ non-root `ubuntu` user in `/work`.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.5.0 \
+  wischner/xcc-z80-zx-spectrum:2.6.0 \
   sh -lc 'xcc -Os --oformat=binary main.c -lgpx -o app.bin && xprog --tap app.bin -o app.tap --name APP'
 ```
 

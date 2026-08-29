@@ -88,11 +88,13 @@ Z80 toolchains. It keeps `float` and 32-bit `long` support while omitting the
 larger `double`, `long long`, and floating-point stdio payloads:
 
 ```text
-IMG_VERSION=2.5.0
+IMG_VERSION=2.6.0
 XYZ_VERSION=2.5.0
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,
 and can be overridden with normal Docker build arguments if you need to test a
-different upstream tag later. `IMG_VERSION` and `XYZ_VERSION` are deliberately
-kept identical so an image tag states the installed compiler version directly.
+different upstream tag later. `XYZ_VERSION` names the X Compiler Suite release
+that is built into the image, while `IMG_VERSION` versions the image itself, so
+the image tag can advance when its contents change without a new compiler
+release.

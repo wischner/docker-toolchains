@@ -10,7 +10,7 @@ Partner-compatible XEMU memory map, Snatch, and cpmdisk.
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.5.0
+export IMAGE=wischner/xcc-z80-idp:2.6.0
 ```
 
 ## Quick start

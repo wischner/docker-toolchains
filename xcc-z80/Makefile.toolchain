@@ -8,9 +8,7 @@ prepare:
 	img_version="$$(sed -n 's/^IMG_VERSION=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
 	xyz_version="$$(sed -n 's/^XYZ_VERSION=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
 	[ -n "$$img_version" ]; \
-	[ "$$img_version" = "$$xyz_version" ] || { \
-	  echo "IMG_VERSION and XYZ_VERSION must match" >&2; exit 1; \
-	}; \
+	[ -n "$$xyz_version" ]; \
 	tag="v$${xyz_version#v}"; \
 	echo "Checking $(XYZ_REPO) $$tag"; \
 	git ls-remote --exit-code --tags \

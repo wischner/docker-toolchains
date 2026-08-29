@@ -8,11 +8,9 @@ prepare:
 	base_image="$$(sed -n 's/^BASE_IMAGE=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
 	xyz_version="$$(sed -n 's/^XYZ_VERSION=//p' "$(BUILD_ARGS_FILE)" | head -n1)"; \
 	[ -n "$$img_version" ]; \
-	[ "$$img_version" = "$$xyz_version" ] || { \
-	  echo "IMG_VERSION and XYZ_VERSION must match" >&2; exit 1; \
-	}; \
-	[ "$$base_image" = "wischner/xcc-z80:$$xyz_version" ] || { \
-	  echo "BASE_IMAGE must match XYZ_VERSION" >&2; exit 1; \
+	[ -n "$$xyz_version" ]; \
+	[ "$$base_image" = "wischner/xcc-z80:$$img_version" ] || { \
+	  echo "BASE_IMAGE must match IMG_VERSION" >&2; exit 1; \
 	}; \
 	for item in \
 	  "retro-vault/libgpx LIBGPX_REF" \
