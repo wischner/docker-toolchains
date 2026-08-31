@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=wischner/xcc-z80:2.7.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.8.0
 
 # Assemble the current Amstrad CPC libgpx backend with XCC itself.
 #
@@ -159,7 +159,7 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.7.0
+ARG IMG_VERSION=2.8.0
 ARG XYZ_VERSION=2.5.0
 ARG LIBGPX_REF=v0.4.0
 ARG AMSTRAD_CPC_MCP_REF=main

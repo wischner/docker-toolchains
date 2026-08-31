@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:2.7.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.8.0
 
 # Stage the complete published idp-emu tree: GUI emulator, headless MCP,
 # launchers, CMOS seed, ROMs, system disks, assets, shared libraries, and docs.
@@ -37,6 +37,7 @@ FROM ${BASE_IMAGE} AS library-builder
 
 ARG LIBGPX_REF=v0.4.0
 ARG IDP_UDEV_REF=main
+ARG LIBSQUID_REF=main
 
 USER root
 
@@ -46,6 +47,7 @@ USER root
 ADD --keep-git-dir=true https://github.com/retro-vault/libgpx.git#${LIBGPX_REF} /tmp/libgpx
 ADD --keep-git-dir=true https://github.com/iskra-delta/idp-udev.git#${IDP_UDEV_REF} /tmp/idp-udev
 ADD --keep-git-dir=true https://github.com/iskra-delta/idp-sdk.git#main /tmp/idp-sdk
+ADD --keep-git-dir=true https://github.com/retro-plastics/libsquid.git#${LIBSQUID_REF} /tmp/libsquid
 
 RUN set -eux; \
     apt-get update; \
@@ -108,6 +110,26 @@ RUN set -eux; \
     test ! -e /opt/idp/lib/libsdcc-z80.lib; \
     rm -rf "${tmp_dir}" /tmp/libgpx /tmp/idp-udev /tmp/idp-sdk
 
+# libsquid's own build script is the only supported way to produce the Z80
+# archive: it verifies the C/asm wire contract, links a real program against
+# the archive it just wrote, and enforces the backend's code-size ceiling.
+RUN set -eux; \
+    mkdir -p /opt/idp/include/squid /opt/idp/share/doc/libsquid; \
+    cd /tmp/libsquid; \
+    sh scripts/check-wire.sh; \
+    sh scripts/build-z80.sh cpm3 /tmp/libsquid-build /tmp/libsquid-out; \
+    install -m 0644 /tmp/libsquid-out/lib/libsquid.a /opt/idp/lib/libsquid.a; \
+    ln -s libsquid.a /opt/idp/lib/libsquid.lib; \
+    install -m 0644 /tmp/libsquid-out/include/squid/*.h /opt/idp/include/squid/; \
+    install -m 0644 /tmp/libsquid/README.md /opt/idp/share/doc/libsquid/README.md; \
+    install -m 0644 /tmp/libsquid-out/TOOLCHAIN /opt/idp/share/metadata/libsquid.toolchain; \
+    git -C /tmp/libsquid rev-parse HEAD > /opt/idp/share/metadata/libsquid.version; \
+    printf '%s\n' 'https://github.com/retro-plastics/libsquid' > /opt/idp/share/metadata/libsquid.source; \
+    test -s /opt/idp/lib/libsquid.a; \
+    test -f /opt/idp/include/squid/snet.h; \
+    test -f /opt/idp/include/squid/socket.h; \
+    rm -rf /tmp/libsquid-build /tmp/libsquid-out /tmp/libsquid
+
 # XEMU 2.5.0 can model Partner's RAM windows, but upstream port rules derive
 # selectors from the transferred byte. Partner selects its banks by the I/O
 # port address and ignores that byte, so add fixed selector values for IN/OUT.
@@ -141,17 +163,64 @@ RUN set -eux; \
     /opt/xemu-partner --version; \
     rm -rf "${tmp_dir}"
 
+# PAKET.COM is the Retro Vault package manager for the Partner. It owns its
+# small SIO and RTC layer and deliberately does not link idp-sdk; it compiles
+# libsquid's and squid-server's Z80 client sources straight into the binary
+# with one socket, so it is built from the upstream trees rather than from the
+# libsquid archive installed above. The floppy image is made in the final
+# stage, where cpmdisk exists.
+FROM ${BASE_IMAGE} AS paket-builder
+
+ARG LIBSQUID_REF=main
+ARG SQUID_SERVER_REF=main
+ARG PAKET_REF=main
+
+USER root
+
+ADD --keep-git-dir=true https://github.com/retro-plastics/libsquid.git#${LIBSQUID_REF} /tmp/libsquid
+ADD --keep-git-dir=true https://github.com/retro-plastics/squid-server.git#${SQUID_SERVER_REF} /tmp/squid-server
+ADD --keep-git-dir=true https://github.com/iskra-delta/paket.git#${PAKET_REF} /tmp/paket
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends git make; \
+    rm -rf /var/lib/apt/lists/*; \
+    mkdir -p \
+      /opt/paket/bin \
+      /opt/paket/share/licenses/paket \
+      /opt/paket/share/doc/paket \
+      /opt/paket/share/metadata; \
+    make -C /tmp/paket --no-print-directory -f src/Makefile \
+      ROOT=/tmp/paket \
+      LIBSQUID_DIR=/tmp/libsquid \
+      SQUID_SERVER_DIR=/tmp/squid-server \
+      /tmp/paket/bin/paket.com; \
+    install -m 0644 /tmp/paket/bin/paket.com /opt/paket/bin/paket.com; \
+    install -m 0644 /tmp/paket/LICENSE /opt/paket/share/licenses/paket/LICENSE; \
+    install -m 0644 /tmp/paket/README.md /opt/paket/share/doc/paket/README.md; \
+    git -C /tmp/paket rev-parse HEAD > /opt/paket/share/metadata/paket.version; \
+    printf '%s\n' 'https://github.com/iskra-delta/paket' > /opt/paket/share/metadata/paket.source; \
+    git -C /tmp/squid-server rev-parse HEAD > /opt/paket/share/metadata/squid-server.version; \
+    printf '%s\n' 'https://github.com/retro-plastics/squid-server' > /opt/paket/share/metadata/squid-server.source; \
+    git -C /tmp/libsquid rev-parse HEAD > /opt/paket/share/metadata/libsquid.version; \
+    printf '%s\n' 'https://github.com/retro-plastics/libsquid' > /opt/paket/share/metadata/libsquid.source; \
+    test -s /opt/paket/bin/paket.com; \
+    rm -rf /tmp/libsquid /tmp/squid-server /tmp/paket
+
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.7.0
+ARG IMG_VERSION=2.8.0
 ARG XYZ_VERSION=2.5.0
 ARG LIBGPX_REF=v0.4.0
+ARG LIBSQUID_REF=main
+ARG SQUID_SERVER_REF=main
+ARG PAKET_REF=main
 ARG SNATCH_VERSION=v1.0.0
 ARG CPMDISK_VERSION=v1.1.0
 ARG IDP_EMU_VERSION=v1.1.0
 
 LABEL org.opencontainers.image.title="xcc-z80-idp" \
-      org.opencontainers.image.description="XCC Z80 CP/M 3 toolchain for Iskra Delta Partner with the Partner SDK, graphics libraries, host tools, and Partner MCP." \
+      org.opencontainers.image.description="XCC Z80 CP/M 3 toolchain for Iskra Delta Partner with the Partner SDK, graphics libraries, libsquid, PAKET.COM, host tools, and Partner MCP." \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.licenses="GPL-2.0-or-later; see component licenses" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
@@ -167,6 +236,9 @@ ENV IDP_ROOT=/opt/idp \
     IDP_MCP_CRT_HDD_SEED=/opt/idp-emu/disks/hdd-partner-p-system.img \
     IDP_MCP_GDP_HDD_SEED=/opt/idp-emu/disks/hdd-partner-g-system.img \
     SNATCH_PLUGIN_DIR=/opt/snatch/plugins \
+    PAKET_ROOT=/opt/paket \
+    PAKET_COM=/opt/paket/bin/paket.com \
+    PAKET_DISK=/opt/paket/share/paket/fddb.img \
     PATH="/usr/local/bin:/opt/x/bin:${PATH}"
 
 USER root
@@ -174,6 +246,7 @@ USER root
 COPY --from=library-builder /opt/idp/ /opt/idp/
 COPY --from=emulator-builder /opt/xemu-partner /opt/x/bin/xemu
 COPY --from=idp-emu-builder /opt/idp-emu/ /opt/idp-emu/
+COPY --from=paket-builder /opt/paket/ /opt/paket/
 COPY --chmod=0755 xcc-cpm3 /usr/local/bin/xcc
 COPY --chmod=0755 xld-cpm3 /usr/local/bin/xld
 COPY libraries.manifest /opt/idp/libraries.manifest
@@ -226,6 +299,11 @@ RUN set -eux; \
     ln -s /opt/idp/lib/libgpx.a /opt/x/z80/lib/libgpx.a; \
     ln -s /opt/idp/lib/libugpx.a /opt/x/z80/lib/libugpx.a; \
     ln -s /opt/idp/lib/libsdk.a /opt/x/z80/lib/libsdk.a; \
+    ln -s /opt/idp/include/squid /opt/x/z80/include/squid; \
+    ln -s /opt/idp/lib/libsquid.a /opt/x/z80/lib/libsquid.a; \
+    mkdir -p /opt/paket/share/paket; \
+    cpmdisk create /opt/paket/share/paket/fddb.img fdd; \
+    cpmdisk add /opt/paket/share/paket/fddb.img -u 0 /opt/paket/bin/paket.com; \
     rm -f \
       /opt/x/z80/lib/crt0.rel \
       /opt/x/z80/lib/crt0.s \
@@ -241,14 +319,15 @@ RUN set -eux; \
     mkdir -p /home/ubuntu/.config/x; \
     ln -s /etc/xemu/partner.conf /home/ubuntu/.config/x/xemu.conf; \
     chown -R ubuntu:ubuntu /home/ubuntu/.config; \
-    chown -R ubuntu:ubuntu /opt/idp; \
+    chown -R ubuntu:ubuntu /opt/idp /opt/paket; \
     rm -rf "${tmp_dir}"
 
 USER ubuntu
 WORKDIR /work
 
 # Validate host tools, packaged public interfaces, excluded payloads, default
-# CP/M 3 linkage, and independent full/micro Partner graphics programs.
+# CP/M 3 linkage, the packaged PAKET.COM and its floppy image, and independent
+# full/micro Partner graphics and Squid programs.
 RUN set -eux; \
     test "$(command -v xcc)" = /usr/local/bin/xcc; \
     test "$(command -v xld)" = /usr/local/bin/xld; \
@@ -306,6 +385,12 @@ RUN set -eux; \
     test -f /opt/x/z80/lib/libgpx.a; \
     test -f /opt/x/z80/lib/libugpx.a; \
     test -f /opt/x/z80/lib/libsdk.a; \
+    test -f /opt/x/z80/include/squid/snet.h; \
+    test -f /opt/x/z80/include/squid/socket.h; \
+    test -f /opt/x/z80/lib/libsquid.a; \
+    test -s "${PAKET_COM}"; \
+    test -s "${PAKET_DISK}"; \
+    cpmdisk list "${PAKET_DISK}" -u 0 | grep -F PAKET.COM; \
     test ! -e /opt/idp/lib/libulibc.a; \
     test ! -e /opt/idp/lib/libulibc.lib; \
     test ! -e /opt/idp/lib/ulibc.a; \
@@ -336,6 +421,37 @@ RUN set -eux; \
       > /tmp/idp-smoke.c; \
     xcc /tmp/idp-smoke.c -lsdk -lgpx -o /tmp/idp-smoke.com; \
     test -s /tmp/idp-smoke.com; \
+    printf '%s\n' \
+      '#include <stdint.h>' \
+      '#include <stdlib.h>' \
+      '#include <squid/snet.h>' \
+      '#include <squid/socket.h>' \
+      'static int snd(uint8_t c) { (void)c; return 0; }' \
+      'static int rcv(void) { return -1; }' \
+      'static uint8_t tick(void) { return 0; }' \
+      'int main(void) {' \
+      '    squid_platform_t plat;' \
+      '    squid_timing_t tm;' \
+      '    int fd;' \
+      '    plat.send_char = snd;' \
+      '    plat.recv_char = rcv;' \
+      '    plat.get_tick = tick;' \
+      '    plat.mem_alloc = malloc;' \
+      '    plat.mem_free = free;' \
+      '    tm.timeout_ticks = 6;' \
+      '    tm.ack_delay_ticks = 2;' \
+      '    tm.ping_ticks = 0;' \
+      '    tm.max_retries = 3;' \
+      '    tm.payload_bytes = 0;' \
+      '    snet_init(&plat, &tm);' \
+      '    snet_burst();' \
+      '    fd = squid_open(32, 32);' \
+      '    if (fd > 0) squid_close(fd);' \
+      '    return snet_link_is_up() ? 1 : 0;' \
+      '}' \
+      > /tmp/squid-smoke.c; \
+    xcc /tmp/squid-smoke.c -lsquid -o /tmp/squid-smoke.com; \
+    test -s /tmp/squid-smoke.com; \
     printf '%s\n' \
       '#include <ugpx.h>' \
       'static unsigned char glyph[] = { 0 };' \
@@ -369,6 +485,7 @@ RUN set -eux; \
       --origin 0xc000 --pc 0xc000 --max-steps 1000; \
     rm -f \
       /tmp/idp-smoke.c /tmp/idp-smoke.com \
+      /tmp/squid-smoke.c /tmp/squid-smoke.com \
       /tmp/ugpx-smoke.c /tmp/ugpx-smoke.com /tmp/ugpx-login-smoke.com \
       /tmp/mixed-gpx-smoke.com \
       /tmp/emu-smoke.c /tmp/emu-smoke.bin \

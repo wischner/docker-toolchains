@@ -4,13 +4,14 @@
 
 `wischner/xcc-z80-idp` is a Linux x86-64 development image for the Iskra
 Delta Partner. It provides XCC Z80 2.5.0, the public Partner SDK, two graphics
-library choices, the complete Partner emulator and MCP runtime, a
-Partner-compatible XEMU memory map, Snatch, and cpmdisk.
+library choices, the Squid serial protocol library, the PAKET package manager,
+the complete Partner emulator and MCP runtime, a Partner-compatible XEMU memory
+map, Snatch, and cpmdisk.
 
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.7.0
+export IMAGE=wischner/xcc-z80-idp:2.8.0
 ```
 
 ## Quick start
@@ -65,14 +66,15 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 | IDP SDK | Latest `main` at image build time |
 | Partner libgpx | 0.4.0 |
 | idp-udev ugpx | Latest `main` at image build time |
+| libsquid | Latest `main` at image build time |
+| PAKET | Latest `main` at image build time, with a boot floppy |
 | Snatch | 1.0.0, executable and plugins only |
 | cpmdisk | 1.1.0, executable and runtime library only |
 | Partner emulator and MCP | idp-emu 1.1.0 complete portable runtime |
 
-The resolved idp-udev and idp-sdk revisions are recorded in
-`/opt/idp/share/metadata/idp-udev.version` and
-`/opt/idp/share/metadata/idp-sdk.version`; they are not pinned in the image
-source.
+The resolved idp-udev, idp-sdk and libsquid revisions are recorded under
+`/opt/idp/share/metadata/`, and PAKET's own three source revisions under
+`/opt/paket/share/metadata/`; they are not pinned in the image source.
 
 ## Partner SDK and graphics libraries
 
@@ -84,6 +86,7 @@ Headers and libraries are already on XCC's search paths. No extra `-I` or
 | IDP SDK | `#include <partner/...>` | `-lsdk` |
 | Full Partner graphics | `#include <libgpx.h>` | `-lgpx` |
 | Micro graphics | `#include <ugpx.h>` | `-lugpx` |
+| Squid serial protocol | `#include <squid/snet.h>` | `-lsquid` |
 
 Examples:
 
@@ -92,6 +95,7 @@ xcc console-demo.c -lsdk -o console-demo.com
 xcc graphics-demo.c -lgpx -o graphics-demo.com
 xcc micro-graphics.c -lugpx -o micro-graphics.com
 xcc desktop.c -lsdk -lgpx -o desktop.com
+xcc serial-demo.c -lsquid -o serial-demo.com
 ```
 
 `libgpx` and `ugpx` are alternatives. Never link `-lgpx` and `-lugpx` in the
@@ -100,6 +104,23 @@ can be used with either one.
 
 Only public SDK and ugpx headers are installed. There is no automatic SDK
 initialization: applications call the initialization routines they need.
+
+## PAKET
+
+`PAKET.COM` is the Retro Vault package manager for the Partner. It carries the
+Retro Vault protocol over Squid wire protocol 2 on a chosen Partner serial
+port and streams downloads straight into a CP/M file. The image ships the
+built executable and a ready-to-boot floppy image containing it:
+
+```bash
+cpmdisk add mydisk.img -u 0 "$PAKET_COM"
+
+cp "$PAKET_DISK" ./paket-fd0.img
+idp-mcp --model gdp --fd0 ./paket-fd0.img
+```
+
+`PAKET_COM` is `/opt/paket/bin/paket.com` and `PAKET_DISK` is
+`/opt/paket/share/paket/fddb.img`.
 
 ## Partner MCP and full emulator
 
@@ -217,9 +238,10 @@ Use `COMMAND --help` for full options. Detailed XCC manuals are installed in
 /opt/x/bin/              XCC commands
 /opt/x/z80/include/      public Z80 target headers
 /opt/x/z80/lib/          target libraries, startup files, and linker scripts
-/opt/idp/include/        public SDK, libgpx, and ugpx headers
-/opt/idp/lib/            libsdk.a, libgpx.a, and libugpx.a
+/opt/idp/include/        public SDK, libgpx, ugpx, and squid headers
+/opt/idp/lib/            libsdk.a, libgpx.a, libugpx.a, and libsquid.a
 /opt/idp/share/metadata/ resolved source versions
+/opt/paket/              PAKET.COM, its boot floppy, licence, and docs
 /opt/snatch/             Snatch executable and runtime plugins
 /opt/cpmdisk/            cpmdisk executable and runtime library
 /opt/idp-emu/            complete Partner emulator and MCP runtime tree
@@ -248,6 +270,9 @@ XCC's Z80 target headers and native CP/M 3 runtime remain installed.
 - [Partner libgpx](https://github.com/retro-vault/libgpx)
 - [idp-udev](https://github.com/iskra-delta/idp-udev)
 - [IDP SDK](https://github.com/iskra-delta/idp-sdk)
+- [libsquid](https://github.com/retro-plastics/libsquid)
+- [squid-server](https://github.com/retro-plastics/squid-server)
+- [PAKET](https://github.com/iskra-delta/paket)
 - [Snatch](https://github.com/retro-vault/snatch)
 - [cpmdisk](https://github.com/iskra-delta/cpmdisk)
 - [idp-emu and idp-mcp](https://github.com/iskra-delta/idp-emu)

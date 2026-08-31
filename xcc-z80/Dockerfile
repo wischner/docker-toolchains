@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.7.0
+ARG IMG_VERSION=2.8.0
 ARG XYZ_REPO=retro-vault/xyz
 ARG XYZ_VERSION=2.5.0
 
@@ -44,7 +44,7 @@ RUN set -eux; \
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.7.0
+ARG IMG_VERSION=2.8.0
 ARG XYZ_REPO=retro-vault/xyz
 ARG XYZ_VERSION=2.5.0
 LABEL org.opencontainers.image.title="xcc-z80" \

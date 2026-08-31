@@ -1,7 +1,7 @@
 # `xcc-z80-idp` image contents
 
 This document inventories the toolchain and application payload intentionally
-installed in `wischner/xcc-z80-idp:2.4.0`. The image is based on Ubuntu 24.04
+installed in `wischner/xcc-z80-idp:2.8.0`. The image is based on Ubuntu 24.04
 for Linux x86-64. Ubuntu's standard runtime files, packages, and transitive
 shared-library dependencies are not enumerated file by file.
 
@@ -9,12 +9,15 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 2.7.0 | This package |
-| XCC Z80 toolchain | 2.5.0 | Inherited from `wischner/xcc-z80:2.7.0` |
+| Image | 2.8.0 | This package |
+| XCC Z80 toolchain | 2.5.0 | Inherited from `wischner/xcc-z80:2.8.0` |
 | Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
 | Partner `libgpx` | 0.4.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
 | IDP μgpx | Latest `main` at image build time | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
+| libsquid | Latest `main` at image build time | [retro-plastics/libsquid](https://github.com/retro-plastics/libsquid) |
+| PAKET | Latest `main` at image build time | [iskra-delta/paket](https://github.com/iskra-delta/paket) |
+| Squid client sources | Latest `main` at image build time | [retro-plastics/squid-server](https://github.com/retro-plastics/squid-server) |
 | Snatch | 1.0.0 | [retro-vault/snatch](https://github.com/retro-vault/snatch) |
 | CP/M disk tool | 1.1.0 | [iskra-delta/cpmdisk](https://github.com/iskra-delta/cpmdisk) |
 | Partner emulator and MCP | 1.1.0 | [iskra-delta/idp-emu](https://github.com/iskra-delta/idp-emu) |
@@ -23,10 +26,18 @@ Installed component revisions are also recorded in `/opt/idp/share/metadata`.
 The XCC version and source metadata are stored in `/opt/x/.version` and
 `/opt/x/.source`.
 
-idp-udev and idp-sdk intentionally follow the current tip of `main` instead of
-pinned commits. The exact commits resolved for a particular image build are
-stored in `/opt/idp/share/metadata/idp-udev.version` and
-`/opt/idp/share/metadata/idp-sdk.version`.
+idp-udev, idp-sdk, libsquid, squid-server and PAKET intentionally follow the
+current tip of `main` instead of pinned commits. The exact commits resolved for
+a particular image build are stored in:
+
+```text
+/opt/idp/share/metadata/idp-udev.version
+/opt/idp/share/metadata/idp-sdk.version
+/opt/idp/share/metadata/libsquid.version
+/opt/paket/share/metadata/paket.version
+/opt/paket/share/metadata/libsquid.version
+/opt/paket/share/metadata/squid-server.version
+```
 
 ## Runtime defaults
 
@@ -107,13 +118,16 @@ unistd.h       wchar.h        wctype.h       yos.h
 sys/bdos.h     sys/stat.h     sys/types.h
 ```
 
-The IDP additions `libgpx.h`, `ugpx.h`, and `partner/` are linked into the same
-directory. Choose one graphics interface when including and linking:
+The IDP additions `libgpx.h`, `ugpx.h`, `partner/`, and `squid/` are linked
+into the same directory. Choose one graphics interface when including and
+linking:
 
 ```c
 #include <libgpx.h>       /* full graphics */
 /* or: #include <ugpx.h>  -- micro graphics */
 #include <partner/conio.h>
+#include <squid/snet.h>   /* Squid link layer */
+#include <squid/socket.h> /* Squid sockets */
 ```
 
 ### Z80 startup files, libraries, and linker scripts
@@ -127,15 +141,15 @@ crt0-emu.rel        crt0-emu.s
 libc.a              libcpm3.a
 libemu.a            libfixed.a
 libruntime.a        libgpx.a
-libugpx.a
+libugpx.a           libsquid.a
 libsdk.a
 
 linker-cpm3.ld      linker-cpm3.lk
 linker-emu.ld       linker-emu.lk
 ```
 
-`libgpx.a`, `libugpx.a`, and `libsdk.a` in this directory point to the
-corresponding IDP libraries under `/opt/idp/lib`. `libcpm3.a` is XCC's native
+`libgpx.a`, `libugpx.a`, `libsdk.a`, and `libsquid.a` in this directory point
+to the corresponding IDP libraries under `/opt/idp/lib`. `libcpm3.a` is XCC's native
 CP/M 3 runtime.
 
 The two installed platform variants are:
@@ -286,6 +300,56 @@ Link it with `-lsdk`. The image deliberately does not inject SDK initialization
 code. Programs initialize only the subsystems they use, such as calling the
 console initialization routine before using console services.
 
+### libsquid
+
+libsquid implements the Squid serial wire protocol: framing, retries and
+acknowledgements in a link layer, plus a small multiplexed socket API above it.
+The packaged archive is the hand-written Z80 assembly backend, built for the
+`cpm3` platform by libsquid's own `scripts/build-z80.sh`. That script checks
+the C header and the assembler include against the compact `wire.def` contract,
+links a real program against the archive it just produced, and enforces the
+backend's code-size ceiling.
+
+| Item | Installed location |
+| --- | --- |
+| Public headers | `/opt/idp/include/squid/snet.h`, `/opt/idp/include/squid/socket.h` |
+| Static library | `/opt/idp/lib/libsquid.a` |
+| Compatibility library name | `/opt/idp/lib/libsquid.lib` |
+| XCC header link | `/opt/x/z80/include/squid` |
+| XCC library link | `/opt/x/z80/lib/libsquid.a` |
+| Build record | `/opt/idp/share/metadata/libsquid.toolchain` |
+| Upstream documentation | `/opt/idp/share/doc/libsquid/README.md` |
+
+Link it with `-lsquid`. It is independent of the graphics libraries and can be
+linked alongside either of them, and alongside `-lsdk`. `snet_init()` takes a
+platform structure of `send_char`, `recv_char`, `get_tick`, `mem_alloc` and
+`mem_free` hooks, so the library carries no serial hardware assumptions; the
+calling program supplies the Partner SIO layer. Assign those hooks inside a
+function — xcc does not emit a static initializer that takes the address of a
+static function.
+
+## PAKET
+
+`PAKET.COM` is the Retro Vault command-line package manager for the Partner.
+It connects through a chosen Partner serial port, carries the Retro Vault
+protocol over Squid wire protocol 2 on channel 3, and streams downloads
+straight into a CP/M file. It is a finished CP/M 3 program, not a library, and
+lives in its own `/opt/paket` prefix.
+
+| Item | Installed location | Variable |
+| --- | --- | --- |
+| Executable | `/opt/paket/bin/paket.com` | `PAKET_COM` |
+| Boot floppy with `0:PAKET.COM` | `/opt/paket/share/paket/fddb.img` | `PAKET_DISK` |
+| Licence | `/opt/paket/share/licenses/paket/LICENSE` | — |
+| Upstream documentation | `/opt/paket/share/doc/paket/README.md` | — |
+| Source revisions | `/opt/paket/share/metadata/` | — |
+
+PAKET owns its small Partner SIO and RTC hardware layer and deliberately does
+not link the IDP SDK. It compiles libsquid's and squid-server's Z80 client
+sources directly into the binary with a single socket, so it does not link the
+`libsquid.a` archive above either. The floppy image is produced with the
+image's own `cpmdisk`.
+
 ## Build tools
 
 GNU Make, CMake, and Git are installed from Ubuntu 24.04 and remain available
@@ -382,7 +446,7 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
 ## Filesystem layout
 
 ```text
-/opt/x/                         XCC 2.3.2 host and Z80 toolchain
+/opt/x/                         XCC 2.5.0 host and Z80 toolchain
   bin/                          compiler, assembler, linker, and tools
   lib/                          XCC host static libraries
   share/doc/                    tool documentation
@@ -393,12 +457,21 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
   include/libgpx.h              Partner full graphics header
   include/ugpx.h                Partner micro graphics header
   include/partner/              public IDP SDK headers
+  include/squid/                Squid protocol headers
   lib/libgpx.a                  Partner graphics library
   lib/libugpx.a                 Partner micro graphics library
   lib/libsdk.a                  IDP SDK library
+  lib/libsquid.a                Squid serial protocol library
   libraries.manifest            packaged-library manifest
+  share/doc/                    upstream component documentation
   share/licenses/               source-project licenses
   share/metadata/               pinned component versions
+
+/opt/paket/                     PAKET package manager
+  bin/paket.com                 CP/M 3 executable
+  share/paket/fddb.img          boot floppy holding 0:PAKET.COM
+  share/licenses/paket/         PAKET licence
+  share/metadata/               PAKET, libsquid, and squid-server revisions
 
 /opt/snatch/                    Snatch executable and runtime plugins
 /opt/cpmdisk/                   cpmdisk executable and runtime shared library
@@ -476,6 +549,11 @@ The following files and components are deliberately not included:
 - The SDCC compiler and SDCC runtime libraries.
 - idp-udev's μlibc and μsdcc libraries, CRT, root replacement C headers, and
   internal build files. Only public `ugpx.h` and `libugpx.a` are packaged.
+- The Squid server itself. Only squid-server's Z80 client sources are used,
+  and only by compiling them into `PAKET.COM`; no squid-server headers,
+  libraries, or host binaries are installed.
+- libsquid's portable C backend, host `squid-test`/`squid-chat` programs, and
+  test sources. Only the Z80 archive and its two public headers are packaged.
 - Snatch development headers and other non-runtime release-package files.
 - cpmdisk development headers and other non-runtime release-package files.
 - XCC host-development headers under `/opt/x/include`; Z80 target headers under
@@ -495,7 +573,11 @@ The source-project licenses for the packaged target libraries are installed at:
 /opt/idp/share/licenses/libgpx/LICENSE
 /opt/idp/share/licenses/idp-udev/LICENSE
 /opt/idp/share/licenses/idp-sdk/LICENSE
+/opt/paket/share/licenses/paket/LICENSE
 ```
+
+libsquid and squid-server ship no licence file of their own; libsquid's
+upstream README is installed at `/opt/idp/share/doc/libsquid/README.md`.
 
 The target library inventory used by the image is preserved as
 `/opt/idp/libraries.manifest`.

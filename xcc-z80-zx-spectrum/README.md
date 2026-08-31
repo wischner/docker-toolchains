@@ -2,11 +2,11 @@
 
 `xcc-z80-zx-spectrum` is a complete ZX Spectrum 48K development image based
 on the medium-model [`xcc-z80`](../xcc-z80) toolchain. It compiles RAM-loaded
-programs and replacement ROMs, packages TAP/TZX files, provides a native ZX
-libgpx library, and includes the Beepolix music tools, ZX Spectrum MCP
-emulator, and snatch asset pipeline.
+programs and replacement ROMs, packages TAP/TZX files, provides native ZX
+libgpx and libsquid libraries, and includes the Beepolix music tools, ZX
+Spectrum MCP emulator, and snatch asset pipeline.
 
-Current image version: `2.7.0`. XCC version: `2.5.0`.
+Current image version: `2.8.0`. XCC version: `2.5.0`.
 
 ## Complete image contents
 
@@ -58,6 +58,7 @@ crt0-zx-ram.s            linker-zx-ram.lk
 crt0-zx-rom.rel          linker-zx-rom.ld          libzx-rom.a
 crt0-zx-rom.s            linker-zx-rom.lk
 libgpx.a                 libgpx.lib
+libsquid.a               libsquid.lib
 ```
 
 The inherited host SDK under `/opt/x/include` and `/opt/x/lib` contains the
@@ -99,6 +100,35 @@ Include it with `#include <libgpx.h>` and link it with `-lgpx`; no extra `-I`
 or `-L` option is required. It supplies the ZX implementations of lifecycle,
 screen clearing, dimensions, pixels, lines, rectangles, text, bitmaps,
 sprites, stock cursors, and built-in fonts.
+
+### ZX Spectrum libsquid
+
+The current `main` revision of
+[retro-plastics/libsquid](https://github.com/retro-plastics/libsquid) is used.
+libsquid is the Squid serial wire protocol: a link layer with framing, retries
+and acknowledgements, plus a small multiplexed socket API on top of it. The
+image ships the hand-written Z80 assembly backend, which is substantially
+smaller than the equivalent C implementation.
+
+It is built by libsquid's own `scripts/build-z80.sh`, which verifies that the
+C header and the assembler include still agree with the compact `wire.def`
+contract, links a real program against the archive it just produced, and
+enforces the backend's code-size ceiling. `zx-ram` and `zx-rom` emit identical
+objects, so one archive serves both targets.
+
+| Item | Canonical path | XCC search path |
+|---|---|---|
+| Public headers | `/opt/zx-spectrum/include/squid/` | `/opt/x/z80/include/squid/` |
+| Static library | `/opt/zx-spectrum/lib/libsquid.a` | `/opt/x/z80/lib/libsquid.a` |
+| Compatibility name | `/opt/zx-spectrum/lib/libsquid.lib` | `/opt/x/z80/lib/libsquid.lib` |
+| Build record | `/opt/zx-spectrum/share/metadata/libsquid.toolchain` | — |
+| Documentation | `/opt/zx-spectrum/share/doc/libsquid/README.md` | — |
+
+Include it with `#include <squid/snet.h>` and `#include <squid/socket.h>`, and
+link it with `-lsquid`; no extra `-I` or `-L` option is required. `snet_init()`
+takes a platform structure of `send_char`, `recv_char`, `get_tick`,
+`mem_alloc`, and `mem_free` hooks, so the library stays independent of any
+particular serial hardware.
 
 ### Beepolix
 
@@ -199,7 +229,7 @@ Mount a project and open a shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.7.0 \
+  wischner/xcc-z80-zx-spectrum:2.8.0 \
   bash
 ```
 
@@ -223,6 +253,51 @@ int main(void)
     gpx_t *gpx = gpx_create(GPXM_DEFAULT);
     gpx_draw_pixel(gpx, 10, 10, CO_FORE, BM_CPY, 0);
     for (;;) { }
+}
+```
+
+### Link a Squid serial program
+
+```bash
+xcc -Os --oformat=binary main.c -lsquid -o app.bin
+```
+
+```c
+#include <stdint.h>
+#include <stdlib.h>
+#include <squid/snet.h>
+#include <squid/socket.h>
+
+static int     put(uint8_t c) { /* write one byte to your UART */ (void)c; return 0; }
+static int     get(void)      { /* read one byte, or -1 */ return -1; }
+static uint8_t tick(void)     { /* free-running timebase */ return 0; }
+
+int main(void)
+{
+    squid_platform_t plat;
+    squid_timing_t tm;
+    int fd;
+
+    /* Assign the hooks inside a function: xcc does not emit a static
+       initializer that takes the address of a static function. */
+    plat.send_char = put;
+    plat.recv_char = get;
+    plat.get_tick  = tick;
+    plat.mem_alloc = malloc;
+    plat.mem_free  = free;
+
+    tm.timeout_ticks = 6;
+    tm.ack_delay_ticks = 2;
+    tm.ping_ticks = 0;
+    tm.max_retries = 3;
+    tm.payload_bytes = 0;
+
+    snet_init(&plat, &tm);
+    fd = squid_open(32, 32);
+    squid_connect(fd, 1);
+    while (!snet_link_is_up())
+        snet_burst();
+    return 0;
 }
 ```
 
@@ -290,8 +365,8 @@ self-contained payloads remain under `/opt`.
 XCC itself is pinned to the latest released tag, `v2.5.0`, so the compiler
 version stays reproducible. The Docker image tag versions the image and moves
 independently when its contents change. libgpx is pinned to its `v0.4.0`
-release tag. Beepolix, ZX Spectrum MCP, and snatch intentionally follow their
-current `main` branches. Docker BuildKit remote Git `ADD` instructions resolve
+release tag. libsquid, Beepolix, ZX Spectrum MCP, and snatch intentionally
+follow their current `main` branches. Docker BuildKit remote Git `ADD` instructions resolve
 those refs on every build and invalidate cached layers when the upstream commit
 changes.
 
@@ -299,6 +374,7 @@ The exact commits included in a built image are recorded in:
 
 ```text
 /opt/zx-spectrum/share/metadata/libgpx.version
+/opt/zx-spectrum/share/metadata/libsquid.version
 /opt/beepolix/.version
 /opt/zx-spectrum-mcp/.version
 /opt/snatch/.version
@@ -311,5 +387,7 @@ through the corresponding entries in [`build.args`](./build.args).
 
 Component licences and upstream documentation are retained below each
 component's `/opt` prefix. libgpx and snatch are GPL-2.0 projects; Beepolix and
-ZX Spectrum MCP are GPL-3.0 projects. Vendored dependencies retain their own
+ZX Spectrum MCP are GPL-3.0 projects. libsquid ships no licence file of its
+own; its upstream README is installed under
+`/opt/zx-spectrum/share/doc/libsquid`. Vendored dependencies retain their own
 licences as documented upstream.

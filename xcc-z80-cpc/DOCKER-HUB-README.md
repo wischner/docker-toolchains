@@ -10,7 +10,7 @@ and the standard CPC disk, graphics, and compression tools.
 ## Quick start
 
 ```bash
-export IMAGE=wischner/xcc-z80-cpc:2.7.0
+export IMAGE=wischner/xcc-z80-cpc:2.8.0
 
 # A 6128 disk program.
 docker run --rm -v "$PWD":/work -w /work $IMAGE sh -c '

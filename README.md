@@ -41,12 +41,12 @@ available for reproducible builds.
   *Use the already-built `retro-vault/xyz` Z80 compiler suite directly in a light Ubuntu image.*
 
 - [**XCC Z80 – Iskra Delta Partner**](./xcc-z80-idp)
-  XCC-based Partner toolchain with SDK libraries, host utilities, full idp-emu,
-  and invisible Partner MCP.
-  *Compile, package, emulate, and let AI inspect or run the real Partner hardware model.*
+  XCC-based Partner toolchain with SDK libraries, libsquid, the PAKET package
+  manager, host utilities, full idp-emu, and invisible Partner MCP.
+  *Compile, package, network, emulate, and let AI inspect or run the real Partner hardware model.*
 
 - [**XCC Z80 – ZX Spectrum**](./xcc-z80-zx-spectrum)
-  Medium-model XCC with native ZX RAM/ROM targets, libgpx, Beepolix,
+  Medium-model XCC with native ZX RAM/ROM targets, libgpx, libsquid, Beepolix,
   ZX Spectrum MCP, and snatch.
   *A complete compile, package, graphics, music, asset, and headless-emulation workflow.*
 

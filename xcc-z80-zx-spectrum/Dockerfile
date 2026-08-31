@@ -1,17 +1,19 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=wischner/xcc-z80:2.7.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.8.0
 
-# Assemble the current ZX Spectrum libgpx backend with XCC itself.
-FROM ${BASE_IMAGE} AS libgpx-builder
+# Assemble the current ZX Spectrum target libraries with XCC itself.
+FROM ${BASE_IMAGE} AS library-builder
 
 ARG LIBGPX_REF=v0.4.0
+ARG LIBSQUID_REF=main
 
 USER root
 
 # Remote Git ADDs are deliberately used for moving refs: BuildKit resolves the
 # ref on each build and invalidates the layer when its commit changes.
 ADD --keep-git-dir=true https://github.com/retro-vault/libgpx.git#${LIBGPX_REF} /tmp/libgpx
+ADD --keep-git-dir=true https://github.com/retro-plastics/libsquid.git#${LIBSQUID_REF} /tmp/libsquid
 
 RUN set -eux; \
     apt-get update; \
@@ -34,6 +36,29 @@ RUN set -eux; \
     git -C /tmp/libgpx rev-parse HEAD > /opt/zx-spectrum/share/metadata/libgpx.version; \
     printf '%s\n' 'https://github.com/retro-vault/libgpx' > /opt/zx-spectrum/share/metadata/libgpx.source; \
     test -s /opt/zx-spectrum/lib/libgpx.a
+
+# libsquid's own build script is the only supported way to produce the Z80
+# archive: it verifies the C/asm wire contract, links a real program against
+# the archive it just wrote, and enforces the backend's code-size ceiling.
+# zx-ram and zx-rom emit identical objects, so one archive serves both.
+RUN set -eux; \
+    mkdir -p \
+      /opt/zx-spectrum/include/squid \
+      /opt/zx-spectrum/share/doc/libsquid; \
+    cd /tmp/libsquid; \
+    sh scripts/check-wire.sh; \
+    sh scripts/build-z80.sh zx-ram /tmp/libsquid-build /tmp/libsquid-out; \
+    install -m 0644 /tmp/libsquid-out/lib/libsquid.a /opt/zx-spectrum/lib/libsquid.a; \
+    ln -s libsquid.a /opt/zx-spectrum/lib/libsquid.lib; \
+    install -m 0644 /tmp/libsquid-out/include/squid/*.h /opt/zx-spectrum/include/squid/; \
+    install -m 0644 /tmp/libsquid/README.md /opt/zx-spectrum/share/doc/libsquid/README.md; \
+    install -m 0644 /tmp/libsquid-out/TOOLCHAIN /opt/zx-spectrum/share/metadata/libsquid.toolchain; \
+    git -C /tmp/libsquid rev-parse HEAD > /opt/zx-spectrum/share/metadata/libsquid.version; \
+    printf '%s\n' 'https://github.com/retro-plastics/libsquid' > /opt/zx-spectrum/share/metadata/libsquid.source; \
+    test -s /opt/zx-spectrum/lib/libsquid.a; \
+    test -f /opt/zx-spectrum/include/squid/snet.h; \
+    test -f /opt/zx-spectrum/include/squid/socket.h; \
+    rm -rf /tmp/libsquid-build /tmp/libsquid-out
 
 # Build current host-side Spectrum utilities independently of the target
 # compiler prefix, and install each under a self-contained /opt directory.
@@ -94,15 +119,16 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.7.0
+ARG IMG_VERSION=2.8.0
 ARG XYZ_VERSION=2.5.0
 ARG LIBGPX_REF=v0.4.0
+ARG LIBSQUID_REF=main
 ARG BEEPOLIX_REF=main
 ARG ZX_SPECTRUM_MCP_REF=main
 ARG SNATCH_REF=main
 
 LABEL org.opencontainers.image.title="xcc-z80-zx-spectrum" \
-      org.opencontainers.image.description="Medium-model XCC Z80 toolchain with ZX Spectrum RAM/ROM targets, libgpx, Beepolix, ZX Spectrum MCP, and snatch." \
+      org.opencontainers.image.description="Medium-model XCC Z80 toolchain with ZX Spectrum RAM/ROM targets, libgpx, libsquid, Beepolix, ZX Spectrum MCP, and snatch." \
       org.opencontainers.image.vendor="Wischner Ltd." \
       org.opencontainers.image.licenses="GPL-2.0-or-later AND GPL-3.0-or-later; see component licenses" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
@@ -123,7 +149,7 @@ ENV HOME=/home/ubuntu \
 
 USER root
 
-COPY --from=libgpx-builder /opt/zx-spectrum/ /opt/zx-spectrum/
+COPY --from=library-builder /opt/zx-spectrum/ /opt/zx-spectrum/
 COPY --from=host-tools-builder /opt/beepolix/ /opt/beepolix/
 COPY --from=host-tools-builder /opt/zx-spectrum-mcp/ /opt/zx-spectrum-mcp/
 COPY --from=host-tools-builder /opt/snatch/ /opt/snatch/
@@ -140,6 +166,9 @@ RUN set -eux; \
     ln -s /opt/zx-spectrum/include/libgpx.h /opt/x/z80/include/libgpx.h; \
     ln -s /opt/zx-spectrum/lib/libgpx.a /opt/x/z80/lib/libgpx.a; \
     ln -s /opt/zx-spectrum/lib/libgpx.lib /opt/x/z80/lib/libgpx.lib; \
+    ln -s /opt/zx-spectrum/include/squid /opt/x/z80/include/squid; \
+    ln -s /opt/zx-spectrum/lib/libsquid.a /opt/x/z80/lib/libsquid.a; \
+    ln -s /opt/zx-spectrum/lib/libsquid.lib /opt/x/z80/lib/libsquid.lib; \
     ln -s /opt/beepolix/bin/beplay /usr/local/bin/beplay; \
     ln -s /opt/beepolix/bin/bescore /usr/local/bin/bescore; \
     ln -s /opt/beepolix/bin/becompile /usr/local/bin/becompile; \
@@ -150,6 +179,8 @@ RUN set -eux; \
     chmod 0644 /etc/profile.d/x.sh; \
     test -f /opt/x/z80/include/libgpx.h; \
     test -f /opt/x/z80/lib/libgpx.a; \
+    test -f /opt/x/z80/include/squid/snet.h; \
+    test -f /opt/x/z80/lib/libsquid.a; \
     test -f "${ZX_SPECTRUM_MCP_ROM}"; \
     test -d "${SNATCH_PLUGIN_DIR}"; \
     for tool in xcc xld xas xar xopt xobjcopy xprog xgdb xemu beplay bescore becompile zx-spectrum-mcp snatch; do \
@@ -159,8 +190,9 @@ RUN set -eux; \
 USER ubuntu
 WORKDIR /work
 
-# Validate the default RAM target, explicit ROM target, libgpx discovery,
-# Spectrum tape packaging, and every added host command as the runtime user.
+# Validate the default RAM target, explicit ROM target, libgpx and libsquid
+# discovery, Spectrum tape packaging, and every added host command as the
+# runtime user.
 RUN set -eux; \
     test "$(id -u)" -ne 0; \
     test "$(command -v xcc)" = /usr/local/bin/xcc; \
@@ -179,6 +211,37 @@ RUN set -eux; \
     test -s /tmp/zx-gpx-smoke.bin; \
     test -s /tmp/zx-gpx-smoke.tap; \
     test "$(wc -c < /tmp/zx-gpx-smoke.rom)" -eq 16384; \
+    printf '%s\n' \
+      '#include <stdint.h>' \
+      '#include <stdlib.h>' \
+      '#include <squid/snet.h>' \
+      '#include <squid/socket.h>' \
+      'static int snd(uint8_t c) { (void)c; return 0; }' \
+      'static int rcv(void) { return -1; }' \
+      'static uint8_t tick(void) { return 0; }' \
+      'int main(void) {' \
+      '    squid_platform_t plat;' \
+      '    squid_timing_t tm;' \
+      '    int fd;' \
+      '    plat.send_char = snd;' \
+      '    plat.recv_char = rcv;' \
+      '    plat.get_tick = tick;' \
+      '    plat.mem_alloc = malloc;' \
+      '    plat.mem_free = free;' \
+      '    tm.timeout_ticks = 6;' \
+      '    tm.ack_delay_ticks = 2;' \
+      '    tm.ping_ticks = 0;' \
+      '    tm.max_retries = 3;' \
+      '    tm.payload_bytes = 0;' \
+      '    snet_init(&plat, &tm);' \
+      '    snet_burst();' \
+      '    fd = squid_open(32, 32);' \
+      '    if (fd > 0) squid_close(fd);' \
+      '    return snet_link_is_up() ? 1 : 0;' \
+      '}' \
+      > /tmp/zx-squid-smoke.c; \
+    xcc -Os --oformat=binary /tmp/zx-squid-smoke.c -lsquid -o /tmp/zx-squid-smoke.bin; \
+    test -s /tmp/zx-squid-smoke.bin; \
     beplay --help >/dev/null; \
     bescore --help >/dev/null; \
     becompile --help >/dev/null; \
@@ -187,5 +250,6 @@ RUN set -eux; \
     snatch --help >/dev/null; \
     ! xcc --platform=cpm3 --version >/dev/null 2>&1; \
     ! xld --platform=none --version >/dev/null 2>&1; \
-    rm -f /tmp/zx-gpx-smoke.c /tmp/zx-gpx-smoke.bin /tmp/zx-gpx-smoke.tap /tmp/zx-gpx-smoke.rom; \
+    rm -f /tmp/zx-gpx-smoke.c /tmp/zx-gpx-smoke.bin /tmp/zx-gpx-smoke.tap /tmp/zx-gpx-smoke.rom \
+      /tmp/zx-squid-smoke.c /tmp/zx-squid-smoke.bin; \
     xcc --version

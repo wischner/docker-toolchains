@@ -4,7 +4,7 @@
 
 Ubuntu 24.04 development image for the ZX Spectrum 48K. It combines the XCC
 2.5.0 medium-model C23 toolchain with native RAM and ROM platforms, the ZX
-backend of libgpx, Beepolix, ZX Spectrum MCP, and snatch.
+backends of libgpx and libsquid, Beepolix, ZX Spectrum MCP, and snatch.
 
 ## Everything installed
 
@@ -52,6 +52,32 @@ and link with `-lgpx`; no custom include or library path is needed. This is
 the hand-written ZX backend with screen, drawing, text, bitmap, sprite, cursor,
 and built-in-font support.
 
+### libsquid
+
+The latest `retro-plastics/libsquid` `main` is built with XCC's `xas` and
+archived with `xar`:
+
+```text
+/opt/x/z80/include/squid/snet.h
+/opt/x/z80/include/squid/socket.h
+/opt/x/z80/lib/libsquid.a
+/opt/x/z80/lib/libsquid.lib
+```
+
+libsquid is the Squid serial wire protocol — framing, retries and
+acknowledgements in a link layer, plus a small multiplexed socket API on top.
+The packaged archive is the hand-written Z80 assembly backend, which is much
+smaller than the equivalent C build. `zx-ram` and `zx-rom` emit identical
+objects, so one archive serves both. The canonical files are under
+`/opt/zx-spectrum`. Use `#include <squid/snet.h>` and link with `-lsquid`; no
+custom include or library path is needed.
+
+`snet_init()` takes a platform structure of `send_char`, `recv_char`,
+`get_tick`, `mem_alloc` and `mem_free` hooks, so the library makes no
+assumptions about the serial hardware. Assign those hooks inside a function —
+xcc does not emit a static initializer that takes the address of a static
+function.
+
 ### Beepolix
 
 The latest `retro-vault/beepolix` `main` is built in release mode under
@@ -97,7 +123,7 @@ non-root `ubuntu` user in `/work`.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.7.0 \
+  wischner/xcc-z80-zx-spectrum:2.8.0 \
   sh -lc 'xcc -Os --oformat=binary main.c -lgpx -o app.bin && xprog --tap app.bin -o app.tap --name APP'
 ```
 
@@ -114,6 +140,12 @@ xcc -Os --platform=zx-rom --oformat=binary main.c -lgpx -o app.rom
 ```
 
 The output is exactly 16,384 bytes.
+
+## Link a Squid serial program
+
+```bash
+xcc -Os --oformat=binary main.c -lsquid -o app.bin
+```
 
 ## Use Beepolix
 
@@ -162,13 +194,14 @@ snatch \
 ## Latest-source policy
 
 XCC is pinned to the current release, `v2.5.0`, and uses the requested medium
-model. libgpx is pinned to its `v0.4.0` release tag. Beepolix, ZX Spectrum MCP,
-and snatch follow their latest `main` commits on every build. BuildKit remote
+model. libgpx is pinned to its `v0.4.0` release tag. libsquid, Beepolix, ZX Spectrum
+MCP, and snatch follow their latest `main` commits on every build. BuildKit remote
 Git inputs invalidate their layers when those branches advance. Exact resolved
 commits are recorded in:
 
 ```text
 /opt/zx-spectrum/share/metadata/libgpx.version
+/opt/zx-spectrum/share/metadata/libsquid.version
 /opt/beepolix/.version
 /opt/zx-spectrum-mcp/.version
 /opt/snatch/.version
