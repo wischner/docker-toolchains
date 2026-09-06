@@ -1,7 +1,7 @@
 # Target libraries added to XCC's normal Z80 search path.
 # Source refs are either released tags or a tracked branch; the exact commit
 # for each is recorded under /opt/zx-spectrum/share/metadata in the image.
-retro-vault/libgpx v0.4.0 /opt/x/z80/lib/libgpx.a /opt/x/z80/include/libgpx.h
+retro-vault/libgpx v1.0.0 /opt/x/z80/lib/libgpx.a /opt/x/z80/include/libgpx.h
 retro-plastics/libsquid main-latest /opt/x/z80/lib/libsquid.a /opt/x/z80/include/squid
 
 # libsquid is the hand-written Z80 backend of the Squid serial wire protocol.

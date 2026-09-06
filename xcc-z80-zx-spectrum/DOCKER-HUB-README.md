@@ -38,7 +38,7 @@ XZ80 remain under `/opt/x/lib`, and all X tool manuals are under
 
 ### libgpx
 
-`retro-vault/libgpx` `v0.4.0` is assembled with XCC's `xas` and
+`retro-vault/libgpx` `v1.0.0` is assembled with XCC's `xas` and
 archived with `xar`:
 
 ```text
@@ -123,7 +123,7 @@ non-root `ubuntu` user in `/work`.
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.8.0 \
+  wischner/xcc-z80-zx-spectrum:2.9.0 \
   sh -lc 'xcc -Os --oformat=binary main.c -lgpx -o app.bin && xprog --tap app.bin -o app.tap --name APP'
 ```
 
@@ -194,7 +194,7 @@ snatch \
 ## Latest-source policy
 
 XCC is pinned to the current release, `v2.5.0`, and uses the requested medium
-model. libgpx is pinned to its `v0.4.0` release tag. libsquid, Beepolix, ZX Spectrum
+model. libgpx is pinned to its `v1.0.0` release tag. libsquid, Beepolix, ZX Spectrum
 MCP, and snatch follow their latest `main` commits on every build. BuildKit remote
 Git inputs invalidate their layers when those branches advance. Exact resolved
 commits are recorded in:

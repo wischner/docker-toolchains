@@ -11,7 +11,7 @@ map, Snatch, and cpmdisk.
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.8.0
+export IMAGE=wischner/xcc-z80-idp:2.9.0
 ```
 
 ## Quick start
@@ -64,7 +64,7 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 | XCC targets | `cpm3` (default) and `emu` |
 | Build tools | GNU Make, CMake, and Git |
 | IDP SDK | Latest `main` at image build time |
-| Partner libgpx | 0.4.0 |
+| Partner libgpx | 1.0.0 |
 | idp-udev ugpx | Latest `main` at image build time |
 | libsquid | Latest `main` at image build time |
 | PAKET | Latest `main` at image build time, with a boot floppy |

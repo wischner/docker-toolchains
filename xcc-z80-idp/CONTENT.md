@@ -1,7 +1,7 @@
 # `xcc-z80-idp` image contents
 
 This document inventories the toolchain and application payload intentionally
-installed in `wischner/xcc-z80-idp:2.8.0`. The image is based on Ubuntu 24.04
+installed in `wischner/xcc-z80-idp:2.9.0`. The image is based on Ubuntu 24.04
 for Linux x86-64. Ubuntu's standard runtime files, packages, and transitive
 shared-library dependencies are not enumerated file by file.
 
@@ -9,10 +9,10 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 2.8.0 | This package |
-| XCC Z80 toolchain | 2.5.0 | Inherited from `wischner/xcc-z80:2.8.0` |
+| Image | 2.9.0 | This package |
+| XCC Z80 toolchain | 2.5.0 | Inherited from `wischner/xcc-z80:2.9.0` |
 | Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
-| Partner `libgpx` | 0.4.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
+| Partner `libgpx` | 1.0.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
 | IDP μgpx | Latest `main` at image build time | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
 | libsquid | Latest `main` at image build time | [retro-plastics/libsquid](https://github.com/retro-plastics/libsquid) |

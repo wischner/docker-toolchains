@@ -28,6 +28,14 @@ COPY sdk/ /opt/openlook-sdk/
 # libtirpc is the only development dependency not supplied by the X11 base.
 # OpenLook itself is the CMake-native retro-vault port; no imake toolchain or
 # historical source overlay is required.
+#
+# The font set ships with the OpenLook source tree and is staged into
+# OPENWINHOME below. The defaults in lib/app-defaults name both the
+# Adobe Helvetica and B&H Lucida families, and XView falls back to the
+# server's wide fixed font when either is absent, which mis-sizes every
+# control. The build check near the end of this file asserts both are
+# present, so a source revision that drops them fails here rather than
+# on screen.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libtirpc-dev \
@@ -85,6 +93,14 @@ RUN set -eux; \
       test -f /usr/openwin/include/pixrect/pixrect.h; \
       test -f /usr/openwin/include/xview/xview.h; \
       test -f /usr/openwin/include/xview_private/attr_impl.h; \
+    echo "=== OpenLook fonts ==="; \
+      for dpi in 75dpi 100dpi; do \
+        test -f "/usr/openwin/share/fonts/openlook/bdf/$dpi/fonts.dir"; \
+      done; \
+      grep -qi -- '-adobe-helvetica-' \
+        /usr/openwin/share/fonts/openlook/bdf/75dpi/fonts.dir; \
+      grep -qi -- '-b&h-lucida-' \
+        /usr/openwin/share/fonts/openlook/bdf/75dpi/fonts.dir; \
     echo "=== OpenLook libraries and applications ==="; \
       test -f /usr/openwin/lib/libxview.so; test -f /usr/openwin/lib/libxview.a; \
       test -f /usr/openwin/lib/libolgx.so; test -f /usr/openwin/lib/libolgx.a; \

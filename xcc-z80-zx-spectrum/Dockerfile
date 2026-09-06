@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=wischner/xcc-z80:2.8.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.9.0
 
 # Assemble the current ZX Spectrum target libraries with XCC itself.
 FROM ${BASE_IMAGE} AS library-builder
 
-ARG LIBGPX_REF=v0.4.0
+ARG LIBGPX_REF=v1.0.0
 ARG LIBSQUID_REF=main
 
 USER root
@@ -119,9 +119,9 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.8.0
+ARG IMG_VERSION=2.9.0
 ARG XYZ_VERSION=2.5.0
-ARG LIBGPX_REF=v0.4.0
+ARG LIBGPX_REF=v1.0.0
 ARG LIBSQUID_REF=main
 ARG BEEPOLIX_REF=main
 ARG ZX_SPECTRUM_MCP_REF=main

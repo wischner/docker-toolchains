@@ -6,8 +6,8 @@
 # cannot be linked against the firmware-hosted cpc-464/cpc-664/cpc-6128
 # platforms. It ships with its own startup file and is kept off the default
 # search path deliberately.
-retro-vault/libgpx v0.4.0 /opt/cpc/lib/libgpx.a /opt/cpc/include/libgpx.h
-retro-vault/libgpx v0.4.0 /opt/cpc/lib/crt0-cpc.rel -
+retro-vault/libgpx v1.0.0 /opt/cpc/lib/libgpx.a /opt/cpc/include/libgpx.h
+retro-vault/libgpx v1.0.0 /opt/cpc/lib/crt0-cpc.rel -
 
 # The firmware-hosted CPC runtimes (crt0-cpc-*.rel, libcpc-*.a, linker-cpc-*.ld)
 # come from the X Compiler Suite in the base image and are already on XCC's

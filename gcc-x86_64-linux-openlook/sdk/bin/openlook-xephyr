@@ -58,10 +58,31 @@ for font_dir in \
     "$OPENWINHOME/share/fonts/openlook/bdf/75dpi" \
     "$OPENWINHOME/share/fonts/openlook/bdf/100dpi"; do
     if [[ -d "$font_dir" ]]; then
-        DISPLAY="$nested_display" xset +fp "$font_dir"
+        # A font directory the server rejects is worth reporting, but
+        # it must not take the session down: this script runs under
+        # "set -e" and is also used as a debugger wrapper, where an
+        # abort here would look like the program failing to start.
+        if ! DISPLAY="$nested_display" xset +fp "$font_dir"; then
+            echo "Warning: X server rejected font path $font_dir" >&2
+        fi
     fi
 done
 DISPLAY="$nested_display" xset fp rehash
+
+# XView asks for the fonts named in the OPEN LOOK defaults. When they
+# are missing it silently falls back to the server's fixed font, whose
+# wide metrics push control labels past their bounds and make adjacent
+# controls overlap. Say so rather than leave it to be discovered by
+# eye.
+for required_font in \
+    "-adobe-helvetica-medium-r-normal--12-*-*-*-*-*-iso8859-1" \
+    "-b&h-lucida-medium-r-normal-sans-12-*-*-*-*-*-iso8859-1"; do
+    if [[ -z "$(DISPLAY="$nested_display" xlsfonts \
+        -fn "$required_font" 2>/dev/null)" ]]; then
+        echo "Warning: no font matches $required_font;" \
+            "OPEN LOOK controls will be mis-sized." >&2
+    fi
+done
 
 if [[ -f "$OPENWINHOME/lib/app-defaults/Olwm" ]]; then
     DISPLAY="$nested_display" xrdb -merge "$OPENWINHOME/lib/app-defaults/Olwm"
