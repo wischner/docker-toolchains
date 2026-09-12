@@ -4,7 +4,7 @@
 
 `wischner/sdcc-z80-zx-spectrum` is a Docker image for **ZX Spectrum development** with SDCC plus Spectrum-specific tooling and emulation support.
 
-It extends the generic Z80 image with Fuse, `libspectrum`, conversion helpers, and a workflow that is friendly to both RAM-loaded and ROM-based Spectrum software.
+It extends the generic Z80 image with Fuse, `libspectrum`, conversion helpers, hdfmonkey with blank FAT16 HDF disk images, and a workflow that is friendly to RAM-loaded, ROM-based, and divIDE/esxDOS disk-based Spectrum software.
 
 ## What is included
 
@@ -13,6 +13,9 @@ It extends the generic Z80 image with Fuse, `libspectrum`, conversion helpers, a
 - `libspectrum`
 - `bin2tap`
 - convenience helpers such as `ihx2bin` and `ihx2tap`
+- `hdfmonkey` for FAT filesystems inside HDF/raw IDE images (divIDE, DivMMC, +3e, Fuse),
+  plus gzip-compressed blank FAT16 `ESXDOS` volumes of 16, 32, 64, and 128 MB
+  under `$HDFMONKEY_IMAGE_DIR`
 - bundled Spectrum ROMs
 
 ## What this image is for
@@ -63,9 +66,19 @@ docker run --rm -it \
   fuse hello.tap
 ```
 
+Prepare an esxDOS disk image:
+
+```bash
+gunzip -c "$HDFMONKEY_IMAGE_DIR/blank-32m.hdf.gz" > disk.hdf
+hdfmonkey put disk.hdf esxdos089/SYS esxdos089/BIN esxdos089/TMP /
+hdfmonkey put disk.hdf hello.bin /HELLO.BIN
+hdfmonkey ls disk.hdf
+```
+
 ## Notes
 
 - This image does not force a Spectrum-specific runtime model on your program.
+- esxDOS firmware is not bundled; put your own distribution on the disk image.
 - For ROM targets and special hardware initialization, you are expected to provide your own `crt0.rel`.
 
 ## CONTRIBUTE

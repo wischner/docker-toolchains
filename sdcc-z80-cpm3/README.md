@@ -2,7 +2,7 @@
 
 `sdcc-z80-cpm3` is a Docker image for building **CP/M 3** software with **SDCC Z80**, packaging files onto CP/M disk images, and using a CP/M 3-oriented runtime bundled directly into the image.
 
-Current image version: `1.1.0`
+Current image version: `1.2.0`
 
 ## What the image contains
 
@@ -12,7 +12,7 @@ Included tools:
 
 - `sdcc`, `sdasz80`, `sdar`, `sdobjcopy`
 - `ucsim`
-- `cpmdisk`
+- `cpmdisk` 1.2.0
 
 Included runtime content:
 
@@ -49,7 +49,7 @@ These provide the base SDCC runtime and CP/M 3 pieces used by normal builds.
 
 ### `cpmdisk`
 
-`cpmdisk` is installed from the latest GitHub release or a pinned tag at build time. It is used to create and inspect CP/M disk images.
+`cpmdisk` is built from the pinned GitHub release tag (`v1.2.0`, set by `CPMDISK_VERSION` in `build.args`). It is used to create and inspect CP/M disk images; 1.2.0 adds the Iskra Delta Partner `fdd:p` and `fdd:g` floppy formats and fixes an extent bug.
 
 Typical uses:
 
@@ -65,7 +65,7 @@ Typical uses:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   bash
 ```
 
@@ -88,7 +88,7 @@ Compile:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   sdcc -o hello.ihx hello.c
 ```
 
@@ -98,7 +98,7 @@ Convert to a CP/M `.com` file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   sdobjcopy -I ihex -O binary hello.ihx hello.com
 ```
 
@@ -110,7 +110,7 @@ Create an empty floppy image:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   cpmdisk create cpm3-floppy.img idpfdd --label CPM3 --datestamp
 ```
 
@@ -120,7 +120,7 @@ Add a compiled file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   cpmdisk add cpm3-floppy.img -u 0 hello.com
 ```
 
@@ -130,7 +130,7 @@ Inspect the result:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   cpmdisk info cpm3-floppy.img
 ```
 
@@ -138,7 +138,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-cpm3:1.1.0 \
+  wischner/sdcc-z80-cpm3:1.2.0 \
   cpmdisk list cpm3-floppy.img -u 0
 ```
 

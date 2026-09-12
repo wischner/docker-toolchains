@@ -12,7 +12,7 @@ It extends `wischner/sdcc-z80` with CP/M-specific runtime content and disk image
 - CP/M 3 oriented headers installed into `/opt/sdcc/share/sdcc/include`
 - CP/M 3 oriented runtime libraries merged into `/opt/sdcc/share/sdcc/lib/z80/z80.lib`
 - startup object installed as `/opt/sdcc/share/sdcc/lib/z80/crt0.rel`
-- `cpmdisk`
+- `cpmdisk` 1.2.0
 
 ## How the toolchain is arranged
 

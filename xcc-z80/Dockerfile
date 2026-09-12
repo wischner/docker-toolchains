@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain on lightweight Ubuntu
-ARG IMG_VERSION=2.9.0
+ARG IMG_VERSION=2.10.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.5.0
+ARG XYZ_VERSION=2.5.1
 
 # Build the medium-model toolchain locally. Derived images depend on this image,
 # so its build must not require the same version to be published first.
@@ -44,9 +44,9 @@ RUN set -eux; \
 
 FROM ubuntu:24.04
 
-ARG IMG_VERSION=2.9.0
+ARG IMG_VERSION=2.10.0
 ARG XYZ_REPO=retro-vault/xyz
-ARG XYZ_VERSION=2.5.0
+ARG XYZ_VERSION=2.5.1
 LABEL org.opencontainers.image.title="xcc-z80" \
       org.opencontainers.image.description="Ubuntu-based X Compiler Suite medium-model Linux bundle with xcc, xas, xld, xprog, xgdb, xemu, headers, and Z80 runtime libraries." \
       org.opencontainers.image.vendor="Wischner Ltd." \
@@ -95,6 +95,11 @@ RUN set -eux; \
     test -f /opt/x/z80/lib/libzx-rom.a; \
     test -f /opt/x/z80/lib/linker-zx-ram.ld; \
     test -f /opt/x/z80/lib/linker-zx-rom.ld; \
+    for zx in zx-esxdos zx-esxdos-rom yos; do \
+      test -f "/opt/x/z80/lib/crt0-${zx}.rel"; \
+      test -f "/opt/x/z80/lib/lib${zx}.a"; \
+      test -f "/opt/x/z80/lib/linker-${zx}.ld"; \
+    done; \
     for cpc in cpc-464 cpc-664 cpc-6128; do \
       test -f "/opt/x/z80/lib/crt0-${cpc}.rel"; \
       test -f "/opt/x/z80/lib/lib${cpc}.a"; \
@@ -138,6 +143,13 @@ RUN set -eux; \
     test -s /tmp/hello.cdt; \
     test -s /tmp/hello.dsk; \
     rm -f /tmp/hello-cpc-464.bin /tmp/hello-cpc-664.bin /tmp/hello-cpc-6128.bin /tmp/hello.cdt /tmp/hello.dsk; \
+    xcc -Os --platform=zx-esxdos --oformat=binary /tmp/hello.c -o /tmp/hello-zx-esxdos.bin; \
+    xcc -Os --platform=zx-esxdos-rom --oformat=binary /tmp/hello.c -o /tmp/hello-zx-esxdos.rom; \
+    xprog --esxdos /tmp/hello-zx-esxdos.bin --name HELLO.BIN -o /tmp/hello.ide; \
+    test -s /tmp/hello-zx-esxdos.bin; \
+    test "$(wc -c < /tmp/hello-zx-esxdos.rom)" -eq 16384; \
+    test "$(wc -c < /tmp/hello.ide)" -eq 16777216; \
+    rm -f /tmp/hello-zx-esxdos.bin /tmp/hello-zx-esxdos.rom /tmp/hello.ide; \
     test -s /tmp/hello.bin; \
     test -s /tmp/medium-model.xl; \
     test -s /tmp/hello.rel; \

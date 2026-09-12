@@ -12,11 +12,12 @@ In practice this gives you:
 - `xcc` as the medium-model C23 compiler driver (`float` and 32-bit `long`,
   without `double`, `long long`, or floating-point stdio)
 - `xas`, `xld`, `xar`, and `xobjcopy`
-- `xprog` for XL process/service images, ZX Spectrum TAP/TZX packaging, and
-  Amstrad CPC CDT tape and DSK disk packaging
+- `xprog` for XL process/service images, ZX Spectrum TAP/TZX packaging,
+  esxDOS FAT16 IDE disk images, and Amstrad CPC CDT tape and DSK disk packaging
 - `xgdb` and `xemu` for debugging, plus an `xgdb-z80` compatibility alias
 - a staged Z80 target runtime under `z80/include` and `z80/lib`, including the
-  `cpm3`, `zx-ram`, `zx-rom`, `cpc-464`, `cpc-664`, and `cpc-6128` platforms
+  `cpm3`, `zx-ram`, `zx-rom`, `zx-esxdos`, `zx-esxdos-rom`, `yos`, `cpc-464`,
+  `cpc-664`, and `cpc-6128` platforms
 
 ## Installed components
 
@@ -88,8 +89,8 @@ Z80 toolchains. It keeps `float` and 32-bit `long` support while omitting the
 larger `double`, `long long`, and floating-point stdio payloads:
 
 ```text
-IMG_VERSION=2.9.0
-XYZ_VERSION=2.5.0
+IMG_VERSION=2.10.0
+XYZ_VERSION=2.5.1
 ```
 
 Those defaults live in [`build.args`](./build.args), alongside `IMG_VERSION`,

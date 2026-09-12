@@ -5,7 +5,7 @@ Partner** with **SDCC Z80**, packaging files onto Partner-compatible CP/M
 disks, and running it with the complete Partner emulator or its invisible MCP
 server.
 
-Current image version: `1.10.0`
+Current image version: `1.12.0`
 
 ## What the image contains
 
@@ -15,7 +15,7 @@ Included tools:
 
 - `sdcc`, `sdasz80`, `sdar`, `sdobjcopy`
 - `ucsim`
-- `cpmdisk`
+- `cpmdisk` 1.2.0
 - `snatch`
 - `idp-emu`, `idp-mcp`, `partnerp`, `partnerg`
 
@@ -32,7 +32,7 @@ Extra application content:
 - `snatch` installed in `/opt/snatch`
 - `snatch` plugins installed in `/opt/snatch/plugins`
 - `SNATCH_PLUGIN_DIR=/opt/snatch/plugins`
-- complete idp-emu 1.0.0 runtime under `/opt/idp-emu`, including the CMOS
+- complete idp-emu 1.3.0 runtime under `/opt/idp-emu`, including the CMOS
   seed, CRT/GDP ROMs, Partner P/G system hard-disk seeds, UI assets, shared
   libraries, and upstream documentation
 
@@ -42,10 +42,19 @@ This image does not just add a few extra files beside the stock SDCC installatio
 
 During image build:
 
-- the latest `iskra-delta/idp-sdk` release is downloaded into `sdcc-z80-idp/libraries/`
-- its full `include/` tree replaces the SDCC Z80 include directory
-- its `libsdcc-z80.lib`, `libcpm3-z80.lib`, and `libsdk.lib` archives are unpacked and merged into `z80.lib`
-- its `crt0*.rel` startup object is normalized to `crt0.rel`
+- the source tree of the latest `iskra-delta/idp-sdk` release is staged into
+  `sdcc-z80-idp/libraries/idp-sdk/source` (since v1.1.0 the release archive
+  itself contains only the XCC-built library)
+- inside the image, upstream's own `make _build TOOLCHAIN=sdcc` builds
+  `libsdcc-z80`, the Partner build of `libcpm3-z80` (`PLATFORM=partner`), and
+  the SDCC `libsdk.lib`; the `libsdcc-z80`/`libcpm3-z80` commits it cloned are
+  recorded in `/opt/libraries/idp-sdk/.libsdcc-z80.version` and
+  `.libcpm3-z80.version`
+- the resulting `include/` tree (libc plus `partner/`) replaces the SDCC Z80
+  include directory
+- the resulting `libsdcc-z80.lib`, `libcpm3-z80.lib`, and `libsdk.lib`
+  archives are unpacked and merged into `z80.lib`
+- the resulting `crt0cpm3-z80.rel` startup object is normalized to `crt0.rel`
 - `ugpx` is fetched separately from the latest `iskra-delta/idp-udev` `main` revision
 - the exact `idp-udev` commit is recorded in `libraries/ugpx/.version`
 - `ugpx` is installed as its own standalone `ugpx.lib`, not merged into `z80.lib`
@@ -61,10 +70,11 @@ That means:
 
 ### Merged into `z80.lib`
 
-These are synced from the latest `iskra-delta/idp-sdk` release:
+These are built from the latest `iskra-delta/idp-sdk` release source with
+SDCC during the image build:
 
 - `libsdcc-z80.lib`
-- `libcpm3-z80.lib`
+- `libcpm3-z80.lib` (Partner platform build)
 - `libsdk.lib`
 
 These provide the base Partner-targeted SDCC runtime and CP/M-oriented pieces used by normal builds.
@@ -92,7 +102,7 @@ This layout is intentional so that a future `gpx.h` can coexist beside `ugpx.h` 
 
 ### `cpmdisk`
 
-`cpmdisk` is installed from the latest GitHub release or a pinned tag at build time. It is used to create and inspect Iskra Delta Partner-compatible CP/M disk images.
+`cpmdisk` is built from the pinned GitHub release tag (`v1.2.0`, set by `CPMDISK_VERSION` in `build.args`). It is used to create and inspect Iskra Delta Partner-compatible CP/M disk images; 1.2.0 adds the `fdd:p` (Partner P, 154 tracks) and `fdd:g` (Partner G, the `fdd` default) floppy formats and fixes an extent bug.
 
 Typical uses:
 
@@ -118,7 +128,7 @@ SNATCH_PLUGIN_DIR=/opt/snatch/plugins
 
 ### Partner emulator and MCP
 
-[idp-emu](https://github.com/iskra-delta/idp-emu) 1.0.0 is built natively for
+[idp-emu](https://github.com/iskra-delta/idp-emu) 1.3.0 is built natively for
 Alpine/musl. The full upstream runtime tree is installed, not only the MCP
 binary:
 
@@ -174,7 +184,7 @@ idp-mcp --model gdp --hdd ./partner-g.img
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   bash
 ```
 
@@ -197,7 +207,7 @@ Compile:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   sdcc -o hello.ihx hello.c
 ```
 
@@ -207,7 +217,7 @@ Convert to a CP/M `.com` file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   sdobjcopy -I ihex -O binary hello.ihx hello.com
 ```
 
@@ -232,7 +242,7 @@ Compile and link:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   sdcc -o demo.ihx demo.c -l ugpx
 ```
 
@@ -244,7 +254,7 @@ Create an empty floppy image:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   cpmdisk create partner-floppy.img idpfdd --label PARTNER --datestamp
 ```
 
@@ -254,7 +264,7 @@ Add a compiled file:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   cpmdisk add partner-floppy.img -u 0 hello.com
 ```
 
@@ -264,7 +274,7 @@ Inspect the result:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   cpmdisk info partner-floppy.img
 ```
 
@@ -272,7 +282,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   cpmdisk list partner-floppy.img -u 0
 ```
 
@@ -282,7 +292,7 @@ docker run --rm -it \
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$(pwd)":/work -w /work \
-  wischner/sdcc-z80-idp:1.10.0 \
+  wischner/sdcc-z80-idp:1.12.0 \
   snatch --help
 ```
 

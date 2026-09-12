@@ -2,7 +2,7 @@
 
 **Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
 
-Ubuntu 24.04 development image for the Amstrad CPC. It combines the XCC 2.5.0
+Ubuntu 24.04 development image for the Amstrad CPC. It combines the XCC 2.5.1
 medium-model C23 toolchain with native CPC 464, 664, and 6128 platforms, CDT
 and DSK packaging, the CPC backend of libgpx, an emulator with an MCP server,
 and the standard CPC disk, graphics, and compression tools.
@@ -10,7 +10,7 @@ and the standard CPC disk, graphics, and compression tools.
 ## Quick start
 
 ```bash
-export IMAGE=wischner/xcc-z80-cpc:2.9.0
+export IMAGE=wischner/xcc-z80-cpc:2.10.0
 
 # A 6128 disk program.
 docker run --rm -v "$PWD":/work -w /work $IMAGE sh -c '
@@ -61,7 +61,8 @@ BASIC. Their CRTs, archives, and linker scripts are in `/opt/x/z80/lib` as
 
 ### libgpx
 
-The `retro-vault/libgpx` `v1.0.0` CPC backend is assembled with XCC's
+The latest `retro-vault/libgpx` `main` CPC backend, together with the shared
+`src/common` circle and polygon modules, is assembled with XCC's
 `xas` and archived with `xar` under `/opt/cpc`:
 
 ```text

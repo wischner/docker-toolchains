@@ -1,5 +1,9 @@
 .PHONY: prepare build
 
+# idp-sdk releases ship only the XCC-built archive since v1.1.0, so its
+# source tree is staged instead and the Dockerfile builds it with
+# TOOLCHAIN=sdcc (which also builds libsdcc-z80 and the Partner build of
+# libcpm3-z80 exactly as upstream's own SDCC build does).
 LIBRARIES_MANIFEST ?= libraries.manifest
 LIBRARIES_DST ?= libraries
 UGPX_REPO ?= iskra-delta/idp-udev
@@ -43,6 +47,10 @@ prepare:
 	    tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/^[[:space:]]*"sha":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
 	    [ -n "$$tag" ] || { echo "Could not resolve $$repo $$ref commit"; rm -rf "$$tmp_dir"; exit 1; }; \
 	    asset_url="https://github.com/$$repo/archive/$$tag.tar.gz"; \
+	  elif [ "$$repo" = "$(IDP_SDK_REPO)" ]; then \
+	    tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
+	    [ -n "$$tag" ] || { echo "Could not resolve $$repo release tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    asset_url="https://github.com/$$repo/archive/refs/tags/$$tag.tar.gz"; \
 	  else \
 	    tag="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"; \
 	    asset_url="$$(printf '%s\n' "$$rel_json" | sed -n 's/.*"browser_download_url":[[:space:]]*"\([^"]*\.tar\.gz\)".*/\1/p' | head -n1)"; \
@@ -65,18 +73,11 @@ prepare:
 	  elif [ "$$repo" = "$(IDP_SDK_REPO)" ]; then \
 	    tar -xzf "$$tmp_dir/release.tar.gz" -C "$$tmp_dir"; \
 	    src_root="$$(find "$$tmp_dir" -mindepth 1 -maxdepth 1 -type d -name 'idp-sdk-*' | head -n1)"; \
-	    [ -d "$$src_root/include" ] || { echo "Missing include/ in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    [ -f "$$src_root/lib/libsdcc-z80.lib" ] || { echo "Missing lib/libsdcc-z80.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    [ -f "$$src_root/lib/libcpm3-z80.lib" ] || { echo "Missing lib/libcpm3-z80.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    [ -f "$$src_root/lib/libsdk.lib" ] || { echo "Missing lib/libsdk.lib in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    crt0_src="$$(find "$$src_root/lib" -maxdepth 1 -type f -name 'crt0*.rel' | sort | head -n1)"; \
-	    [ -n "$$crt0_src" ] || { echo "Missing crt0*.rel in $$repo release $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
-	    mkdir -p "$$dst/lib" "$$dst/include"; \
-	    cp -a "$$src_root/include/." "$$dst/include/"; \
-	    cp "$$src_root/lib/libsdcc-z80.lib" "$$dst/lib/"; \
-	    cp "$$src_root/lib/libcpm3-z80.lib" "$$dst/lib/"; \
-	    cp "$$src_root/lib/libsdk.lib" "$$dst/lib/"; \
-	    cp "$$crt0_src" "$$dst/lib/crt0.rel"; \
+	    [ -f "$$src_root/Makefile" ] || { echo "Missing Makefile in $$repo revision $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    [ -f "$$src_root/lib/Makefile" ] || { echo "Missing lib/Makefile in $$repo revision $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    [ -d "$$src_root/include/partner" ] || { echo "Missing include/partner in $$repo revision $$tag"; rm -rf "$$tmp_dir"; exit 1; }; \
+	    mkdir -p "$$dst/source"; \
+	    cp -a "$$src_root/." "$$dst/source/"; \
 	  else \
 	    tar -xzf "$$tmp_dir/release.tar.gz" -C "$$dst" --strip-components=1; \
 	  fi; \

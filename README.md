@@ -46,9 +46,10 @@ available for reproducible builds.
   *Compile, package, network, emulate, and let AI inspect or run the real Partner hardware model.*
 
 - [**XCC Z80 – ZX Spectrum**](./xcc-z80-zx-spectrum)
-  Medium-model XCC with native ZX RAM/ROM targets, libgpx, libsquid, Beepolix,
-  ZX Spectrum MCP, and snatch.
-  *A complete compile, package, graphics, music, asset, and headless-emulation workflow.*
+  Medium-model XCC with native ZX RAM/ROM and divIDE/esxDOS disk targets,
+  libgpx, libsquid, Beepolix, ZX Spectrum MCP, snatch, and hdfmonkey with
+  blank FAT16 HDF images.
+  *A complete compile, package, disk, graphics, music, asset, and headless-emulation workflow.*
 
 - [**XCC Z80 – Amstrad CPC**](./xcc-z80-cpc)
   Medium-model XCC with native CPC 464/664/6128 firmware targets, CDT and DSK
@@ -57,7 +58,8 @@ available for reproducible builds.
   *Compile, package, convert, compress, emulate, and let AI drive a real CPC model.*
 
 - [**SDCC Z80 – ZX Spectrum**](./sdcc-z80-zx-spectrum)
-  Z80 toolchain variant tailored for **ZX Spectrum** builds.
+  Z80 toolchain variant tailored for **ZX Spectrum** builds, with Fuse,
+  bin2tap, and hdfmonkey plus blank FAT16 HDF images for divIDE/esxDOS.
   *Convenient defaults/structure for Spectrum projects.*
 
 - [**SDCC Z80 – Iskra Delta Partner**](./sdcc-z80-idp)

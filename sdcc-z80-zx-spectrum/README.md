@@ -16,6 +16,9 @@ It extends the base `wischner/sdcc-z80` image with Spectrum-specific tools and t
 - Convenience wrappers:
   - `ihx2bin` — convert `.ihx` → `.bin`
   - `ihx2tap` — convert `.ihx` → `.tap` (default load address `32768`)
+- [hdfmonkey](https://github.com/gasman/hdfmonkey) (create, format, and edit
+  FAT filesystems inside HDF or raw IDE disk images for divIDE, DivMMC, +3e,
+  and Fuse), plus blank FAT16 `ESXDOS` volumes under `/opt/hdfmonkey/share/hdfmonkey/images`
 - Build tools: `make`, `git`
 
 ## Sample Project
@@ -103,11 +106,32 @@ X11 example:
       wischner/sdcc-z80-zx-spectrum:latest \
       fuse hello.tap
 
+### Prepare an esxDOS disk image with hdfmonkey
+
+`hdfmonkey` edits the FAT filesystem inside an HDF image without mounting it.
+Blank FAT16 volumes (`blank-16m.hdf.gz`, `blank-32m.hdf.gz`, `blank-64m.hdf.gz`,
+`blank-128m.hdf.gz`) are shipped gzip-compressed under `$HDFMONKEY_IMAGE_DIR`;
+esxDOS firmware itself is not bundled.
+
+    gunzip -c "$HDFMONKEY_IMAGE_DIR/blank-32m.hdf.gz" > disk.hdf
+    hdfmonkey put disk.hdf esxdos089/SYS esxdos089/BIN esxdos089/TMP /
+    hdfmonkey put disk.hdf hello.bin /HELLO.BIN
+    hdfmonkey ls disk.hdf
+
+    # Or create a fresh volume of any size (--fat16 keeps <64 MB disks esxDOS-compatible)
+    hdfmonkey create --fat16 disk.hdf 64M LABEL
+
+Then attach `disk.hdf` as a divIDE disk in Fuse (`fuse --divide --divide-masterfile disk.hdf`).
+`hdfmonkey help <command>` prints the interface of `clone`, `create`, `format`,
+`get`, `ls`, `mkdir`, `put`, `rebuild`, and `rm`.
+
 ## ROMs
 Sinclair ROMs are in `/usr/share/spectrum-roms`.
 
 ## Environment
 - `FUSE_ROM_DIR` — ROM directory inside the container (default: `/usr/share/spectrum-roms`)
+- `HDFMONKEY_ROOT` — hdfmonkey installation prefix (`/opt/hdfmonkey`)
+- `HDFMONKEY_IMAGE_DIR` — blank HDF templates (`/opt/hdfmonkey/share/hdfmonkey/images`)
 
 ## Support and contributions
 

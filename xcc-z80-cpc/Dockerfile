@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=wischner/xcc-z80:2.9.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.10.0
 
 # Assemble the current Amstrad CPC libgpx backend with XCC itself.
 #
@@ -11,7 +11,7 @@ ARG BASE_IMAGE=wischner/xcc-z80:2.9.0
 # than onto XCC's default search path.
 FROM ${BASE_IMAGE} AS libgpx-builder
 
-ARG LIBGPX_REF=v1.0.0
+ARG LIBGPX_REF=main
 
 USER root
 
@@ -30,7 +30,8 @@ RUN set -eux; \
       /opt/cpc/share/metadata \
       /tmp/libgpx-obj; \
     test -d /tmp/libgpx/src/cpc; \
-    for src in /tmp/libgpx/src/cpc/*.s; do \
+    test -d /tmp/libgpx/src/common; \
+    for src in /tmp/libgpx/src/cpc/*.s /tmp/libgpx/src/common/*.s; do \
       name="$(basename "${src}" .s)"; \
       xas -g -I /tmp/libgpx/src/cpc -o "/tmp/libgpx-obj/${name}.rel" "${src}"; \
     done; \
@@ -38,6 +39,9 @@ RUN set -eux; \
     install -m 0644 /tmp/libgpx-obj/crt0-cpc.rel /opt/cpc/lib/crt0-cpc.rel; \
     rm -f /tmp/libgpx-obj/crt0-cpc.rel; \
     xar --mode=gnu rcs /opt/cpc/lib/libgpx.a /tmp/libgpx-obj/*.rel; \
+    for member in gpx_draw_box gpx_draw_circle gpx_fill_circle gpx_draw_polygon gpx_fill_polygon; do \
+      xar t /opt/cpc/lib/libgpx.a | grep -qx "${member}.rel"; \
+    done; \
     ln -s libgpx.a /opt/cpc/lib/libgpx.lib; \
     install -m 0644 /tmp/libgpx/include/libgpx.h /opt/cpc/include/libgpx.h; \
     install -m 0644 /tmp/libgpx/LICENSE /opt/cpc/share/licenses/libgpx/LICENSE; \
@@ -159,9 +163,9 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.9.0
-ARG XYZ_VERSION=2.5.0
-ARG LIBGPX_REF=v1.0.0
+ARG IMG_VERSION=2.10.0
+ARG XYZ_VERSION=2.5.1
+ARG LIBGPX_REF=main
 ARG AMSTRAD_CPC_MCP_REF=main
 ARG SNATCH_REF=main
 ARG IDSK_REF=master
@@ -255,7 +259,10 @@ RUN set -eux; \
       '#include <libgpx.h>' \
       'int main(void) {' \
       '    gpx_t *gpx = gpx_create(GPXM_CPC_640X200);' \
+      '    rect_t box = { 8, 8, 40, 24 };' \
       '    gpx_draw_pixel(gpx, 1, 1, CO_FORE, BM_CPY, 0);' \
+      '    gpx_draw_circle(gpx, 64, 64, 20, CO_FORE, BM_CPY, 0);' \
+      '    gpx_draw_box(gpx, &box, GPX_EDGE_ALL, CO_FORE, BM_CPY, GPX_LP_SOLID, 0);' \
       '    return gpx == 0;' \
       '}' \
       > /tmp/cpc-gpx-smoke.c; \

@@ -1,7 +1,7 @@
 # `xcc-z80-idp` image contents
 
 This document inventories the toolchain and application payload intentionally
-installed in `wischner/xcc-z80-idp:2.9.0`. The image is based on Ubuntu 24.04
+installed in `wischner/xcc-z80-idp:2.11.0`. The image is based on Ubuntu 24.04
 for Linux x86-64. Ubuntu's standard runtime files, packages, and transitive
 shared-library dependencies are not enumerated file by file.
 
@@ -9,18 +9,18 @@ shared-library dependencies are not enumerated file by file.
 
 | Component | Version | Source |
 | --- | --- | --- |
-| Image | 2.9.0 | This package |
-| XCC Z80 toolchain | 2.5.0 | Inherited from `wischner/xcc-z80:2.9.0` |
+| Image | 2.11.0 | This package |
+| XCC Z80 toolchain | 2.5.1 | Inherited from `wischner/xcc-z80:2.10.0` |
 | Build tools | Ubuntu 24.04 packages | GNU Make, CMake, and Git |
-| Partner `libgpx` | 1.0.0 | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
+| Partner `libgpx` | Latest `main` at image build time | [retro-vault/libgpx](https://github.com/retro-vault/libgpx) |
 | IDP μgpx | Latest `main` at image build time | [iskra-delta/idp-udev](https://github.com/iskra-delta/idp-udev) |
 | IDP SDK | Latest `main` at image build time | [iskra-delta/idp-sdk](https://github.com/iskra-delta/idp-sdk) |
 | libsquid | Latest `main` at image build time | [retro-plastics/libsquid](https://github.com/retro-plastics/libsquid) |
 | PAKET | Latest `main` at image build time | [iskra-delta/paket](https://github.com/iskra-delta/paket) |
 | Squid client sources | Latest `main` at image build time | [retro-plastics/squid-server](https://github.com/retro-plastics/squid-server) |
 | Snatch | 1.0.0 | [retro-vault/snatch](https://github.com/retro-vault/snatch) |
-| CP/M disk tool | 1.1.0 | [iskra-delta/cpmdisk](https://github.com/iskra-delta/cpmdisk) |
-| Partner emulator and MCP | 1.1.0 | [iskra-delta/idp-emu](https://github.com/iskra-delta/idp-emu) |
+| CP/M disk tool | 1.2.0 | [iskra-delta/cpmdisk](https://github.com/iskra-delta/cpmdisk) |
+| Partner emulator and MCP | 1.3.0 | [iskra-delta/idp-emu](https://github.com/iskra-delta/idp-emu) |
 
 Installed component revisions are also recorded in `/opt/idp/share/metadata`.
 The XCC version and source metadata are stored in `/opt/x/.version` and
@@ -187,7 +187,7 @@ peripheral set or boot-ROM overlay.
 
 ## Full Partner emulator and MCP runtime
 
-The complete idp-emu 1.0.0 Ubuntu x86-64 portable tree is installed under
+The complete idp-emu 1.3.0 Ubuntu x86-64 portable tree is installed under
 `/opt/idp-emu`. Unlike the smaller XEMU toolchain target described above,
 idp-emu models the Partner chip set, firmware, display boards, keyboard, and
 media controllers. The same machine core is exposed headlessly through
@@ -241,7 +241,10 @@ extra `-I` or `-L` option is required.
 
 ### Partner `libgpx`
 
-Partner's `libgpx` is assembled with XCC's `xas` and archived with `xar`.
+Partner's `libgpx` is assembled with XCC's `xas` and archived with `xar`. The
+archive holds the `src/partner` backend together with the shared `src/common`
+circle and polygon modules, so `gpx_draw_circle`, `gpx_fill_circle`,
+`gpx_draw_polygon`, and `gpx_fill_polygon` link without any extra library.
 
 | Item | Installed location |
 | --- | --- |
@@ -446,7 +449,7 @@ For compatibility, `/opt/xtools` points to `/opt/x`, and
 ## Filesystem layout
 
 ```text
-/opt/x/                         XCC 2.5.0 host and Z80 toolchain
+/opt/x/                         XCC 2.5.1 host and Z80 toolchain
   bin/                          compiler, assembler, linker, and tools
   lib/                          XCC host static libraries
   share/doc/                    tool documentation

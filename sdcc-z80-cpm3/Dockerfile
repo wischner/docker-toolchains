@@ -5,8 +5,8 @@
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.1.0
-ARG CPMDISK_VERSION=latest
+ARG IMG_VERSION=1.2.0
+ARG CPMDISK_VERSION=v1.2.0
 
 LABEL org.opencontainers.image.title="sdcc-z80-cpm3" \
       org.opencontainers.image.description="SDCC Z80 toolchain for CP/M 3 with cpmdisk and wrapped SDCC Z80 runtime" \
@@ -18,7 +18,7 @@ LABEL org.opencontainers.image.title="sdcc-z80-cpm3" \
 # Install dependencies for installing cpmdisk and handling library sync
 RUN apk add --no-cache git build-base curl libstdc++ gcompat
 
-# Build and install cpmdisk from latest (or pinned) GitHub release tag
+# Build and install cpmdisk from the pinned GitHub release tag (or latest)
 RUN set -e; \
     if [ "${CPMDISK_VERSION}" = "latest" ]; then \
       rel_url="https://api.github.com/repos/iskra-delta/cpmdisk/releases/latest"; \

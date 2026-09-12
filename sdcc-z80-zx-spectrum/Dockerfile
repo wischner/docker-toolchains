@@ -3,10 +3,12 @@
 # - Adds: python3, which
 # - Builds: libspectrum + Fuse (SDL backend) from source
 # - Keeps: bin2tap + wrappers from earlier example
+# - Adds: hdfmonkey plus blank FAT16 HDF images for divIDE/DivMMC/esxDOS
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.2.0
+ARG IMG_VERSION=1.3.0
+ARG HDFMONKEY_REF=master
 
 LABEL org.opencontainers.image.title="sdcc-z80-zx-spectrum" \
       org.opencontainers.image.description="SDCC Z80 toolchain + ZX Spectrum helpers built on Alpine" \
@@ -91,6 +93,42 @@ RUN set -e; \
     'echo "Wrote $base.tap (load at $addr)"' \
     > /usr/local/bin/ihx2tap && chmod +x /usr/local/bin/ihx2tap
 
+# hdfmonkey: create, format, and edit the FAT filesystems inside HDF (and raw
+# IDE) disk images used by divIDE, DivMMC, +3e, and Fuse. Plain autotools, no
+# external dependencies. Blank FAT16 volumes are generated for esxDOS and kept
+# gzip-compressed because they are almost entirely zeros.
+RUN set -eux; \
+    git clone --depth=1 --branch "${HDFMONKEY_REF}" \
+      https://github.com/gasman/hdfmonkey.git /tmp/hdfmonkey; \
+    cd /tmp/hdfmonkey; \
+    autoreconf -fi; \
+    ./configure --prefix=/opt/hdfmonkey; \
+    make -j"$(getconf _NPROCESSORS_ONLN)"; \
+    mkdir -p \
+      /opt/hdfmonkey/bin \
+      /opt/hdfmonkey/share/hdfmonkey/images \
+      /opt/hdfmonkey/share/licenses/hdfmonkey \
+      /opt/hdfmonkey/share/doc/hdfmonkey; \
+    install -m 0755 /tmp/hdfmonkey/src/hdfmonkey /opt/hdfmonkey/bin/hdfmonkey; \
+    install -m 0644 /tmp/hdfmonkey/COPYING /opt/hdfmonkey/share/licenses/hdfmonkey/COPYING; \
+    install -m 0644 /tmp/hdfmonkey/README /opt/hdfmonkey/share/doc/hdfmonkey/README; \
+    install -m 0644 /tmp/hdfmonkey/CHANGELOG /opt/hdfmonkey/share/doc/hdfmonkey/CHANGELOG; \
+    git -C /tmp/hdfmonkey rev-parse HEAD > /opt/hdfmonkey/.version; \
+    printf '%s\n' 'https://github.com/gasman/hdfmonkey' > /opt/hdfmonkey/.source; \
+    ln -s /opt/hdfmonkey/bin/hdfmonkey /usr/local/bin/hdfmonkey; \
+    for size in 16M 32M 64M 128M; do \
+      image="/opt/hdfmonkey/share/hdfmonkey/images/blank-$(printf '%s' "${size}" | tr 'M' 'm').hdf"; \
+      hdfmonkey create --fat16 "${image}" "${size}" ESXDOS; \
+      hdfmonkey ls "${image}" >/dev/null; \
+      gzip -9 -n "${image}"; \
+      test -s "${image}.gz"; \
+    done; \
+    cd /; \
+    rm -rf /tmp/hdfmonkey
+
+ENV HDFMONKEY_ROOT=/opt/hdfmonkey \
+    HDFMONKEY_IMAGE_DIR=/opt/hdfmonkey/share/hdfmonkey/images
+
 # Copy Sinclair roms.
 RUN mkdir -p /usr/share/spectrum-roms/
 COPY roms/ /usr/share/spectrum-roms/
@@ -107,4 +145,18 @@ RUN set -e; \
     fuse --help >/dev/null 2>&1 || true; \
     which bin2tap; \
     which ihx2bin; \
-    which ihx2tap
+    which ihx2tap; \
+    which hdfmonkey; \
+    hdfmonkey help >/dev/null; \
+    test -f "${HDFMONKEY_IMAGE_DIR}/blank-16m.hdf.gz"; \
+    test -f "${HDFMONKEY_IMAGE_DIR}/blank-32m.hdf.gz"; \
+    test -f "${HDFMONKEY_IMAGE_DIR}/blank-64m.hdf.gz"; \
+    test -f "${HDFMONKEY_IMAGE_DIR}/blank-128m.hdf.gz"; \
+    gunzip -c "${HDFMONKEY_IMAGE_DIR}/blank-16m.hdf.gz" > /tmp/smoke.hdf; \
+    printf 'smoke\n' > /tmp/smoke.txt; \
+    hdfmonkey mkdir /tmp/smoke.hdf /BIN; \
+    hdfmonkey put /tmp/smoke.hdf /tmp/smoke.txt /BIN/SMOKE.TXT; \
+    hdfmonkey ls /tmp/smoke.hdf /BIN | grep -F SMOKE.TXT; \
+    hdfmonkey get /tmp/smoke.hdf /BIN/SMOKE.TXT /tmp/smoke-roundtrip.txt; \
+    cmp /tmp/smoke.txt /tmp/smoke-roundtrip.txt; \
+    rm -f /tmp/smoke.hdf /tmp/smoke.txt /tmp/smoke-roundtrip.txt

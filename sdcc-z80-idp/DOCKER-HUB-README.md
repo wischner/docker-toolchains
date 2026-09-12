@@ -15,9 +15,9 @@ It extends the generic Z80 toolchain with Partner-oriented headers, merged runti
 - merged `z80.lib` built from Partner SDK libraries
 - normalized `crt0.rel`
 - standalone `ugpx.lib` and `gpx/ugpx.h`
-- `cpmdisk`
+- `cpmdisk` 1.2.0 (Partner `fdd`, `fdd:g`, `fdd:p`, and `hdd` formats)
 - `snatch`
-- idp-emu 1.0.0: `idp-emu`, `idp-mcp`, `partnerp`, and `partnerg`
+- idp-emu 1.3.0: `idp-emu`, `idp-mcp`, `partnerp`, and `partnerg`
 - Partner CMOS seed, CRT/GDP ROMs, P/G system disks, UI assets, shared
   libraries, and emulator documentation under `/opt/idp-emu`
 

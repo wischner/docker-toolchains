@@ -17,10 +17,12 @@ Inside the image you get:
 - `xopt` for post-generation assembly optimization
 - `xar` for static libraries
 - `xobjcopy` for object and archive conversion
-- `xprog` for XL process/service images, ZX Spectrum TAP/TZX packaging, and
-  Amstrad CPC CDT/DSK packaging
+- `xprog` for XL process/service images, ZX Spectrum TAP/TZX packaging,
+  esxDOS FAT16 IDE disk images, and Amstrad CPC CDT/DSK packaging
 - `xgdb` and `xemu` for source-level debugging, plus an `xgdb-z80` compatibility alias
 - target headers and runtime in `/opt/x/z80/include` and `/opt/x/z80/lib`
+  for the `cpm3`, `zx-ram`, `zx-rom`, `zx-esxdos`, `zx-esxdos-rom`, `yos`,
+  `cpc-464`, `cpc-664`, and `cpc-6128` platforms
 - host-side SDK headers and libraries in `/opt/x/include` and `/opt/x/lib`
 - Python 3 for build and project scripting
 

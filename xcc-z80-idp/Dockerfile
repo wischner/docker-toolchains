@@ -1,14 +1,14 @@
 # syntax=docker/dockerfile:1
 
 # XCC Z80 toolchain for the Iskra Delta Partner
-ARG BASE_IMAGE=wischner/xcc-z80:2.9.0
+ARG BASE_IMAGE=wischner/xcc-z80:2.10.0
 
 # Stage the complete published idp-emu tree: GUI emulator, headless MCP,
 # launchers, CMOS seed, ROMs, system disks, assets, shared libraries, and docs.
 FROM ubuntu:24.04 AS idp-emu-builder
 
-ARG IDP_EMU_VERSION=v1.1.0
-ARG IDP_EMU_SHA256=7c27201baf6a1014ace95c658a3f13ee07af32ca2df33564394d2075eefc7a3e
+ARG IDP_EMU_VERSION=v1.3.0
+ARG IDP_EMU_SHA256=4d6582f0fe53994700478a1a5d9b695d94c4d1e0d2e6b578438d7207a4eac22f
 
 RUN set -eux; \
     apt-get update; \
@@ -35,7 +35,7 @@ RUN set -eux; \
 # self-contained and use the same object/archive formats as the base image.
 FROM ${BASE_IMAGE} AS library-builder
 
-ARG LIBGPX_REF=v1.0.0
+ARG LIBGPX_REF=main
 ARG IDP_UDEV_REF=main
 ARG LIBSQUID_REF=main
 
@@ -57,11 +57,15 @@ RUN set -eux; \
     tmp_dir="$(mktemp -d)"; \
     mkdir -p "${tmp_dir}/libgpx-obj"; \
     test -d /tmp/libgpx/src/partner; \
-    for src in /tmp/libgpx/src/partner/*.s; do \
+    test -d /tmp/libgpx/src/common; \
+    for src in /tmp/libgpx/src/partner/*.s /tmp/libgpx/src/common/*.s; do \
       name="$(basename "${src}" .s)"; \
       xas -g -o "${tmp_dir}/libgpx-obj/${name}.rel" "${src}"; \
     done; \
     xar --mode=gnu rcs /opt/idp/lib/libgpx.a "${tmp_dir}"/libgpx-obj/*.rel; \
+    for member in gpx_draw_box gpx_draw_circle gpx_fill_circle gpx_draw_polygon gpx_fill_polygon; do \
+      xar t /opt/idp/lib/libgpx.a | grep -qx "${member}.rel"; \
+    done; \
     ln -s libgpx.a /opt/idp/lib/libgpx.lib; \
     install -m 0644 /tmp/libgpx/include/libgpx.h /opt/idp/include/libgpx.h; \
     mkdir -p /opt/idp/share/licenses/libgpx; \
@@ -130,12 +134,12 @@ RUN set -eux; \
     test -f /opt/idp/include/squid/socket.h; \
     rm -rf /tmp/libsquid-build /tmp/libsquid-out /tmp/libsquid
 
-# XEMU 2.5.0 can model Partner's RAM windows, but upstream port rules derive
+# XEMU 2.5.1 can model Partner's RAM windows, but upstream port rules derive
 # selectors from the transferred byte. Partner selects its banks by the I/O
 # port address and ignores that byte, so add fixed selector values for IN/OUT.
 FROM ${BASE_IMAGE} AS emulator-builder
 
-ARG XYZ_VERSION=2.5.0
+ARG XYZ_VERSION=2.5.1
 
 USER root
 
@@ -209,15 +213,15 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=2.9.0
-ARG XYZ_VERSION=2.5.0
-ARG LIBGPX_REF=v1.0.0
+ARG IMG_VERSION=2.11.0
+ARG XYZ_VERSION=2.5.1
+ARG LIBGPX_REF=main
 ARG LIBSQUID_REF=main
 ARG SQUID_SERVER_REF=main
 ARG PAKET_REF=main
 ARG SNATCH_VERSION=v1.0.0
-ARG CPMDISK_VERSION=v1.1.0
-ARG IDP_EMU_VERSION=v1.1.0
+ARG CPMDISK_VERSION=v1.2.0
+ARG IDP_EMU_VERSION=v1.3.0
 
 LABEL org.opencontainers.image.title="xcc-z80-idp" \
       org.opencontainers.image.description="XCC Z80 CP/M 3 toolchain for Iskra Delta Partner with the Partner SDK, graphics libraries, libsquid, PAKET.COM, host tools, and Partner MCP." \
@@ -415,6 +419,9 @@ RUN set -eux; \
       '#include <partner/conio.h>' \
       'int main(void) {' \
       '    gpx_t *gpx = gpx_create(GPXM_DEFAULT);' \
+      '    rect_t box = { 8, 8, 40, 24 };' \
+      '    gpx_draw_circle(gpx, 64, 64, 20, CO_FORE, BM_CPY, 0);' \
+      '    gpx_draw_box(gpx, &box, GPX_EDGE_ALL, CO_FORE, BM_CPY, GPX_LP_SOLID, 0);' \
       '    cputs("XCC IDP");' \
       '    return gpx == 0;' \
       '}' \

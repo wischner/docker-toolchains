@@ -5,7 +5,7 @@
 # - Adds: cpmdisk for Partner-compatible CP/M disk image creation
 # - Replaces SDCC default Z80 includes/libs with library bundles synced into ./libraries
 ARG BASE_IMAGE=wischner/sdcc-z80:latest
-ARG IDP_EMU_VERSION=v1.0.0
+ARG IDP_EMU_VERSION=v1.3.0
 
 # Build the complete idp-emu runtime against musl instead of copying the
 # incompatible Ubuntu/glibc release tree into the Alpine image.
@@ -19,15 +19,25 @@ RUN apk add --no-cache \
 
 # Upstream's Linux dependency copier queries glibc's ldconfig cache. Alpine has
 # no such cache; final-image APKs provide the native shared libraries instead.
+#
+# idp-emu declares Dear ImGui with GIT_SHALLOW plus a commit hash. That only
+# works while the hash is still a branch tip upstream, which it no longer is,
+# so the pinned commit is fetched here by hash and handed to FetchContent.
 RUN set -eux; \
     git clone --depth=1 --branch "${IDP_EMU_VERSION}" \
       https://github.com/iskra-delta/idp-emu.git /tmp/idp-emu; \
     make -C /tmp/idp-emu fetch; \
+    imgui_ref="$(awk '/^FetchContent_Declare\(/ { getline; gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0); name = $0; next } name == "imgui" && $1 == "GIT_TAG" { print $2; exit }' /tmp/idp-emu/CMakeLists.txt)"; \
+    test -n "${imgui_ref}"; \
+    git init -q /tmp/imgui; \
+    git -C /tmp/imgui fetch -q --depth 1 https://github.com/ocornut/imgui.git "${imgui_ref}"; \
+    git -C /tmp/imgui checkout -q FETCH_HEAD; \
     release="${IDP_EMU_VERSION#v}"; \
     cmake -S /tmp/idp-emu -B /tmp/idp-emu/build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DIDP_STATIC_RUNTIME=OFF \
-      -DIDP_VERSION="${release}"; \
+      -DIDP_VERSION="${release}" \
+      -DFETCHCONTENT_SOURCE_DIR_IMGUI=/tmp/imgui; \
     cmake --build /tmp/idp-emu/build --target idp-emu idp-mcp -j"$(nproc)"; \
     sed -i '1i return()' /tmp/idp-emu/build/fix-linux-rpaths.cmake; \
     cmake --install /tmp/idp-emu/build --prefix /opt/idp-emu; \
@@ -42,8 +52,8 @@ RUN set -eux; \
 
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.10.0
-ARG CPMDISK_VERSION=latest
+ARG IMG_VERSION=1.12.0
+ARG CPMDISK_VERSION=v1.2.0
 ARG SNATCH_VERSION=latest
 ARG IDP_EMU_VERSION
 
@@ -66,7 +76,7 @@ RUN set -eux; \
     ln -s /opt/idp-emu/bin/partnerp /usr/local/bin/partnerp; \
     ln -s /opt/idp-emu/bin/partnerg /usr/local/bin/partnerg
 
-# Build and install cpmdisk from latest (or pinned) GitHub release tag
+# Build and install cpmdisk from the pinned GitHub release tag (or latest)
 RUN set -e; \
     if [ "${CPMDISK_VERSION}" = "latest" ]; then \
       rel_url="https://api.github.com/repos/iskra-delta/cpmdisk/releases/latest"; \
@@ -118,6 +128,35 @@ ENV PATH="/opt/sdcc/bin:/opt/snatch:${PATH}" \
 
 # Copy synced library bundles payload
 COPY libraries/ /opt/libraries/
+
+# idp-sdk releases ship only the XCC-built archive since v1.1.0, so the
+# bundle carries the release's source tree instead. Run upstream's own SDCC
+# build: it clones and builds libsdcc-z80 and the Partner build of
+# libcpm3-z80 (PLATFORM=partner drops the generic _libinit/_msleep so the
+# SDK's versions take over), then builds libsdk.lib against them. The result
+# is laid out as an ordinary include/ + lib/ bundle for the merge below.
+RUN set -eux; \
+    src=/opt/libraries/idp-sdk/source; \
+    test -f "${src}/Makefile"; \
+    mkdir -p "${src}/third_party/cpmdisk" "${src}/third_party/CLI11"; \
+    make -C "${src}" _build \
+      TOOLCHAIN=sdcc \
+      DOCKER=off \
+      INSIDE_DOCKER=1 \
+      BUILD_DIR=/tmp/idp-sdk-build \
+      BIN_DIR=/tmp/idp-sdk-bin; \
+    mkdir -p /opt/libraries/idp-sdk/lib /opt/libraries/idp-sdk/include; \
+    install -m 0644 /tmp/idp-sdk-bin/libsdk.lib /opt/libraries/idp-sdk/lib/libsdk.lib; \
+    install -m 0644 /tmp/idp-sdk-bin/libcpm3-z80.lib /opt/libraries/idp-sdk/lib/libcpm3-z80.lib; \
+    install -m 0644 /tmp/idp-sdk-bin/libsdcc-z80.lib /opt/libraries/idp-sdk/lib/libsdcc-z80.lib; \
+    install -m 0644 /tmp/idp-sdk-bin/crt0cpm3-z80.rel /opt/libraries/idp-sdk/lib/crt0.rel; \
+    cp -a /tmp/idp-sdk-bin/include/. /opt/libraries/idp-sdk/include/; \
+    git -C "${src}/third_party/libsdcc-z80" rev-parse HEAD > /opt/libraries/idp-sdk/.libsdcc-z80.version; \
+    git -C "${src}/third_party/libcpm3-z80" rev-parse HEAD > /opt/libraries/idp-sdk/.libcpm3-z80.version; \
+    test -f /opt/libraries/idp-sdk/include/partner/conio.h; \
+    test -f /opt/libraries/idp-sdk/include/stdio.h; \
+    sdar -t /opt/libraries/idp-sdk/lib/libsdk.lib | grep -qx '_libinit.rel'; \
+    rm -rf "${src}" /tmp/idp-sdk-build /tmp/idp-sdk-bin
 
 # Build any source-based bundles, then replace SDCC default Z80 include/lib directories
 RUN set -e; \
@@ -221,4 +260,25 @@ RUN set -e; \
     test -d "${IDP_EMU_ROOT}/shared"; \
     idp-emu --help >/dev/null; \
     test -f /opt/sdcc/share/sdcc/include/gpx/ugpx.h; \
-    test -f /opt/sdcc/share/sdcc/lib/z80/ugpx.lib
+    test -f /opt/sdcc/share/sdcc/lib/z80/ugpx.lib; \
+    test -f /opt/sdcc/share/sdcc/include/partner/conio.h; \
+    test -f /opt/sdcc/share/sdcc/include/stdio.h; \
+    test -f /opt/libraries/idp-sdk/.version; \
+    test -f /opt/libraries/idp-sdk/.libsdcc-z80.version; \
+    test -f /opt/libraries/idp-sdk/.libcpm3-z80.version; \
+    printf '%s\n' \
+      '#include <stdio.h>' \
+      '#include <partner/conio.h>' \
+      'int main(void) {' \
+      '    cputs("SDCC IDP");' \
+      '    printf("%d\n", 42);' \
+      '    return 0;' \
+      '}' \
+      > /tmp/smoke.c; \
+    sdcc -o /tmp/smoke.ihx /tmp/smoke.c; \
+    sdobjcopy -I ihex -O binary /tmp/smoke.ihx /tmp/smoke.com; \
+    test -s /tmp/smoke.com; \
+    cpmdisk create /tmp/smoke.img fdd:p >/dev/null; \
+    cpmdisk add /tmp/smoke.img -u 0 /tmp/smoke.com; \
+    cpmdisk list /tmp/smoke.img -u 0 | grep -i -F SMOKE.COM; \
+    rm -f /tmp/smoke.c /tmp/smoke.ihx /tmp/smoke.com /tmp/smoke.img

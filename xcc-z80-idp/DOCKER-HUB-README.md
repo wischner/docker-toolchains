@@ -3,7 +3,7 @@
 **Support:** [wischner.co.uk/support](https://wischner.co.uk/support)
 
 `wischner/xcc-z80-idp` is a Linux x86-64 development image for the Iskra
-Delta Partner. It provides XCC Z80 2.5.0, the public Partner SDK, two graphics
+Delta Partner. It provides XCC Z80 2.5.1, the public Partner SDK, two graphics
 library choices, the Squid serial protocol library, the PAKET package manager,
 the complete Partner emulator and MCP runtime, a Partner-compatible XEMU memory
 map, Snatch, and cpmdisk.
@@ -11,7 +11,7 @@ map, Snatch, and cpmdisk.
 CP/M 3 is the default target. The only other installed target is `emu`.
 
 ```bash
-export IMAGE=wischner/xcc-z80-idp:2.9.0
+export IMAGE=wischner/xcc-z80-idp:2.11.0
 ```
 
 ## Quick start
@@ -60,17 +60,17 @@ docker run --rm -it --user "$(id -u):$(id -g)" \
 
 | Component | Version or policy |
 | --- | --- |
-| XCC Z80 | 2.5.0 |
+| XCC Z80 | 2.5.1 |
 | XCC targets | `cpm3` (default) and `emu` |
 | Build tools | GNU Make, CMake, and Git |
 | IDP SDK | Latest `main` at image build time |
-| Partner libgpx | 1.0.0 |
+| Partner libgpx | Latest `main` at image build time |
 | idp-udev ugpx | Latest `main` at image build time |
 | libsquid | Latest `main` at image build time |
 | PAKET | Latest `main` at image build time, with a boot floppy |
 | Snatch | 1.0.0, executable and plugins only |
-| cpmdisk | 1.1.0, executable and runtime library only |
-| Partner emulator and MCP | idp-emu 1.1.0 complete portable runtime |
+| cpmdisk | 1.2.0, executable and runtime library only |
+| Partner emulator and MCP | idp-emu 1.3.0 complete portable runtime |
 
 The resolved idp-udev, idp-sdk and libsquid revisions are recorded under
 `/opt/idp/share/metadata/`, and PAKET's own three source revisions under

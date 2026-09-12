@@ -2,15 +2,16 @@
 
 `xcc-z80-zx-spectrum` is a complete ZX Spectrum 48K development image based
 on the medium-model [`xcc-z80`](../xcc-z80) toolchain. It compiles RAM-loaded
-programs and replacement ROMs, packages TAP/TZX files, provides native ZX
-libgpx and libsquid libraries, and includes the Beepolix music tools, ZX
-Spectrum MCP emulator, and snatch asset pipeline.
+programs, replacement ROMs, and divIDE/esxDOS disk programs, packages TAP/TZX
+files and esxDOS IDE images, provides native ZX libgpx and libsquid libraries,
+and includes the Beepolix music tools, ZX Spectrum MCP emulator, snatch asset
+pipeline, and hdfmonkey for FAT-formatted HDF disk images.
 
-Current image version: `2.9.0`. XCC version: `2.5.0`.
+Current image version: `2.10.0`. XCC version: `2.5.1`.
 
 ## Complete image contents
 
-### XCC 2.5.0 medium model
+### XCC 2.5.1 medium model
 
 The complete X Compiler Suite is under `/opt/x`, with `/opt/x/bin` on `PATH`:
 
@@ -22,7 +23,7 @@ The complete X Compiler Suite is under `/opt/x`, with `/opt/x/bin` on `PATH`:
 | `xar` | Static-library archiver |
 | `xobjcopy` | Object, archive, binary, Intel HEX, and ELF conversion |
 | `xopt` | Z80 assembly optimizer |
-| `xprog` | XL process/service packager and ZX TAP/TZX packager |
+| `xprog` | XL process/service packager, ZX TAP/TZX packager, and esxDOS FAT16 IDE image writer |
 | `xgdb` | Source-level debugger |
 | `xemu` | Z80 emulator and debugger remote target |
 | `xgdb-z80` | Compatibility alias for `xemu` |
@@ -32,15 +33,17 @@ This is the requested **medium (`M`) model**. It includes C23, `float`, and
 `long long`, and floating-point stdio support.
 
 The image-specific `xcc` and `xld` commands in `/usr/local/bin` select
-`--platform=zx-ram` automatically. They accept an explicit
-`--platform=zx-ram` or `--platform=zx-rom` and reject unrelated platforms.
+`--platform=zx-ram` automatically. They accept an explicit `--platform=zx-ram`,
+`--platform=zx-rom`, `--platform=zx-esxdos`, or `--platform=zx-esxdos-rom` and
+reject unrelated platforms.
 The unwrapped compiler and linker remain available as `/opt/x/bin/xcc` and
 `/opt/x/bin/xld`.
 
 XCC target headers are in `/opt/x/z80/include`. This includes the standard C
 headers, `sys.h`, `sys/stat.h`, `sys/types.h`, `yos.h`, CP/M 3 headers, and
-the platform-specific `zx-ram/conio.h` and `zx-rom/conio.h` headers. When a ZX
-platform is selected, `<conio.h>` resolves to that platform's keyboard API.
+the platform-specific `zx-ram/conio.h`, `zx-rom/conio.h`, and esxDOS
+`sys/esxdos.h` headers. When a ZX platform is selected, `<conio.h>` resolves
+to that platform's keyboard API.
 
 The target runtime directory `/opt/x/z80/lib` contains:
 
@@ -57,6 +60,12 @@ crt0-zx-ram.rel          linker-zx-ram.ld          libzx-ram.a
 crt0-zx-ram.s            linker-zx-ram.lk
 crt0-zx-rom.rel          linker-zx-rom.ld          libzx-rom.a
 crt0-zx-rom.s            linker-zx-rom.lk
+crt0-zx-esxdos.rel       linker-zx-esxdos.ld       libzx-esxdos.a
+crt0-zx-esxdos.s         linker-zx-esxdos.lk
+crt0-zx-esxdos-rom.rel   linker-zx-esxdos-rom.ld   libzx-esxdos-rom.a
+crt0-zx-esxdos-rom.s     linker-zx-esxdos-rom.lk
+crt0-yos.rel             linker-yos.ld             libyos.a
+crt0-yos.s               linker-yos.lk
 libgpx.a                 libgpx.lib
 libsquid.a               libsquid.lib
 ```
@@ -69,7 +78,7 @@ headers and static libraries for `rsp`, `xbfd`, `xemu`, `xgdb`, `xopt`, and
 
 ### Native ZX Spectrum targets
 
-Two XCC 2.5.0 platforms are ready to use:
+Four XCC 2.5.1 platforms are ready to use:
 
 - `zx-ram` is the default. It produces a program loaded at `0x5CCB`, above
   the standard 48K ROM system variables. The upper 4 KiB is reserved for the
@@ -77,17 +86,30 @@ Two XCC 2.5.0 platforms are ready to use:
 - `zx-rom` produces an exact 16 KiB replacement ROM. Startup copies writable
   initialized data into RAM, clears BSS, initializes the console, and calls
   `main`.
+- `zx-esxdos` produces a program loaded at `0x8000` for a normally booted 48K
+  Spectrum with divIDE (or compatible) hardware running esxDOS 0.8.9. It adds
+  POSIX-style `open`, `read`, `write`, `lseek`, `fsync`, `stat`, `unlink`,
+  `rename`, `chdir`, `mkdir`, and `rmdir` backed by the resident firmware, so
+  the ordinary libc `fopen`/`fread`/`fwrite` family works on FAT disks. Load
+  it from BASIC with `CLEAR 32767`, `LOAD *"APP.BIN" CODE 32768`, and
+  `RANDOMIZE USR 32768`.
+- `zx-esxdos-rom` produces an exact 16 KiB replacement ROM with the same disk
+  API. It boots from reset without the Sinclair ROM; only 48 bytes of disk-call
+  gates run in RAM. Set `AutoBoot=0` in `SYS/CONFIG/ESXDOS.CFG`.
 
-Both platforms provide startup code, a proportional bitmap console, keyboard
-input and `<conio.h>` `kbhit()`, libc I/O hooks, heap setup, and linker scripts.
-They target the 48K machine; 128K bank switching is not part of these runtimes.
+All four platforms provide startup code, a proportional bitmap console,
+keyboard input and `<conio.h>` `kbhit()`, libc I/O hooks, heap setup, and
+linker scripts. They target the 48K machine; 128K bank switching is not part
+of these runtimes. The esxDOS firmware itself is not bundled; supply your own
+distribution on the disk image.
 
 ### ZX Spectrum libgpx
 
-The `v1.0.0` release of
+The current `main` revision of
 [retro-vault/libgpx](https://github.com/retro-vault/libgpx) is used. Its
-hand-written `src/zx` backend is assembled with the image's XCC `xas` and
-archived with `xar`.
+hand-written `src/zx` backend and the shared `src/common` circle and polygon
+modules are assembled with the image's XCC `xas` and archived with `xar`, so
+the archive is the complete library that upstream's own build produces.
 
 | Item | Canonical path | XCC search path |
 |---|---|---|
@@ -98,8 +120,9 @@ archived with `xar`.
 
 Include it with `#include <libgpx.h>` and link it with `-lgpx`; no extra `-I`
 or `-L` option is required. It supplies the ZX implementations of lifecycle,
-screen clearing, dimensions, pixels, lines, rectangles, text, bitmaps,
-sprites, stock cursors, and built-in fonts.
+screen clearing, dimensions, pixels, lines with patterns, rectangles, boxes
+with selectable edges, circles, polygons, text, bitmaps, sprites, stock
+cursors, and built-in fonts.
 
 ### ZX Spectrum libsquid
 
@@ -215,6 +238,31 @@ tiny_font_transformer.so
 ttf_extractor.so
 ```
 
+### hdfmonkey
+
+The `master` revision of
+[gasman/hdfmonkey](https://github.com/gasman/hdfmonkey) is built from source
+and installed under `/opt/hdfmonkey`, with `hdfmonkey` linked into
+`/usr/local/bin`. It creates, formats, and edits the FAT12/16/32 filesystems
+inside HDF disk images (and headerless raw IDE images) used by Spectrum IDE
+interfaces such as divIDE, DivMMC, and +3e, and by emulators like Fuse. Its
+commands are `clone`, `create`, `format`, `get`, `ls`, `mkdir`, `put`,
+`rebuild`, and `rm`; `hdfmonkey help <command>` prints each interface.
+
+Ready-made empty FAT16 volumes labelled `ESXDOS` are shipped gzip-compressed
+under `HDFMONKEY_IMAGE_DIR`:
+
+```text
+/opt/hdfmonkey/share/hdfmonkey/images/blank-16m.hdf.gz
+/opt/hdfmonkey/share/hdfmonkey/images/blank-32m.hdf.gz
+/opt/hdfmonkey/share/hdfmonkey/images/blank-64m.hdf.gz
+/opt/hdfmonkey/share/hdfmonkey/images/blank-128m.hdf.gz
+```
+
+Decompress one to get a working disk, then add your program and the esxDOS
+`SYS`, `BIN`, and `TMP` directories from your own firmware distribution.
+hdfmonkey also reads the raw 16 MiB images written by `xprog --esxdos`.
+
 ### Other runtime utilities
 
 The Ubuntu 24.04 image also provides `python3`, `curl`, standard POSIX shell
@@ -229,7 +277,7 @@ Mount a project and open a shell:
 docker run --rm -it \
   --user "$(id -u):$(id -g)" \
   -v "$PWD":/work -w /work \
-  wischner/xcc-z80-zx-spectrum:2.9.0 \
+  wischner/xcc-z80-zx-spectrum:2.10.0 \
   bash
 ```
 
@@ -308,6 +356,39 @@ xcc -Os --platform=zx-rom --oformat=binary main.c -lgpx -o app.rom
 test "$(wc -c < app.rom)" -eq 16384
 ```
 
+### Build an esxDOS disk program and put it on a disk image
+
+```bash
+xcc -Os --platform=zx-esxdos --oformat=binary diskio.c -o DISKIO.BIN
+
+# Quickest: a 16 MiB raw IDE image holding only DISKIO.BIN
+xprog --esxdos DISKIO.BIN --name DISKIO.BIN -o diskio.ide
+hdfmonkey ls diskio.ide
+
+# Or start from a blank FAT16 HDF, add esxDOS's SYS/BIN/TMP and the program
+gunzip -c "$HDFMONKEY_IMAGE_DIR/blank-32m.hdf.gz" > disk.hdf
+hdfmonkey put disk.hdf esxdos089/SYS esxdos089/BIN esxdos089/TMP /
+hdfmonkey put disk.hdf DISKIO.BIN /DISKIO.BIN
+hdfmonkey ls disk.hdf
+```
+
+```c
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(void)
+{
+    int fd = open("HELLO.TXT", O_WRONLY | O_CREAT | O_TRUNC);
+    if (fd < 0) return 1;
+    write(fd, "hello\r\n", 7);
+    close(fd);
+    return 0;
+}
+```
+
+`hdfmonkey create --fat16 disk.hdf 64M LABEL` makes a fresh volume of any
+size; `--fat16` keeps volumes below 64 MB compatible with esxDOS.
+
 ### Compile music with Beepolix
 
 ```bash
@@ -354,6 +435,8 @@ snatch \
 | `ZX_SPECTRUM_MCP_ROM` | `/opt/zx-spectrum-mcp/share/zx-spectrum-mcp/roms/48.rom` |
 | `SNATCH_ROOT` | `/opt/snatch` |
 | `SNATCH_PLUGIN_DIR` | `/opt/snatch/lib/snatch/plugins` |
+| `HDFMONKEY_ROOT` | `/opt/hdfmonkey` |
+| `HDFMONKEY_IMAGE_DIR` | `/opt/hdfmonkey/share/hdfmonkey/images` |
 | `HOME` | `/home/ubuntu` |
 
 `/usr/local/bin` and `/opt/x/bin` are on `PATH`. All added application
@@ -362,13 +445,13 @@ self-contained payloads remain under `/opt`.
 
 ## How latest upstream revisions are selected
 
-XCC itself is pinned to the latest released tag, `v2.5.0`, so the compiler
+XCC itself is pinned to the latest released tag, `v2.5.1`, so the compiler
 version stays reproducible. The Docker image tag versions the image and moves
-independently when its contents change. libgpx is pinned to its `v1.0.0`
-release tag. libsquid, Beepolix, ZX Spectrum MCP, and snatch intentionally
-follow their current `main` branches. Docker BuildKit remote Git `ADD` instructions resolve
-those refs on every build and invalidate cached layers when the upstream commit
-changes.
+independently when its contents change. libgpx, libsquid, Beepolix, ZX
+Spectrum MCP, and snatch intentionally follow their current `main` branches,
+and hdfmonkey follows upstream `master`. Docker BuildKit remote Git `ADD`
+instructions resolve those refs on every build and invalidate cached layers
+when the upstream commit changes.
 
 The exact commits included in a built image are recorded in:
 
@@ -378,6 +461,7 @@ The exact commits included in a built image are recorded in:
 /opt/beepolix/.version
 /opt/zx-spectrum-mcp/.version
 /opt/snatch/.version
+/opt/hdfmonkey/.version
 ```
 
 Their source URLs are stored beside those files. Build refs can be overridden
@@ -386,8 +470,8 @@ through the corresponding entries in [`build.args`](./build.args).
 ## Licences
 
 Component licences and upstream documentation are retained below each
-component's `/opt` prefix. libgpx and snatch are GPL-2.0 projects; Beepolix and
-ZX Spectrum MCP are GPL-3.0 projects. libsquid ships no licence file of its
-own; its upstream README is installed under
+component's `/opt` prefix. libgpx and snatch are GPL-2.0 projects; Beepolix,
+ZX Spectrum MCP, and hdfmonkey are GPL-3.0 projects. libsquid ships no licence
+file of its own; its upstream README is installed under
 `/opt/zx-spectrum/share/doc/libsquid`. Vendored dependencies retain their own
 licences as documented upstream.

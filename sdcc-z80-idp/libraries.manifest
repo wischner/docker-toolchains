@@ -1,3 +1,6 @@
 # <github_repo> [release_tag_or_latest_or_main-latest]
+# idp-sdk is staged as the source tree of its latest release and built inside
+# the image with TOOLCHAIN=sdcc, which also produces libsdcc-z80 and the
+# Partner build of libcpm3-z80 (the release archive itself is XCC-only).
 iskra-delta/idp-sdk latest
 iskra-delta/idp-udev main-latest
