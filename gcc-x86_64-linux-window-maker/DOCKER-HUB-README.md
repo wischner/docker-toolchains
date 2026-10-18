@@ -12,7 +12,8 @@ Docker image for native **Window Maker** and **WINGs** development.
 - shared and static WINGs, WUtil, wraster, and WMaker SDK libraries
 - all public/private development headers, pkg-config modules, and CMake targets
 - Window Maker, WPrefs, wmagnify, wmiv, utilities, and development examples
-- all menus, styles, themes, icons, artwork, defaults, translations, and manuals
+- every menu, style, theme, icon, background, pixmap, artwork file, default,
+  translation, and manual from the pinned source tree
 - all optional image, text, EXIF, and X extension development dependencies
 - Xvfb, Xephyr, xterm, and `window-maker-xephyr` for contained GUI testing
 

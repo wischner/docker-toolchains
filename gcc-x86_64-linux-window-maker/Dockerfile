@@ -1,10 +1,10 @@
 # GCC x86_64 Linux Window Maker / WINGs development toolchain (Ubuntu 22.04)
-ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.2.0
+ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.4.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.2.0
+ARG IMG_VERSION=1.3.0
 ARG WINDOW_MAKER_REPOSITORY=https://github.com/retro-vault/window-maker.git
-ARG WINDOW_MAKER_REVISION=89338622679950dad5e3f5d2a39e78d58d60063d
+ARG WINDOW_MAKER_REVISION=57bfe74ca688ac0f679dfcf98234e294f8e53236
 ARG WINDOW_MAKER_VERSION=0.96.0
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-window-maker" \
@@ -197,13 +197,88 @@ RUN set -eux; \
         wraster-view; do \
           command -v "$program"; \
       done; \
-      test -d /usr/local/share/WindowMaker; \
-      test -d /usr/local/share/WINGs; \
-      test -d /usr/local/share/WPrefs; \
-      test -d /usr/local/share/locale; \
-      test -d /usr/local/share/man/man1; \
-      test -d /usr/local/etc/WindowMaker; \
       test "$(wmaker --version)" = "Window Maker $WINDOW_MAKER_VERSION"; \
+      command -v msgfmt; command -v perl; command -v xdpyinfo; command -v xprop; \
+      command -v Xephyr; \
+    echo "=== Every runtime file from the pinned source tree ==="; \
+      src="$WINDOW_MAKER_SOURCE"; \
+      pkg=/usr/local/share/WindowMaker; \
+      test -x "$src/.vscode/wmaker-docker.sh"; \
+      test -x "$src/.vscode/wmaker-container.sh"; \
+      for leaf in Icons Styles Themes Backgrounds Pixmaps; do \
+        test -d "$src/data/WindowMaker/$leaf"; \
+        found=0; \
+        for path in "$src/data/WindowMaker/$leaf"/*; do \
+          case "$path" in \
+            *.tiff|*.xpm|*.png|*.style|*.jpeg) ;; \
+            *) continue ;; \
+          esac; \
+          found=1; \
+          test -f "$pkg/$leaf/$(basename "$path")"; \
+        done; \
+        test "$found" = 1; \
+      done; \
+      for path in "$src/data/WindowMaker"/*.in; do \
+        test -f "$pkg/$(basename "$path" .in)"; \
+      done; \
+      for path in "$src/data/WindowMaker"/menu.* "$src/data/WindowMaker"/plmenu.* \
+                  "$src/data/WindowMaker"/background.menu \
+                  "$src/data/WindowMaker"/background.menu.* \
+                  "$src/data/WindowMaker"/autostart.sh \
+                  "$src/data/WindowMaker"/exitscript.sh \
+                  "$src/data/WindowMaker"/README \
+                  "$src/data/WindowMaker"/README.themes; do \
+        case "$path" in *.in) continue ;; esac; \
+        test -f "$path"; \
+        test -f "$pkg/$(basename "$path")"; \
+      done; \
+      test -s "$pkg/IconSets/Default.iconset"; \
+      for name in WMGLOBAL WindowMaker WMState WMRootMenu WMWindowAttributes; do \
+        test -s "/usr/local/etc/WindowMaker/$name"; \
+      done; \
+      for name in Images.tiff Images.xpm defaultIcon.tiff defaultIcon.xpm; do \
+        test -f "/usr/local/share/WINGs/$name"; \
+      done; \
+      for name in WPrefs.tiff WPrefs.xpm; do \
+        test -f "/usr/local/share/WPrefs/$name"; \
+      done; \
+      for leaf in tiff xpm; do \
+        found=0; \
+        for path in "$src/data/WPrefs/$leaf"/*; do \
+          case "$path" in \
+            *.tiff|*.xpm) ;; \
+            *) continue ;; \
+          esac; \
+          found=1; \
+          test -f "/usr/local/share/WPrefs/$leaf/$(basename "$path")"; \
+        done; \
+        test "$found" = 1; \
+      done; \
+      for path in "$src/docs/man"/*.1; do \
+        test -f "/usr/local/share/man/man1/$(basename "$path")"; \
+      done; \
+      test -s /usr/local/share/man/man1/wmaker.1; \
+      test -s /usr/local/share/man/man1/wmsetbg.1; \
+      for lang in cs ru sk; do \
+        for path in "$src/docs/man/$lang"/*.1; do \
+          test -f "/usr/local/share/man/$lang/man1/$(basename "$path")"; \
+        done; \
+      done; \
+      for spec in \
+          "WindowMaker:$src/src/wmaker/po" \
+          "WINGs:$src/lib/WINGs/po" \
+          "WRaster:$src/lib/wrlib/po" \
+          "wmgenmenu:$src/tools/po" \
+          "WPrefs:$src/src/apps/WPrefs/po"; do \
+        domain=${spec%%:*}; \
+        dir=${spec#*:}; \
+        for path in "$dir"/*.po; do \
+          lang=$(basename "$path" .po); \
+          test -s "/usr/local/share/locale/$lang/LC_MESSAGES/${domain}.mo"; \
+        done; \
+      done; \
+      test -s /usr/local/share/xsessions/wmaker.desktop; \
+      test -s /usr/local/share/applications/WPrefs.desktop; \
     echo "=== Shared and static pkg-config consumers ==="; \
       printf '#include <WINGs/WINGsP.h>\nint main(int argc,char **argv){WMInitializeApplication("test",&argc,argv);return 0;}\n' \
         > /tmp/test-wings.c; \

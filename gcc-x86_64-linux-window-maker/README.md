@@ -8,7 +8,9 @@ A complete Ubuntu 22.04 native development environment for **Window Maker**
 and its **WINGs** widget toolkit. It extends `gcc-x86_64-linux-x11`, builds the
 CMake-native [`retro-vault/window-maker`](https://github.com/retro-vault/window-maker)
 source at a pinned revision, and retains the patched checkout at
-`/usr/local/src/window-maker`.
+`/usr/local/src/window-maker`. The image installs every runtime file from that
+tree: menus, icons, styles, themes, backgrounds, pixmaps, icon sets, WINGs and
+WPrefs artwork, defaults, translations, manuals, and session metadata.
 
 ## Installed components
 
