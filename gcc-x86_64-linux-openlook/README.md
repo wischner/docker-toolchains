@@ -15,8 +15,11 @@ It extends the X11 toolchain with the CMake-native
 - Shared and static **OLGX** libraries (`libolgx.so` and `libolgx.a`)
 - Every exported header from `include/olgx`, `include/pixrect`,
   `include/xview`, and `include/xview_private`
-- `olwm` plus the complete OpenLook application set from the source tree
-- Runtime fonts, images, bitmaps, menus, locales, and manuals
+- `olwm` plus the OpenLook application set from the source tree, including
+  File Manager (`filemgr`), `cmdtool`, `textedit`, `clock`, `props`,
+  `xtoolplaces`, and `olwmslave`
+- Runtime fonts, images, bitmaps, menus, File Manager help, locales,
+  manuals, and the `sun-cmd` terminfo entry
 - `pkg-config` modules for `xview` and `olgx`
 - CMake targets `OpenLook::xview`, `OpenLook::xview_static`,
   `OpenLook::olgx`, and `OpenLook::olgx_static`

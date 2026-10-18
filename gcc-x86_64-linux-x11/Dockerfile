@@ -1,7 +1,7 @@
 # GCC x86_64 Linux X11 development toolchain (Ubuntu 22.04)
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.2.0
+ARG IMG_VERSION=1.4.0
 ARG LIBXAW_VERSION=1.0.16
 ARG LIBXAW_REVISION=0877699c1fb9ef29a2a1e4429b5f77fd5c3adc5c
 
@@ -54,7 +54,18 @@ RUN apt-get update && apt-get install -y \
     # Headless and nested X servers for integration testing
     xvfb \
     xserver-xephyr \
+    twm \
     xfonts-utils \
+    # Bitmap fonts on the X server font path. Xephyr loads these from the
+    # image; TrueType fonts below are for fontconfig and are not on that path.
+    # 75dpi and 100dpi are the hand-drawn Adobe and B&H sizes (Helvetica,
+    # Courier, Times, Lucida, Lucida Typewriter, New Century Schoolbook).
+    # Terminus is a fixed-width bitmap font from 12px to 32px, installed
+    # into misc alongside xfonts-base.
+    xfonts-base \
+    xfonts-75dpi \
+    xfonts-100dpi \
+    xfonts-terminus \
     # OpenGL (Mesa)
     libgl1-mesa-dev \
     libglu1-mesa-dev \
@@ -123,8 +134,17 @@ RUN echo "=== Compiler ===" && gcc --version && g++ --version \
  && echo "=== pkg-config ===" && pkg-config --version \
  && echo "=== GDB ===" && gdb --version | head -1 \
  && echo "=== X11 ===" && pkg-config --modversion x11 \
- && echo "=== X11 test servers ===" && command -v Xvfb && command -v Xephyr \
+ && echo "=== X11 test servers ===" && command -v Xvfb && command -v Xephyr && command -v twm \
  && echo "=== X11 font tools ===" && command -v mkfontdir \
+ && echo "=== X11 bitmap fonts ===" \
+ && dpkg-query -W xfonts-base xfonts-75dpi xfonts-100dpi xfonts-terminus \
+ && test -s /usr/share/fonts/X11/misc/fonts.dir \
+ && test -s /usr/share/fonts/X11/75dpi/fonts.dir \
+ && test -s /usr/share/fonts/X11/100dpi/fonts.dir \
+ && grep -q -- '-misc-fixed-medium-r-' /usr/share/fonts/X11/misc/fonts.dir \
+ && grep -q -- '-adobe-helvetica-medium-r-normal--' /usr/share/fonts/X11/75dpi/fonts.dir \
+ && grep -q -- '-adobe-helvetica-medium-r-normal--25-' /usr/share/fonts/X11/100dpi/fonts.dir \
+ && grep -q -- '-xos4-terminus-medium-r-normal--' /usr/share/fonts/X11/misc/fonts.dir \
  && echo "=== Xrender ===" && pkg-config --modversion xrender \
  && echo "=== Xft ===" && pkg-config --modversion xft \
  && echo "=== Athena widgets ===" \

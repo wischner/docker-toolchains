@@ -21,7 +21,12 @@ It is intended for native X11/OpenGL development and also serves as the base ima
 - Athena development dependencies: X11/Xext protocols and libraries, Xt,
   **Xmu** (`libxmu-dev`), and Xpm
 - **Xephyr** and **Xvfb** for nested/headless X11 integration tests
+- **twm** window manager
 - X11 bitmap-font indexing tools (`mkfontdir`, `mkfontscale`)
+- X11 bitmap fonts on the server font path: **xfonts-base** (misc-fixed),
+  **xfonts-75dpi** and **xfonts-100dpi** (Helvetica, Courier, Times, Lucida,
+  Lucida Typewriter, and New Century Schoolbook, including the 25px 100dpi
+  size), and **xfonts-terminus** (fixed-width, 12px to 32px)
 - **OpenGL** (Mesa), GLU, EGL, and `mesa-utils`
 - Image development libraries: libpng, libjpeg, libtiff, libwebp, librsvg
 - Image tools: **ImageMagick**, **Netpbm**, **librsvg2-bin**, **Ghostscript**

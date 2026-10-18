@@ -82,7 +82,7 @@ available for reproducible builds.
   *Build, test, convert assets, compress, and package complete AmigaOS projects.*
 
 - [**GCC x86_64 Linux X11**](./gcc-x86_64-linux-x11)
-  GCC x86_64 toolchain with **X11**, original **Athena widgets (libXaw)**, OpenGL (Mesa), image/font tooling, Xephyr, and Xvfb on Ubuntu 22.04.
+  GCC x86_64 toolchain with **X11**, original **Athena widgets (libXaw)**, OpenGL (Mesa), image/font tooling, Xephyr, Xvfb, and twm on Ubuntu 22.04.
   *Native X11/OpenGL development and reusable Linux desktop base image.*
 
 - [**GCC x86_64 GEMix**](./gcc-x86_64-gemix)

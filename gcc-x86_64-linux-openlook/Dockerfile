@@ -1,10 +1,10 @@
 # GCC x86_64 Linux OpenLook / XView development toolchain (Ubuntu 22.04)
-ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.1
+ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.4.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.1.1
+ARG IMG_VERSION=1.2.0
 ARG OPENLOOK_REPOSITORY=https://github.com/retro-vault/open-look.git
-ARG OPENLOOK_REVISION=24f59f6a9d952d0091719f3f7f0c0b8877cf1c6f
+ARG OPENLOOK_REVISION=6d71812d9cdfe3b7efca7f54f17bc905f8b87d41
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-openlook" \
       org.opencontainers.image.description="Complete GCC x86_64 Linux OpenLook/XView development toolchain layered on the Linux X11 base image." \
@@ -25,25 +25,28 @@ ENV MANPATH=/usr/openwin/share/man:
 
 COPY sdk/ /opt/openlook-sdk/
 
-# libtirpc is the only development dependency not supplied by the X11 base.
-# OpenLook itself is the CMake-native retro-vault port; no imake toolchain or
-# historical source overlay is required.
+# libtirpc and Boost are the development dependencies this port needs beyond
+# the X11 base. XView headers include <rpc/rpc.h> and <boost/preprocessor.hpp>.
+# File Manager links libXpm, which the base already provides. OpenLook itself
+# is the CMake-native retro-vault port; no imake toolchain is required.
 #
-# The font set ships with the OpenLook source tree and is staged into
-# OPENWINHOME below. The defaults in lib/app-defaults name both the
-# Adobe Helvetica and B&H Lucida families, and XView falls back to the
-# server's wide fixed font when either is absent, which mis-sizes every
-# control. The build check near the end of this file asserts both are
-# present, so a source revision that drops them fails here rather than
-# on screen.
+# The font set, File Manager help, menus, manuals, locale data, and the
+# sun-cmd terminfo entry ship with the source tree. CMake install places
+# them under OPENWINHOME. The defaults name both the Adobe Helvetica and
+# B&H Lucida families, and XView falls back to the server's wide fixed font
+# when either is absent, which mis-sizes every control. The build check
+# near the end of this file asserts both are present, so a source revision
+# that drops them fails here rather than on screen.
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    libboost-dev \
     libtirpc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Build all library/application targets, copy the complete staged OPENWINHOME
-# tree, and explicitly overlay every exported header. The latter includes
-# xview_private, which this port documents as part of its development SDK.
+# Install the complete OPENWINHOME tree from the upstream CMake rules:
+# libraries, headers (including xview_private), applications, fonts, images,
+# bitmaps, menus, help, manuals, locales, and terminfo. The compiled default
+# OPENWINHOME matches the image prefix.
 RUN set -eux; \
     srcdir="$(mktemp -d)"; \
     git -C "$srcdir" init; \
@@ -52,11 +55,10 @@ RUN set -eux; \
     git -C "$srcdir" checkout --detach FETCH_HEAD; \
     test "$(git -C "$srcdir" rev-parse HEAD)" = "$OPENLOOK_REVISION"; \
     cmake -S "$srcdir" -B "$srcdir/build" \
-      -DCMAKE_BUILD_TYPE=Release; \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX="$OPENWINHOME"; \
     cmake --build "$srcdir/build" --parallel "$(nproc)"; \
-    install -d "$OPENWINHOME"; \
-    cp -a "$srcdir/bin/." "$OPENWINHOME/"; \
-    cp -a "$srcdir/include/." "$OPENWINHOME/include/"; \
+    cmake --install "$srcdir/build"; \
     find "$srcdir/include" -type f -printf '%P\n' | while IFS= read -r header; do \
       test -f "$OPENWINHOME/include/$header"; \
     done; \
@@ -94,17 +96,29 @@ RUN set -eux; \
       test -f /usr/openwin/include/xview/xview.h; \
       test -f /usr/openwin/include/xview_private/attr_impl.h; \
     echo "=== OpenLook fonts ==="; \
-      for dpi in 75dpi 100dpi; do \
-        test -f "/usr/openwin/share/fonts/openlook/bdf/$dpi/fonts.dir"; \
+      for leaf in misc 75dpi 100dpi; do \
+        test -s "/usr/openwin/share/fonts/openlook/bdf/$leaf/fonts.dir"; \
       done; \
       grep -qi -- '-adobe-helvetica-' \
         /usr/openwin/share/fonts/openlook/bdf/75dpi/fonts.dir; \
       grep -qi -- '-b&h-lucida-' \
         /usr/openwin/share/fonts/openlook/bdf/75dpi/fonts.dir; \
+      test -d /usr/openwin/include/images; \
+      test -d /usr/openwin/include/bitmaps; \
+      test -d /usr/openwin/include/X11/bitmaps; \
     echo "=== OpenLook libraries and applications ==="; \
       test -f /usr/openwin/lib/libxview.so; test -f /usr/openwin/lib/libxview.a; \
       test -f /usr/openwin/lib/libolgx.so; test -f /usr/openwin/lib/libolgx.a; \
-      command -v olwm; command -v openlook-xephyr; command -v hello; command -v clock; \
+      test -f /usr/openwin/lib/openwin-menu; \
+      test -f /usr/openwin/lib/openwin-menu-programs; \
+      test -f /usr/openwin/lib/app-defaults/Olwm; \
+      test -f /usr/openwin/lib/.text_extras_menu; \
+      test -f /usr/openwin/lib/help/filemgr.info; \
+      test -f /usr/openwin/share/man/man1/filemgr.1; \
+      test -d /usr/openwin/share/locale/C/props; \
+      TERMINFO=/usr/openwin/share/terminfo infocmp sun-cmd >/dev/null; \
+      test -x /usr/openwin/use-openwinhome.sh; \
+      command -v olwm; command -v openlook-xephyr; command -v filemgr; command -v clock; \
       command -v cmdtool; command -v textedit; command -v props; \
       command -v olwmslave; command -v xtoolplaces; \
       pkg-config --exists xview olgx; \

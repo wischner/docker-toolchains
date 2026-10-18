@@ -12,8 +12,9 @@ It is designed for legacy OpenLook desktop software, XView applications, and
 - everything from `wischner/gcc-x86_64-linux-x11`
 - shared and static XView and OLGX libraries
 - every exported `olgx`, `pixrect`, `xview`, and `xview_private` header
-- `olwm` and the complete OpenLook application suite
-- runtime fonts, images, bitmaps, menus, locales, and manuals
+- `olwm` and the OpenLook application suite, including File Manager
+- runtime fonts, images, bitmaps, menus, File Manager help, locales,
+  manuals, and the `sun-cmd` terminfo entry
 - `pkg-config` modules and CMake imported targets for shared/static linking
 - `openlook-xephyr` for self-contained nested/headless OpenLook GUI tests
 

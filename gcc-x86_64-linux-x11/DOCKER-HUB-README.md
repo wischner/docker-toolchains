@@ -19,7 +19,11 @@ It is designed both as a practical end-user image for X11 projects and as the ba
 - Athena development dependencies, including X11/Xext, Xt, Xmu, and Xpm
 - common X11 runtime tools
 - Xephyr and Xvfb for nested/headless X11 integration tests
+- twm window manager
 - X11 bitmap-font indexing tools
+- X11 bitmap fonts on the server font path: misc-fixed, the 75dpi and 100dpi
+  Adobe and B&H families (Helvetica, Courier, Times, Lucida, Lucida
+  Typewriter, and New Century Schoolbook), and Terminus
 - Mesa OpenGL, GLU, EGL, and `mesa-utils`
 - image libraries for PNG, JPEG, TIFF, WebP, and SVG
 - image tools such as ImageMagick, Netpbm, Ghostscript, and librsvg
