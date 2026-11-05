@@ -6,7 +6,8 @@ This image is part of **Wischner Ltd. Toolchains**.
 
 A reusable **Linux x86_64 Open Motif development base** on Ubuntu 22.04.
 It extends the X11 toolchain with the complete Open Motif SDK, the `uil`
-compiler, the Motif Window Manager, GLw, and self-contained nested-X testing.
+compiler, the Motif Window Manager, GLw, the full CDE 2.5.3 desktop, and
+self-contained nested-X testing.
 
 ## Installed components
 
@@ -20,6 +21,15 @@ compiler, the Motif Window Manager, GLw, and self-contained nested-X testing.
 - `pkg-config` modules for shared and static Motif components
 - CMake imported targets for shared and static Motif components
 - **Xvfb**, **Xephyr**, and the `motif-xephyr` test-session helper
+- **CDE 2.5.3** from [`retro-vault/cde`](https://github.com/retro-vault/cde),
+  installed at `/usr/dt`: desktop and window manager, login and session
+  tools, file manager, terminal, editor, mail, calendar, utilities,
+  Application Builder, Information Manager, Desktop KornShell, and online
+  help in English, German, Spanish, French, Italian, and Japanese
+- CDE development headers and shared libraries under `/usr/dt/include` and
+  `/usr/dt/lib`
+- `cde-xephyr`, a self-contained nested CDE session with `rpcbind`,
+  ToolTalk, and the calendar service
 
 ## Using this image as your compiler
 
@@ -48,6 +58,16 @@ target_link_libraries(static_app PRIVATE Motif::Xm_static)
 Other targets are `Motif::Mrm`, `Motif::Uil`, `Motif::GLw`,
 `Motif::Motif`, and corresponding `_static` targets.
 
+Compile a CDE application:
+
+```bash
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-motif:latest \
+  bash -lc 'gcc -o app main.c -I/usr/dt/include -L/usr/dt/lib -lDtSvc -lXm -lXt -lX11'
+```
+
 Compile a UIL file:
 
 ```bash
@@ -69,6 +89,20 @@ docker run --rm \
   wischner/gcc-x86_64-linux-motif:latest \
   motif-xephyr ./app
 ```
+
+Start the CDE desktop in a nested Xephyr window. This needs to run as root
+inside the container so it can start `rpcbind`:
+
+```bash
+docker run --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v "$HOME/.Xauthority":/root/.Xauthority:ro \
+  wischner/gcc-x86_64-linux-motif:latest \
+  cde-xephyr
+```
+
+`CDE_SCREEN` selects the initial window size. The default is `1280x800`.
 
 To use the host display directly:
 

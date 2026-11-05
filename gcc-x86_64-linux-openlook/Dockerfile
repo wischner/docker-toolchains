@@ -1,10 +1,10 @@
 # GCC x86_64 Linux OpenLook / XView development toolchain (Ubuntu 22.04)
-ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.4.0
+ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.2.0
+ARG IMG_VERSION=1.3.1
 ARG OPENLOOK_REPOSITORY=https://github.com/retro-vault/open-look.git
-ARG OPENLOOK_REVISION=6d71812d9cdfe3b7efca7f54f17bc905f8b87d41
+ARG OPENLOOK_REVISION=107a9a003791db463e2c3dbe3b4fd55d60792d06
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-openlook" \
       org.opencontainers.image.description="Complete GCC x86_64 Linux OpenLook/XView development toolchain layered on the Linux X11 base image." \

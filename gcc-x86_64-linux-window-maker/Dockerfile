@@ -1,10 +1,10 @@
 # GCC x86_64 Linux Window Maker / WINGs development toolchain (Ubuntu 22.04)
-ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.4.0
+ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.3.0
+ARG IMG_VERSION=1.4.1
 ARG WINDOW_MAKER_REPOSITORY=https://github.com/retro-vault/window-maker.git
-ARG WINDOW_MAKER_REVISION=57bfe74ca688ac0f679dfcf98234e294f8e53236
+ARG WINDOW_MAKER_REVISION=970ab4ba10e904a1ac53a830defdf02b37e629b7
 ARG WINDOW_MAKER_VERSION=0.96.0
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-window-maker" \

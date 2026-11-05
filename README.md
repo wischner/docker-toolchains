@@ -87,12 +87,12 @@ available for reproducible builds.
 
 - [**GCC x86_64 GEMix**](./gcc-x86_64-gemix)
   GCC x86_64 toolchain layered on the X11 image with the hosted **GEMix**
-  headers, shared libraries, pkg-config metadata, fonts, and runtime resources.
-  *Build and run DRI GEM applications natively on Linux.*
+  SDK, bundled GEM programs, Rasta viewer, pkg-config metadata, and runtime resources.
+  *Build GEM applications and run the GEM desktop through Rasta.*
 
 - [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)
-  GCC x86_64 toolchain layered on the X11 image with the complete shared/static **Open Motif** SDK, `uil`, `mwm`, GLw, CMake/pkg-config metadata, and contained Xephyr testing.
-  *Native Motif desktop development and legacy X11 GUI maintenance.*
+  GCC x86_64 toolchain layered on the X11 image with the complete shared/static **Open Motif** SDK, `uil`, `mwm`, GLw, CDE 2.5.3, CMake/pkg-config metadata, and contained Xephyr testing.
+  *Native Motif and CDE desktop development and legacy X11 GUI maintenance.*
 
 - [**GCC x86_64 Linux GNUstep**](./gcc-x86_64-linux-gnustep)
   GCC x86_64 toolchain layered on the X11 image with **GNUstep**, Objective-C / Objective-C++, `gnustep-make`, Gorm, and ProjectCenter.
@@ -276,6 +276,14 @@ docker run --rm -it \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-linux-motif:latest \
   motif-xephyr ./app
+
+# Start the installed CDE desktop in Xephyr
+docker run --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v "$HOME/.Xauthority":/root/.Xauthority:ro \
+  wischner/gcc-x86_64-linux-motif:latest \
+  cde-xephyr
 ```
 
 ### GCC x86_64 Linux GNUstep

@@ -32,6 +32,13 @@ It is intended for native X11/OpenGL development and also serves as the base ima
 - Image tools: **ImageMagick**, **Netpbm**, **librsvg2-bin**, **Ghostscript**
 - Font/text libraries: **FreeType**, **Fontconfig**
 - Font tools and sample fonts: **fonttools**, DejaVu, FreeFont
+- **PAM** (`libpam0g-dev`, `libpam-modules`) for login authentication
+- Parser generators: **Bison** and **Flex**
+- **ksh** Korn shell
+- **Tcl** (`tcl-dev`) development headers and library
+- **LMDB** (`liblmdb-dev`) for the help database
+- Documentation tooling: **onsgmls** (OpenSP) and **compress**
+- **rpcbind** RPC port mapper
 
 ## Using this image as your compiler
 

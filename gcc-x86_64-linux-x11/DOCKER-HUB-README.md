@@ -29,6 +29,13 @@ It is designed both as a practical end-user image for X11 projects and as the ba
 - image tools such as ImageMagick, Netpbm, Ghostscript, and librsvg
 - font libraries such as FreeType and Fontconfig
 - font tools and bundled fonts
+- PAM for login authentication
+- Bison and Flex parser generators
+- ksh Korn shell
+- Tcl development headers and library (`tcl-dev`)
+- LMDB for the help database
+- onsgmls and compress for documentation tooling
+- rpcbind RPC port mapper
 
 ## What this image is for
 

@@ -1,0 +1,79 @@
+#!/bin/sh
+# Start Rasta, gemd, and the GEM desktop in this container.
+# The container needs a display, for example -e DISPLAY and the X11 socket.
+set -eu
+
+log=/tmp/gem-desktop.log
+: >"$log"
+
+rasta_pid=
+gemd_pid=
+desktop_pid=
+
+cleanup() {
+    status=$?
+    trap - EXIT INT TERM
+    if [ -n "$desktop_pid" ]; then
+        kill "$desktop_pid" 2>/dev/null || true
+    fi
+    if [ -n "$gemd_pid" ]; then
+        kill "$gemd_pid" 2>/dev/null || true
+    fi
+    if [ -n "$rasta_pid" ]; then
+        kill "$rasta_pid" 2>/dev/null || true
+    fi
+    wait 2>/dev/null || true
+    exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+# cout is block-buffered when redirected. The framebuffer file is created
+# before Rasta enters its SDL loop, so that file is the ready signal.
+stdbuf -oL -eL rasta --inverse off --cursor off --bpp 32 \
+    --port "${GEM_RASTA_PORT:-5000}" >>"$log" 2>&1 &
+rasta_pid=$!
+
+i=0
+while [ "$i" -lt 100 ]; do
+    if [ -s /tmp/rasta.framebuffer ]; then
+        break
+    fi
+    if ! kill -0 "$rasta_pid" 2>/dev/null; then
+        echo "rasta exited during startup" >&2
+        cat "$log" >&2
+        exit 1
+    fi
+    i=$((i + 1))
+    sleep 0.1
+done
+if [ ! -s /tmp/rasta.framebuffer ]; then
+    echo "timed out waiting for rasta" >&2
+    cat "$log" >&2
+    exit 1
+fi
+
+gemd >>"$log" 2>&1 &
+gemd_pid=$!
+
+i=0
+while [ "$i" -lt 200 ]; do
+    if [ -S /tmp/gemd.sock ]; then
+        break
+    fi
+    if ! kill -0 "$gemd_pid" 2>/dev/null; then
+        echo "gemd exited before listening" >&2
+        cat "$log" >&2
+        exit 1
+    fi
+    i=$((i + 1))
+    sleep 0.1
+done
+if [ ! -S /tmp/gemd.sock ]; then
+    echo "timed out waiting for gemd" >&2
+    cat "$log" >&2
+    exit 1
+fi
+
+desktop >>"$log" 2>&1 &
+desktop_pid=$!
+wait "$desktop_pid"

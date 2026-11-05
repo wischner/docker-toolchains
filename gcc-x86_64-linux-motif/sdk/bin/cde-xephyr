@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# Start the installed CDE desktop in a nested Xephyr session.
+# Root is required for rpcbind, ToolTalk, and the calendar service.
+set -euo pipefail
+
+prefix=/usr/dt
+nested_display="${CDE_DISPLAY:-:2}"
+parent_display="${CDE_PARENT_DISPLAY:-:99}"
+screen="${CDE_SCREEN:-1280x800}"
+runtime="${CDE_RUNTIME:-/tmp/cde-xephyr}"
+
+parent_pid=""
+xephyr_pid=""
+resize_pid=""
+calendar_pid=""
+tooltalk_pid=""
+session_pid=""
+
+stop_process() {
+    local pid=$1
+    local attempt
+    if [[ -z "$pid" ]]; then
+        return
+    fi
+    kill "$pid" 2>/dev/null || true
+    for attempt in $(seq 1 30); do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            wait "$pid" 2>/dev/null || true
+            return
+        fi
+        sleep 0.1
+    done
+    kill -KILL "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+}
+
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    if [[ -n "$session_pid" ]]; then
+        kill -TERM -- "-$session_pid" 2>/dev/null || true
+    fi
+    stop_process "$session_pid"
+    stop_process "$resize_pid"
+    stop_process "$xephyr_pid"
+    stop_process "$calendar_pid"
+    stop_process "$tooltalk_pid"
+    stop_process "$parent_pid"
+    if [[ -n "${session_uid:-}" ]]; then
+        chown -R "$session_uid:$session_gid" \
+            "$runtime/calendar" "$runtime/tooltalk" "$runtime/logs" 2>/dev/null || true
+    fi
+    exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+wait_for_display() {
+    local display=$1
+    local attempt
+    for attempt in $(seq 1 100); do
+        if xdpyinfo -display "$display" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 0.1
+    done
+    echo "Timed out waiting for X display $display" >&2
+    return 1
+}
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    echo "cde-xephyr must run as root so it can start rpcbind and the CDE services." >&2
+    exit 1
+fi
+
+if [[ "${DISPLAY:-}" == "$nested_display" || "${DISPLAY:-}" == "unix${nested_display}" ]]; then
+    nested_display=:3
+fi
+
+# Xephyr needs a parent X server. Supply a headless parent in CI and on
+# machines without a reachable DISPLAY.
+if [[ -z "${DISPLAY:-}" ]] || ! xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    Xvfb "$parent_display" -screen 0 "${screen}x24" -nolisten tcp -noreset &
+    parent_pid=$!
+    wait_for_display "$parent_display"
+    export DISPLAY="$parent_display"
+fi
+
+install -d -m 0755 "$runtime/logs" "$runtime/calendar" "$runtime/tooltalk" "$runtime/tmp"
+install -d -m 0700 "$runtime/home/Mail"
+touch "$runtime/home/Mail/Inbox"
+chmod 600 "$runtime/home/Mail/Inbox"
+chmod 1777 /tmp/.X11-unix
+
+if ! id cde >/dev/null 2>&1; then
+    useradd --no-create-home --home-dir "$runtime/home" --shell /bin/ksh cde
+fi
+session_uid=$(id -u cde)
+session_gid=$(id -g cde)
+chown -R "$session_uid:$session_gid" "$runtime/home" "$runtime/tmp" "$runtime/logs"
+chown -R root:root "$runtime/calendar" "$runtime/tooltalk"
+printf '/ %s\n/work %s\n' "$runtime/tooltalk" "$runtime/tooltalk" \
+    > "$runtime/partition-map"
+
+install -d -m 0755 /run/rpcbind
+/usr/sbin/rpcbind || true
+if [[ ! -S /run/rpcbind.sock && ! -S /var/run/rpcbind.sock ]]; then
+    echo "rpcbind did not start." >&2
+    exit 1
+fi
+"$prefix/libexec/cde/rpc.cmsd" -s -D "$runtime/calendar" \
+    > "$runtime/logs/calendar.log" 2>&1 &
+calendar_pid=$!
+TT_PARTITION_MAP="$runtime/partition-map" \
+    "$prefix/libexec/cde/rpc.ttdbserver" -S \
+    > "$runtime/logs/tooltalk.log" 2>&1 &
+tooltalk_pid=$!
+
+Xephyr "$nested_display" -ac -br -noreset -resizeable -screen "$screen" -nolisten tcp \
+    > "$runtime/logs/xephyr.log" 2>&1 &
+xephyr_pid=$!
+if ! wait_for_display "$nested_display"; then
+    cat "$runtime/logs/xephyr.log" >&2
+    exit 1
+fi
+
+run_as_cde=(setpriv --reuid "$session_uid" --regid "$session_gid" --clear-groups)
+session_env=(
+    env
+    "HOME=$runtime/home"
+    "TMPDIR=$runtime/tmp"
+    "USER=cde"
+    "LOGNAME=cde"
+    "SHELL=/bin/ksh"
+    "LANG=C.UTF-8"
+    "MAIL=$runtime/home/Mail/Inbox"
+    "PATH=$prefix/bin:$PATH"
+    "DISPLAY=$nested_display"
+)
+
+"${run_as_cde[@]}" "${session_env[@]}" "$prefix/libexec/cde/xephyr-resize" \
+    > "$runtime/logs/resize.log" 2>&1 &
+resize_pid=$!
+
+setsid "${run_as_cde[@]}" "${session_env[@]}" "$prefix/bin/Xsession" \
+    > "$runtime/logs/session.log" 2>&1 &
+session_pid=$!
+
+if (($# > 0)); then
+    "${run_as_cde[@]}" "${session_env[@]}" "$@"
+else
+    status=0
+    wait -n "$session_pid" "$xephyr_pid" || status=$?
+    if ! kill -0 "$xephyr_pid" 2>/dev/null; then
+        status=0
+    fi
+    exit "$status"
+fi

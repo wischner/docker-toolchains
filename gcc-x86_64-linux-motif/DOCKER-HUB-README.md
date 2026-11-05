@@ -17,6 +17,12 @@ It is designed for legacy Motif applications, UIL-based workflows, and Motif/Ope
 - pkg-config modules for every shared and static component
 - CMake imported targets for every shared and static component
 - Xvfb, Xephyr, and a self-contained `motif-xephyr` test helper
+- CDE 2.5.3 at `/usr/dt`, including the desktop, window manager, login and
+  session tools, file manager, terminal, editor, mail, calendar, utilities,
+  Application Builder, Information Manager, Desktop KornShell, development
+  headers and libraries, and online help in English, German, Spanish,
+  French, Italian, and Japanese
+- `cde-xephyr` for a self-contained nested CDE session
 
 ## What this image is for
 
@@ -48,6 +54,27 @@ target_link_libraries(app PRIVATE Motif::Xm)
 Targets are provided for `Xm`, `Mrm`, `Uil`, `GLw`, and the aggregate
 `Motif` SDK. Append `_static` for the static target, for example
 `Motif::Mrm_static`.
+
+Compile a CDE application:
+
+```bash
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-linux-motif:latest \
+  bash -lc 'gcc -o app main.c -I/usr/dt/include -L/usr/dt/lib -lDtSvc -lXm -lXt -lX11'
+```
+
+Start the CDE desktop in Xephyr:
+
+```bash
+docker run --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v "$HOME/.Xauthority":/root/.Xauthority:ro \
+  wischner/gcc-x86_64-linux-motif:latest \
+  cde-xephyr
+```
 
 Compile a UIL file:
 

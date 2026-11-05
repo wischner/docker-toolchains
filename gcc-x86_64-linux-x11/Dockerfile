@@ -1,7 +1,7 @@
 # GCC x86_64 Linux X11 development toolchain (Ubuntu 22.04)
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.4.0
+ARG IMG_VERSION=1.6.0
 ARG LIBXAW_VERSION=1.0.16
 ARG LIBXAW_REVISION=0877699c1fb9ef29a2a1e4429b5f77fd5c3adc5c
 
@@ -91,6 +91,23 @@ RUN apt-get update && apt-get install -y \
     fonts-dejavu-core \
     fonts-dejavu-extra \
     fonts-freefont-ttf \
+    # PAM for login authentication
+    libpam0g-dev \
+    libpam-modules \
+    # Parser generators
+    bison \
+    flex \
+    # Korn shell
+    ksh \
+    # Tcl development headers and library
+    tcl-dev \
+    # LMDB for the help database
+    liblmdb-dev \
+    # Documentation tooling: OpenSP's onsgmls and traditional compress
+    opensp \
+    ncompress \
+    # RPC port mapper
+    rpcbind \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packages/libXaw-1.0.16.tar.xz packages/libXaw-1.0.16.tar.xz.sha256 /tmp/libxaw-source/
@@ -162,6 +179,27 @@ RUN echo "=== Compiler ===" && gcc --version && g++ --version \
  && echo "=== OpenGL ===" && pkg-config --modversion gl \
  && echo "=== Fontconfig ===" && pkg-config --modversion fontconfig \
  && echo "=== FreeType ===" && pkg-config --modversion freetype2 \
+ && echo "=== PAM ===" && dpkg-query -W libpam0g-dev libpam-modules \
+ && test -f /usr/include/security/pam_appl.h \
+ && printf '#include <security/pam_appl.h>\nint main(void){return pam_start==0;}\n' > /tmp/test-pam.c \
+ && gcc -o /tmp/test-pam /tmp/test-pam.c -lpam \
+ && echo "=== Parser generators ===" && bison --version && flex --version \
+ && echo "=== Korn shell ===" && ksh -c 'print ok' \
+ && echo "=== Tcl ===" && dpkg-query -W tcl-dev tcl8.6-dev libtcl8.6 \
+ && pkg-config --modversion tcl8.6 \
+ && test -f /usr/include/tcl8.6/tcl.h \
+ && tcl_libdir="$(pkg-config --variable=libdir tcl8.6)" \
+ && test -f "${tcl_libdir}/libtcl8.6.a" \
+ && test -e "${tcl_libdir}/libtcl8.6.so" \
+ && printf '#include <tcl.h>\nint main(void){return Tcl_CreateInterp==0;}\n' > /tmp/test-tcl.c \
+ && gcc -o /tmp/test-tcl /tmp/test-tcl.c $(pkg-config --cflags --libs tcl8.6) \
+ && echo 'puts ok' | tclsh \
+ && echo "=== LMDB ===" && pkg-config --modversion lmdb \
+ && test -f /usr/include/lmdb.h \
+ && printf '#include <lmdb.h>\nint main(void){MDB_env *e=0; return mdb_env_create(&e);}\n' > /tmp/test-lmdb.c \
+ && gcc -o /tmp/test-lmdb /tmp/test-lmdb.c $(pkg-config --cflags --libs lmdb) \
+ && echo "=== Documentation tools ===" && command -v onsgmls && command -v compress \
+ && echo "=== RPC bind ===" && dpkg-query -W rpcbind && command -v rpcbind && command -v rpcinfo \
  && echo "--- Compile test ---" \
  && printf '#include <X11/Xlib.h>\nint main(void){Display *d=XOpenDisplay(0); if(d) XCloseDisplay(d); return 0;}\n' > /tmp/test.c \
  && gcc -o /tmp/test /tmp/test.c $(pkg-config --cflags --libs x11) \
@@ -169,4 +207,6 @@ RUN echo "=== Compiler ===" && gcc --version && g++ --version \
  && gcc -o /tmp/test-xaw /tmp/test-xaw.c $(pkg-config --cflags --libs xaw7) \
  && gcc -o /tmp/test-xaw-classic /tmp/test-xaw.c -L/usr/local/lib -lXaw -lXt -lX11 \
  && rm -f /tmp/test /tmp/test.c /tmp/test-xaw /tmp/test-xaw.c /tmp/test-xaw-classic \
+          /tmp/test-pam /tmp/test-pam.c /tmp/test-lmdb /tmp/test-lmdb.c \
+          /tmp/test-tcl /tmp/test-tcl.c \
  && echo "All checks passed."

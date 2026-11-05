@@ -1,4 +1,4 @@
-IMG_VERSION=1.2.0
-BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.2.0
-GEM_REF=v1.0.0
-GEM_COMMIT=0df463d9ff4b4cbbdd0612ce700c9e11e5e33661
+IMG_VERSION=1.4.1
+BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
+GEM_REF=03a9c1efdc67fef89abb9c1c3c5de9d42f133ecf
+GEM_COMMIT=03a9c1efdc67fef89abb9c1c3c5de9d42f133ecf

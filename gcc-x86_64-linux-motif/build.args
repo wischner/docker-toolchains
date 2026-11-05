@@ -1,2 +1,6 @@
-IMG_VERSION=1.1.1
-BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.1.1
+IMG_VERSION=1.4.1
+BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
+CDE_REPOSITORY=https://github.com/retro-vault/cde.git
+# main, 2026-10-18: complete CDE 2.5.3 desktop. Still HEAD on 2026-11-05.
+CDE_REVISION=a0652afb351fb68035f9af97a72a001b9fedd61a
+CDE_VERSION=2.5.3
