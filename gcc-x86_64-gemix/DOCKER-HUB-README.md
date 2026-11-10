@@ -6,7 +6,7 @@ Ubuntu 22.04 based GCC toolchain for **GEMix (DRI GEM on Linux)** development.
 The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
 main snapshot (`6e6c60610ac46bf4586ab44da8de20d5eb41a83c`) during the image
 build. That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
-The [Native](https://github.com/wischner/native) C++ UI SDK master snapshot `d560a3a7be6348a772ec8c1f4110b966bd00a61d` (package version `v0.0.0`) is built
+The [Native](https://github.com/wischner/native) C++ UI SDK master snapshot `c1b5106c3434993e2fe40ab1c31c6b15374ef918` (package version `v0.0.0`) is built
 against it for both GEMix backends.
 
 Includes:
@@ -81,3 +81,6 @@ existing snapshot convention; the exact commit is recorded in metadata.
 GEM tab bands default to 20 pixels. Native applications can use
 `tab_view::set_tab_height(28)` for a per-control override, or pass
 `std::nullopt` to restore the theme.
+Selected bottom/right tabs retain their outline at the page join. Both
+splitter orientations show three centered one-pixel grip dots, including
+splitters whose panes are leaf controls such as lists or text editors.

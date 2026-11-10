@@ -182,7 +182,7 @@ RUN set -eux; \
 # copies are the same files) so the system C++ runtime is used at run time.
 ARG IMG_VERSION=1.5.1
 ARG NATIVE_REF=v0.0.0
-ARG NATIVE_COMMIT=d560a3a7be6348a772ec8c1f4110b966bd00a61d
+ARG NATIVE_COMMIT=c1b5106c3434993e2fe40ab1c31c6b15374ef918
 RUN set -eux; \
     git init /tmp/native-source; \
     git -C /tmp/native-source remote add origin https://github.com/wischner/native.git; \
@@ -353,6 +353,8 @@ RUN set -eux; \
       '#include <native.h>' \
       'int program(int, char **) {' \
       '  native::app_wnd window("Native check");' \
+      '  native::tab_view tabs; tabs.set_tab_height(20);' \
+      '  tabs.set_tab_height(std::nullopt);' \
       '  return native::app::run(window);' \
       '}' \
       > /tmp/test-native.cpp; \
