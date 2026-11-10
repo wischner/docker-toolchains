@@ -4,9 +4,9 @@
 
 Ubuntu 22.04 based GCC toolchain for **GEMix (DRI GEM on Linux)** development.
 The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
-release `v1.0.3` (`d940cf31ee9e85af0264a83abd1526d4475ffb0c`) during the image
+main snapshot (`6e6c60610ac46bf4586ab44da8de20d5eb41a83c`) during the image
 build. That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
-The [Native](https://github.com/wischner/native) C++ UI SDK `v0.9.1` is built
+The [Native](https://github.com/wischner/native) C++ UI SDK master snapshot `73c577afabb7a89ecdcdb01d621eed081e0aac13` (package version `v0.0.0`) is built
 against it for both GEMix backends.
 
 Includes:
@@ -62,3 +62,18 @@ docker run --rm -it \
 
 Contributions are welcome. Please open an issue or pull request:
 <https://github.com/wischner/docker-toolchains>
+
+## Complete menus and protocol compatibility
+
+Version 1.5.1 includes matching protocol-3 libgem/gemd and the Native menu
+installation fix. Standard GEM menus support 256 objects and 256 strings,
+including separators; labels over 63 bytes and malformed or oversized trees
+are rejected rather than truncated. Failed Native installation retains the
+previous menu and reports the status. Rebuild clients and restart gemd and
+all clients together: protocol-2 binaries cannot use the new server.
+
+The image build runs a real-server smoke test for 32, 33 and 49 strings,
+65 and 256 objects, check/disable updates, removal and overflow rejection.
+Both bundled Native SDK variants are rebuilt against the same GEM libraries.
+The Native revision is a master snapshot, packaged as v0.0.0 using Native's
+existing snapshot convention; the exact commit is recorded in metadata.

@@ -9,9 +9,10 @@ It extends the X11 toolchain with the GEM SDK, the Native C++ SDK for
 GEMix, the bundled GEM programs, and the Rasta viewer, built from pinned GEM
 and Native revisions.
 
-Current image version: `1.5.0`.
-GEM release: `v1.0.3` (`d940cf31ee9e85af0264a83abd1526d4475ffb0c`).
-Native release: `v0.9.1` (`0bddb80f30fca01067172e441b0ab48fde782ce3`).
+Current image version: `1.5.1`.
+GEM main snapshot: `6e6c60610ac46bf4586ab44da8de20d5eb41a83c`.
+Native master snapshot: `73c577afabb7a89ecdcdb01d621eed081e0aac13`
+(SDK package version `v0.0.0`).
 Rasta revision: `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`, the snapshot that
 revision of GEM builds.
 
@@ -172,3 +173,23 @@ it carries. `BASE_IMAGE` pins the X11 base image tag.
 `wischner/gcc-x86_64-gemix` extends `wischner/gcc-x86_64-linux-x11` and adds
 the hosted GEM SDK, the Native SDK for GEMix, the bundled GEM programs, and
 the Rasta viewer.
+
+## Complete menus and protocol compatibility
+
+Version 1.5.1 includes matching protocol-3 libgem/gemd and the Native menu
+installation fix. Standard GEM menus support 256 objects and 256 strings,
+including separators; labels over 63 bytes and malformed or oversized trees
+are rejected rather than truncated. Failed Native installation retains the
+previous menu and reports the status. Rebuild clients and restart gemd and
+all clients together: protocol-2 binaries cannot use the new server.
+
+The image build runs a real-server smoke test for 32, 33 and 49 strings,
+65 and 256 objects, check/disable updates, removal and overflow rejection.
+Both bundled Native SDK variants are rebuilt against the same GEM libraries.
+The Native revision is a master snapshot, packaged as v0.0.0 using Native's
+existing snapshot convention; the exact commit is recorded in metadata.
+
+The Native pkg-config entries include `libgemctl`, which supplies the current
+chrome metrics. The gemd variant resolves its AES calls through `libgem`; it
+does not pull the direct AES/VDI implementation into client applications.
+Both pkg-config and relocated CMake consumers are linked during image builds.

@@ -2,11 +2,11 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.5.0
-ARG GEM_REF=v1.0.3
-ARG GEM_COMMIT=d940cf31ee9e85af0264a83abd1526d4475ffb0c
-ARG NATIVE_REF=v0.9.1
-ARG NATIVE_COMMIT=0bddb80f30fca01067172e441b0ab48fde782ce3
+ARG IMG_VERSION=1.5.1
+ARG GEM_REF=main
+ARG GEM_COMMIT=6e6c60610ac46bf4586ab44da8de20d5eb41a83c
+ARG NATIVE_REF=v0.0.0
+ARG NATIVE_COMMIT=73c577afabb7a89ecdcdb01d621eed081e0aac13
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, the Native C++ SDK for GEMix, bundled GEM programs, and the Rasta viewer." \
@@ -135,7 +135,7 @@ RUN set -eux; \
     ldconfig
 
 # The SDK ships libraries and headers but no pkg-config metadata.
-ARG IMG_VERSION=1.5.0
+ARG IMG_VERSION=1.5.1
 RUN set -eux; \
     install -d /usr/local/lib/pkgconfig; \
     pc() { \
@@ -182,9 +182,9 @@ RUN set -eux; \
 #   gemd:   calls go through libgem to a running gemd.
 # The pkg-config entries link the image's own GEM libraries (the SDK
 # copies are the same files) so the system C++ runtime is used at run time.
-ARG IMG_VERSION=1.5.0
-ARG NATIVE_REF=v0.9.1
-ARG NATIVE_COMMIT=0bddb80f30fca01067172e441b0ab48fde782ce3
+ARG IMG_VERSION=1.5.1
+ARG NATIVE_REF=v0.0.0
+ARG NATIVE_COMMIT=73c577afabb7a89ecdcdb01d621eed081e0aac13
 RUN set -eux; \
     git init /tmp/native-source; \
     git -C /tmp/native-source remote add origin https://github.com/wischner/native.git; \
@@ -236,11 +236,11 @@ RUN set -eux; \
     }; \
     native_pc native-gemix 'Native C++ UI library, hosted GEMix backend' \
       /opt/gemix/native/hosted \
-      '-L/usr/local/lib -Wl,-rpath,/usr/local/lib -laes -lvdi -lrasta' \
+      '-L/usr/local/lib -Wl,-rpath,/usr/local/lib -lgemctl -laes -lvdi -lrasta' \
       'gemix-aes'; \
     native_pc native-gemix-gemd 'Native C++ UI library, gemd client GEMix backend' \
       /opt/gemix/native/gemd \
-      '-L/usr/local/lib -Wl,-rpath,/usr/local/lib -lgem -lplatform_linux' \
+      '-L/usr/local/lib -Wl,-rpath,/usr/local/lib -lgemctl -lgem -lplatform_linux' \
       'gemix-gem'
 
 WORKDIR /work
@@ -383,3 +383,10 @@ RUN set -eux; \
     rm -rf /tmp/native-consumer /tmp/test-native /tmp/test-native.cpp; \
     rm -f /tmp/rasta.framebuffer /tmp/rasta-smoke.log /tmp/xvfb-error.log; \
     echo "All checks passed."
+
+# Exercise the installed client/server pair, including both former limits.
+COPY smoke-menu.c smoke-menu.sh /tmp/menu-smoke/
+RUN gcc -std=c11 -Wall -Wextra -pedantic -o /tmp/menu-smoke/check \
+      /tmp/menu-smoke/smoke-menu.c $(pkg-config --cflags --libs gemix-gem) \
+    && bash /tmp/menu-smoke/smoke-menu.sh /tmp/menu-smoke/check \
+    && rm -rf /tmp/menu-smoke
