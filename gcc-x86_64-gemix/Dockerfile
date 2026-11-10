@@ -5,8 +5,6 @@ FROM ${BASE_IMAGE}
 ARG IMG_VERSION=1.5.1
 ARG GEM_REF=main
 ARG GEM_COMMIT=6e6c60610ac46bf4586ab44da8de20d5eb41a83c
-ARG NATIVE_REF=v0.0.0
-ARG NATIVE_COMMIT=73c577afabb7a89ecdcdb01d621eed081e0aac13
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, the Native C++ SDK for GEMix, bundled GEM programs, and the Rasta viewer." \
@@ -184,7 +182,7 @@ RUN set -eux; \
 # copies are the same files) so the system C++ runtime is used at run time.
 ARG IMG_VERSION=1.5.1
 ARG NATIVE_REF=v0.0.0
-ARG NATIVE_COMMIT=73c577afabb7a89ecdcdb01d621eed081e0aac13
+ARG NATIVE_COMMIT=d560a3a7be6348a772ec8c1f4110b966bd00a61d
 RUN set -eux; \
     git init /tmp/native-source; \
     git -C /tmp/native-source remote add origin https://github.com/wischner/native.git; \

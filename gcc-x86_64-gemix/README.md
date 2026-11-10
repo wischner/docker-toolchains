@@ -11,7 +11,7 @@ and Native revisions.
 
 Current image version: `1.5.1`.
 GEM main snapshot: `6e6c60610ac46bf4586ab44da8de20d5eb41a83c`.
-Native master snapshot: `73c577afabb7a89ecdcdb01d621eed081e0aac13`
+Native master snapshot: `d560a3a7be6348a772ec8c1f4110b966bd00a61d`
 (SDK package version `v0.0.0`).
 Rasta revision: `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`, the snapshot that
 revision of GEM builds.
@@ -193,3 +193,7 @@ The Native pkg-config entries include `libgemctl`, which supplies the current
 chrome metrics. The gemd variant resolves its AES calls through `libgem`; it
 does not pull the direct AES/VDI implementation into client applications.
 Both pkg-config and relocated CMake consumers are linked during image builds.
+
+GEM tab bands default to 20 pixels. Native applications can use
+`tab_view::set_tab_height(28)` for a per-control override, or pass
+`std::nullopt` to restore the theme.
