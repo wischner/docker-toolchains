@@ -87,7 +87,8 @@ available for reproducible builds.
 
 - [**GCC x86_64 GEMix**](./gcc-x86_64-gemix)
   GCC x86_64 toolchain layered on the X11 image with the hosted **GEMix**
-  SDK, bundled GEM programs, Rasta viewer, pkg-config metadata, and runtime resources.
+  SDK, the **Native** C++ UI SDK for GEMix, bundled GEM programs, Rasta viewer,
+  pkg-config metadata, and runtime resources.
   *Build GEM applications and run the GEM desktop through Rasta.*
 
 - [**GCC x86_64 Linux Open Motif**](./gcc-x86_64-linux-motif)

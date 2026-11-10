@@ -4,8 +4,10 @@
 
 Ubuntu 22.04 based GCC toolchain for **GEMix (DRI GEM on Linux)** development.
 The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
-revision `03a9c1efdc67fef89abb9c1c3c5de9d42f133ecf` during the image build.
-That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
+release `v1.0.3` (`d940cf31ee9e85af0264a83abd1526d4475ffb0c`) during the image
+build. That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
+The [Native](https://github.com/wischner/native) C++ UI SDK `v0.9.1` is built
+against it for both GEMix backends.
 
 Includes:
 
@@ -15,14 +17,19 @@ Includes:
   `libaes.so`, `libvdi.so`, `librasta.so`, `libplatform_linux.so`, `libgem.so`,
   `libfat12.so`, `libmsa.so`, `libprg.so`, `libgemconf.a`, `libgemctl.a`,
   `libstout.a`, `libmusashi.a`
+- Native SDK for GEMix in `/opt/gemix/native/hosted` (in-process AES/VDI)
+  and `/opt/gemix/native/gemd` (gemd client): headers, `libnative.a`, link
+  dependencies, and a CMake package (`find_package(Native)`)
 - GEMix fonts and runtime resources in `/opt/gemix/share/gem`
 - Programs on `PATH`: `rasta`, `gemd`, `desktop`, `terminal`, `calc`, `clock`,
-  `stout`, `gemread`, `gemscape`, `resgen`, and `gem-desktop`
+  `stout`, `gemread`, `gemscape`, `ted`, `resgen`, and `gem-desktop`
 - pkg-config entries for `gemix`, `gemix-aes`, `gemix-vdi`, `gemix-rasta`,
   `gemix-platform-linux`, `gemix-gem`, `gemix-gemconf`, `gemix-gemctl`,
-  `gemix-fat12`, `gemix-msa`, `gemix-prg`, `gemix-stout`, and `gemix-musashi`
+  `gemix-fat12`, `gemix-msa`, `gemix-prg`, `gemix-stout`, `gemix-musashi`,
+  `native-gemix`, and `native-gemix-gemd`
 
-`GEM_RESOURCE_DIR` defaults to `/opt/gemix/share/gem`. `gem-desktop` starts
+`GEM_RESOURCE_DIR` defaults to `/opt/gemix/share/gem`. `NATIVE_GEMIX_SDK` and
+`NATIVE_GEMIX_GEMD_SDK` point at the two Native SDKs. `gem-desktop` starts
 Rasta, gemd, and the desktop in one container.
 
 Example:
@@ -33,6 +40,14 @@ docker run --rm \
   -v "$PWD":/work -w /work \
   wischner/gcc-x86_64-gemix:latest \
   bash -lc 'gcc -o app main.c $(pkg-config --cflags --libs gemix)'
+```
+
+```bash
+docker run --rm \
+  -u $(id -u):$(id -g) \
+  -v "$PWD":/work -w /work \
+  wischner/gcc-x86_64-gemix:latest \
+  bash -lc 'cmake -S . -B build -DCMAKE_PREFIX_PATH="$NATIVE_GEMIX_GEMD_SDK" && cmake --build build'
 ```
 
 ```bash

@@ -2,14 +2,16 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.4.1
-ARG GEM_REF=03a9c1efdc67fef89abb9c1c3c5de9d42f133ecf
-ARG GEM_COMMIT=03a9c1efdc67fef89abb9c1c3c5de9d42f133ecf
+ARG IMG_VERSION=1.5.0
+ARG GEM_REF=v1.0.3
+ARG GEM_COMMIT=d940cf31ee9e85af0264a83abd1526d4475ffb0c
+ARG NATIVE_REF=v0.9.1
+ARG NATIVE_COMMIT=0bddb80f30fca01067172e441b0ab48fde782ce3
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
-      org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, bundled GEM programs, and the Rasta viewer." \
+      org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, the Native C++ SDK for GEMix, bundled GEM programs, and the Rasta viewer." \
       org.opencontainers.image.vendor="Wischner Ltd." \
-      org.opencontainers.image.licenses="MIT; Gemread is AGPL-3.0-or-later; see bundled GEM headers for upstream notices" \
+      org.opencontainers.image.licenses="MIT; Gemread is AGPL-3.0-or-later; see bundled GEM headers and /opt/gemix/native/*/share/licenses for upstream notices" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
       org.opencontainers.image.version="${IMG_VERSION}"
 
@@ -17,7 +19,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/opt/gemix/bin:${PATH}" \
     GEM_RESOURCE_DIR=/opt/gemix/share/gem \
     GEM_SAMPLE_DATA=/opt/gemix/samples/data \
-    GEM_RASTA_PORT=5000
+    GEM_RASTA_PORT=5000 \
+    NATIVE_GEMIX_SDK=/opt/gemix/native/hosted \
+    NATIVE_GEMIX_GEMD_SDK=/opt/gemix/native/gemd
 
 # Rasta is an SDL2 viewer. Gemscape's prebuilt CEF runtime needs the same
 # host libraries the GEM SDL container adds on top of this X11 base.
@@ -58,27 +62,33 @@ RUN set -eux; \
     git -c protocol.version=2 -C /tmp/gem-source fetch --depth 1 origin "${GEM_COMMIT}"; \
     git -C /tmp/gem-source checkout --detach FETCH_HEAD; \
     test "$(git -C /tmp/gem-source rev-parse HEAD)" = "${GEM_COMMIT}"; \
-    cmake -S /tmp/gem-source -B /opt/gemix/work \
+    GEM_IN_CONTAINER=1 cmake -S /tmp/gem-source -B /opt/gemix/work \
       -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_TESTING=OFF \
       -DGEM_PLATFORM=rasta \
       -DGEM_OUTPUT_ROOT=/opt/gemix; \
-    cmake --build /opt/gemix/work --parallel "$(nproc)" --target \
+    GEM_IN_CONTAINER=1 cmake --build /opt/gemix/work --parallel "$(nproc)" --target \
       gem_sdk rasta_viewer \
-      gem_runtime_desktop_icons \
+      gem_runtime_desktop_icons gem_launcher_icons \
       gemd desktop desktop_hosted \
       terminal \
       calc calc_gemd \
       clock clock_gemd \
       stout \
       gemread gemread_hosted \
-      gemscape gemscape_hosted; \
-    cp -a /tmp/gem-source/include/fat12 /opt/gemix/sdk/include/fat12; \
-    cp -a /tmp/gem-source/include/msa /opt/gemix/sdk/include/msa; \
-    cp -a /tmp/gem-source/include/prg /opt/gemix/sdk/include/prg; \
-    musashi_lib="$(find /opt/gemix/work -name libmusashi.a -print -quit)"; \
-    test -n "${musashi_lib}"; \
-    cp -a "${musashi_lib}" /opt/gemix/sdk/lib/libmusashi.a; \
+      gemscape gemscape_hosted \
+      ted; \
+    for component in fat12 msa prg stout; do \
+      install -d "/opt/gemix/sdk/include/${component}"; \
+      cp -a "/tmp/gem-source/include/${component}/." "/opt/gemix/sdk/include/${component}/"; \
+    done; \
+    for library in libprg.so libstout.a libmusashi.a; do \
+      if [ ! -f "/opt/gemix/sdk/lib/${library}" ]; then \
+        built="$(find /opt/gemix/lib /opt/gemix/work -name "${library}" -print -quit)"; \
+        test -n "${built}"; \
+        cp -a "${built}" "/opt/gemix/sdk/lib/${library}"; \
+      fi; \
+    done; \
     cp -a /opt/gemix/sdk/include/. /usr/local/include/; \
     cp -a /opt/gemix/sdk/lib/. /usr/local/lib/; \
     ln -sfn /opt/gemix/sdk/share/gem /opt/gemix/share/gem; \
@@ -101,6 +111,7 @@ RUN set -eux; \
     link_tool gemread_hosted /opt/gemix/apps/gemread_hosted; \
     link_tool gemscape /opt/gemix/apps/gemscape; \
     link_tool gemscape_hosted /opt/gemix/apps/gemscape_hosted; \
+    link_tool ted /opt/gemix/apps/ted; \
     link_tool resgen /opt/gemix/sdk/bin/resgen; \
     link_tool rasta /opt/gemix/tools/rasta; \
     chmod 0755 /opt/gemix/bin/gem-desktop; \
@@ -124,7 +135,7 @@ RUN set -eux; \
     ldconfig
 
 # The SDK ships libraries and headers but no pkg-config metadata.
-ARG IMG_VERSION=1.4.1
+ARG IMG_VERSION=1.5.0
 RUN set -eux; \
     install -d /usr/local/lib/pkgconfig; \
     pc() { \
@@ -160,6 +171,77 @@ RUN set -eux; \
     pc gemix-stout 'GEMix Stout disk and guest support library' '-lstout' \
       'gemix-gem gemix-prg gemix-fat12 gemix-msa gemix-platform-linux gemix-musashi'; \
     pc gemix 'GEMix umbrella development package' '' 'gemix-aes'
+
+# Native C++ UI SDK for GEMix (https://github.com/wischner/native).
+# Native's published Linux GEMix SDKs are linked against whatever GEM was
+# in its CI image, so both variants are built here against the GEM above
+# with Native's own release packager. The packager stages the public
+# headers, libnative.a, the link dependency closure, and a relocatable
+# CMake package, then links a consumer against the relocated tree.
+#   hosted: AES/VDI run in-process and draw straight to Rasta.
+#   gemd:   calls go through libgem to a running gemd.
+# The pkg-config entries link the image's own GEM libraries (the SDK
+# copies are the same files) so the system C++ runtime is used at run time.
+ARG IMG_VERSION=1.5.0
+ARG NATIVE_REF=v0.9.1
+ARG NATIVE_COMMIT=0bddb80f30fca01067172e441b0ab48fde782ce3
+RUN set -eux; \
+    git init /tmp/native-source; \
+    git -C /tmp/native-source remote add origin https://github.com/wischner/native.git; \
+    git -c protocol.version=2 -C /tmp/native-source fetch --depth 1 origin "${NATIVE_COMMIT}"; \
+    git -C /tmp/native-source checkout --detach FETCH_HEAD; \
+    test "$(git -C /tmp/native-source rev-parse HEAD)" = "${NATIVE_COMMIT}"; \
+    install -d /opt/gemix/native; \
+    for variant in hosted gemd; do \
+      case "${variant}" in \
+        hosted) sdk_id=linux-gemix-x86_64; extra= ;; \
+        gemd) sdk_id=linux-gemix-gemd-x86_64; extra=-DGEMIX_USE_GEMD=ON ;; \
+      esac; \
+      cmake -S /tmp/native-source -B "/tmp/native-source/build/${sdk_id}" \
+        -DTOOLKIT=GEMIX ${extra} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTING=OFF \
+        -DNATIVE_DOCKER_CONTROL_ONLY=OFF \
+        -DNATIVE_BUILD_SDK=ON \
+        -DNATIVE_SDK_VERSION="${NATIVE_REF}" \
+        -DNATIVE_SDK_ID="${sdk_id}"; \
+      cmake --build "/tmp/native-source/build/${sdk_id}" --parallel "$(nproc)"; \
+      archive="/tmp/native-source/build/release/native-${NATIVE_REF}-${sdk_id}-sdk.tar.gz"; \
+      test -f "${archive}"; \
+      install -d "/opt/gemix/native/${variant}"; \
+      tar -xzf "${archive}" -C "/opt/gemix/native/${variant}" --strip-components=1; \
+      test -f "/opt/gemix/native/${variant}/lib/libnative.a"; \
+      test -f "/opt/gemix/native/${variant}/lib/cmake/Native/NativeConfig.cmake"; \
+    done; \
+    install -d /opt/gemix/share/metadata; \
+    git -C /tmp/native-source rev-parse HEAD > /opt/gemix/share/metadata/native.version; \
+    printf '%s\n' "${NATIVE_REF}" > /opt/gemix/share/metadata/native.ref; \
+    printf '%s\n' 'https://github.com/wischner/native' \
+      > /opt/gemix/share/metadata/native.source; \
+    rm -rf /tmp/native-source /tmp/build /tmp/consumer; \
+    native_pc() { \
+      name="$1"; desc="$2"; sdk="$3"; libs="$4"; requires="$5"; \
+      printf '%s\n' \
+        "prefix=${sdk}" \
+        'libdir=${prefix}/lib' \
+        'includedir=${prefix}/include' \
+        '' \
+        "Name: ${name}" \
+        "Description: ${desc}" \
+        "Version: ${NATIVE_REF#v}" \
+        "Requires.private: ${requires}" \
+        'Cflags: -std=c++20 -I${includedir}' \
+        "Libs: \${libdir}/libnative.a ${libs} -ldl -lpng -lz -ljpeg" \
+        > "/usr/local/lib/pkgconfig/${name}.pc"; \
+    }; \
+    native_pc native-gemix 'Native C++ UI library, hosted GEMix backend' \
+      /opt/gemix/native/hosted \
+      '-L/usr/local/lib -Wl,-rpath,/usr/local/lib -laes -lvdi -lrasta' \
+      'gemix-aes'; \
+    native_pc native-gemix-gemd 'Native C++ UI library, gemd client GEMix backend' \
+      /opt/gemix/native/gemd \
+      '-L/usr/local/lib -Wl,-rpath,/usr/local/lib -lgem -lplatform_linux' \
+      'gemix-gem'
 
 WORKDIR /work
 
@@ -213,7 +295,7 @@ RUN set -eux; \
     echo "=== GEMix programs ==="; \
     for program in gemd desktop desktop_hosted terminal calc calc_hosted \
         clock clock_hosted stout gemread gemread_hosted gemscape \
-        gemscape_hosted resgen rasta gem-desktop; do \
+        gemscape_hosted ted resgen rasta gem-desktop; do \
       command -v "$program"; \
       test -x "$(command -v "$program")"; \
     done; \
@@ -265,4 +347,39 @@ RUN set -eux; \
     gcc -o /tmp/test-gemix /tmp/test-gemix.c \
       $(pkg-config --cflags --libs gemix gemix-platform-linux gemix-gemconf gemix-gemctl gemix-fat12 gemix-msa gemix-prg gemix-stout); \
     rm -f /tmp/test-gemix /tmp/test-gemix.c; \
+    echo "=== Native SDK ==="; \
+    test -s /opt/gemix/share/metadata/native.version; \
+    test -f "${NATIVE_GEMIX_SDK}/include/native.h"; \
+    test -f "${NATIVE_GEMIX_GEMD_SDK}/include/native.h"; \
+    printf '%s\n' \
+      '#include <native.h>' \
+      'int program(int, char **) {' \
+      '  native::app_wnd window("Native check");' \
+      '  return native::app::run(window);' \
+      '}' \
+      > /tmp/test-native.cpp; \
+    for module in native-gemix native-gemix-gemd; do \
+      pkg-config --modversion "$module"; \
+      g++ -o /tmp/test-native /tmp/test-native.cpp \
+        $(pkg-config --cflags --libs "$module"); \
+      ldd /tmp/test-native; \
+      ! ldd /tmp/test-native | grep -q 'not found\|/opt/gemix/native'; \
+    done; \
+    install -d /tmp/native-consumer; \
+    cp /tmp/test-native.cpp /tmp/native-consumer/main.cpp; \
+    printf '%s\n' \
+      'cmake_minimum_required(VERSION 3.20)' \
+      'project(native_consumer LANGUAGES CXX)' \
+      'find_package(Native CONFIG REQUIRED)' \
+      'add_executable(native_consumer main.cpp)' \
+      'target_link_libraries(native_consumer PRIVATE Native::Native)' \
+      > /tmp/native-consumer/CMakeLists.txt; \
+    for sdk in "${NATIVE_GEMIX_SDK}" "${NATIVE_GEMIX_GEMD_SDK}"; do \
+      rm -rf /tmp/native-consumer/build; \
+      cmake -S /tmp/native-consumer -B /tmp/native-consumer/build \
+        -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$sdk"; \
+      cmake --build /tmp/native-consumer/build; \
+    done; \
+    rm -rf /tmp/native-consumer /tmp/test-native /tmp/test-native.cpp; \
+    rm -f /tmp/rasta.framebuffer /tmp/rasta-smoke.log /tmp/xvfb-error.log; \
     echo "All checks passed."
