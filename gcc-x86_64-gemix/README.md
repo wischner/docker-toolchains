@@ -9,12 +9,18 @@ It extends the X11 toolchain with the GEM SDK, the Native C++ SDK for
 GEMix, the bundled GEM programs, and the Rasta viewer, built from pinned GEM
 and Native revisions.
 
-Current image version: `1.5.1`.
-GEM main snapshot: `6e6c60610ac46bf4586ab44da8de20d5eb41a83c`.
+Current image version: `1.5.2`.
+GEM main snapshot: `89fdb8b83d7fb61395a3779b9b5690b1c88ecce3`.
 Native master snapshot: `c1b5106c3434993e2fe40ab1c31c6b15374ef918`
 (SDK package version `v0.0.0`).
 Rasta revision: `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`, the snapshot that
 revision of GEM builds.
+
+The compact resizable frame meets application status bars with a single
+bottom/right border. It has no inner work-area frame or corner strokes;
+AES still handles resizing on the outer corner. Full scrollbar frames are
+unchanged. This image also retains protocol 3 and the expanded application
+menu limits from SDK 1.5.1.
 
 ## Installed components
 
@@ -50,7 +56,8 @@ The image sets `GEM_RESOURCE_DIR=/opt/gemix/share/gem`,
 `NATIVE_GEMIX_GEMD_SDK=/opt/gemix/native/gemd`. The upstream SDK tree is
 `/opt/gemix/sdk`. Gemscape keeps its CEF runtime at the path compiled into
 the binary, `/opt/gemix/work/deps/cef/source`. Gemread is AGPL-3.0-or-later;
-the rest of the bundled GEM core is MIT.
+project-owned GEM core code is GPL-2.0-or-later. Preserve the bundled
+notices for separately licensed dependencies and historical assets.
 
 ## Using this image as your compiler
 
@@ -176,7 +183,7 @@ the Rasta viewer.
 
 ## Complete menus and protocol compatibility
 
-Version 1.5.1 includes matching protocol-3 libgem/gemd and the Native menu
+Versions 1.5.1 and later include matching protocol-3 libgem/gemd and the Native menu
 installation fix. Standard GEM menus support 256 objects and 256 strings,
 including separators; labels over 63 bytes and malformed or oversized trees
 are rejected rather than truncated. Failed Native installation retains the

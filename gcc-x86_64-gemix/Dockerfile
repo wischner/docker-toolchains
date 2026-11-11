@@ -2,14 +2,14 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.5.1
+ARG IMG_VERSION=1.5.2
 ARG GEM_REF=main
-ARG GEM_COMMIT=6e6c60610ac46bf4586ab44da8de20d5eb41a83c
+ARG GEM_COMMIT=89fdb8b83d7fb61395a3779b9b5690b1c88ecce3
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, the Native C++ SDK for GEMix, bundled GEM programs, and the Rasta viewer." \
       org.opencontainers.image.vendor="Wischner Ltd." \
-      org.opencontainers.image.licenses="MIT; Gemread is AGPL-3.0-or-later; see bundled GEM headers and /opt/gemix/native/*/share/licenses for upstream notices" \
+      org.opencontainers.image.licenses="GPL-2.0-or-later; Native is MIT; Gemread is AGPL-3.0-or-later; see bundled GEM headers and /opt/gemix/native/*/share/licenses for upstream notices" \
       org.opencontainers.image.source="https://github.com/wischner/docker-toolchains" \
       org.opencontainers.image.version="${IMG_VERSION}"
 
@@ -133,7 +133,7 @@ RUN set -eux; \
     ldconfig
 
 # The SDK ships libraries and headers but no pkg-config metadata.
-ARG IMG_VERSION=1.5.1
+ARG IMG_VERSION=1.5.2
 RUN set -eux; \
     install -d /usr/local/lib/pkgconfig; \
     pc() { \
@@ -180,7 +180,7 @@ RUN set -eux; \
 #   gemd:   calls go through libgem to a running gemd.
 # The pkg-config entries link the image's own GEM libraries (the SDK
 # copies are the same files) so the system C++ runtime is used at run time.
-ARG IMG_VERSION=1.5.1
+ARG IMG_VERSION=1.5.2
 ARG NATIVE_REF=v0.0.0
 ARG NATIVE_COMMIT=c1b5106c3434993e2fe40ab1c31c6b15374ef918
 RUN set -eux; \

@@ -4,10 +4,12 @@
 
 Ubuntu 22.04 based GCC toolchain for **GEMix (DRI GEM on Linux)** development.
 The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
-main snapshot (`6e6c60610ac46bf4586ab44da8de20d5eb41a83c`) during the image
+main snapshot (`89fdb8b83d7fb61395a3779b9b5690b1c88ecce3`) during the image
 build. That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
 The [Native](https://github.com/wischner/native) C++ UI SDK master snapshot `c1b5106c3434993e2fe40ab1c31c6b15374ef918` (package version `v0.0.0`) is built
-against it for both GEMix backends.
+against it for both GEMix backends. Image 1.5.2 uses a single-pixel compact
+window frame, so status bars meet the bottom border without extra corner
+strokes. Native corner resizing and full scrollbar chrome are retained.
 
 Includes:
 
@@ -65,7 +67,7 @@ Contributions are welcome. Please open an issue or pull request:
 
 ## Complete menus and protocol compatibility
 
-Version 1.5.1 includes matching protocol-3 libgem/gemd and the Native menu
+Versions 1.5.1 and later include matching protocol-3 libgem/gemd and the Native menu
 installation fix. Standard GEM menus support 256 objects and 256 strings,
 including separators; labels over 63 bytes and malformed or oversized trees
 are rejected rather than truncated. Failed Native installation retains the
