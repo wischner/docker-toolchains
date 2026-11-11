@@ -2,9 +2,9 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.5.2
-ARG GEM_REF=main
-ARG GEM_COMMIT=89fdb8b83d7fb61395a3779b9b5690b1c88ecce3
+ARG IMG_VERSION=1.5.3
+ARG GEM_REF=v1.0.4
+ARG GEM_COMMIT=755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, the Native C++ SDK for GEMix, bundled GEM programs, and the Rasta viewer." \
@@ -133,7 +133,7 @@ RUN set -eux; \
     ldconfig
 
 # The SDK ships libraries and headers but no pkg-config metadata.
-ARG IMG_VERSION=1.5.2
+ARG IMG_VERSION=1.5.3
 RUN set -eux; \
     install -d /usr/local/lib/pkgconfig; \
     pc() { \
@@ -180,9 +180,9 @@ RUN set -eux; \
 #   gemd:   calls go through libgem to a running gemd.
 # The pkg-config entries link the image's own GEM libraries (the SDK
 # copies are the same files) so the system C++ runtime is used at run time.
-ARG IMG_VERSION=1.5.2
-ARG NATIVE_REF=v0.0.0
-ARG NATIVE_COMMIT=c1b5106c3434993e2fe40ab1c31c6b15374ef918
+ARG IMG_VERSION=1.5.3
+ARG NATIVE_REF=v1.0.5
+ARG NATIVE_COMMIT=3184fd615d67bb27cdacc09e6a30b4c0123fa891
 RUN set -eux; \
     git init /tmp/native-source; \
     git -C /tmp/native-source remote add origin https://github.com/wischner/native.git; \

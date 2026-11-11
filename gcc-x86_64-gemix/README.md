@@ -9,10 +9,9 @@ It extends the X11 toolchain with the GEM SDK, the Native C++ SDK for
 GEMix, the bundled GEM programs, and the Rasta viewer, built from pinned GEM
 and Native revisions.
 
-Current image version: `1.5.2`.
-GEM main snapshot: `89fdb8b83d7fb61395a3779b9b5690b1c88ecce3`.
-Native master snapshot: `c1b5106c3434993e2fe40ab1c31c6b15374ef918`
-(SDK package version `v0.0.0`).
+Current image version: `1.5.3`.
+GEM release: `v1.0.4` (`755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6`).
+Native release: `v1.0.5` (`3184fd615d67bb27cdacc09e6a30b4c0123fa891`).
 Rasta revision: `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`, the snapshot that
 revision of GEM builds.
 
@@ -193,8 +192,8 @@ all clients together: protocol-2 binaries cannot use the new server.
 The image build runs a real-server smoke test for 32, 33 and 49 strings,
 65 and 256 objects, check/disable updates, removal and overflow rejection.
 Both bundled Native SDK variants are rebuilt against the same GEM libraries.
-The Native revision is a master snapshot, packaged as v0.0.0 using Native's
-existing snapshot convention; the exact commit is recorded in metadata.
+The Native revision is the v1.0.5 release tag, packaged under that version;
+the exact commit is recorded in metadata.
 
 The Native pkg-config entries include `libgemctl`, which supplies the current
 chrome metrics. The gemd variant resolves its AES calls through `libgem`; it

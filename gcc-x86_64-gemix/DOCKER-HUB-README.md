@@ -4,12 +4,13 @@
 
 Ubuntu 22.04 based GCC toolchain for **GEMix (DRI GEM on Linux)** development.
 The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
-main snapshot (`89fdb8b83d7fb61395a3779b9b5690b1c88ecce3`) during the image
+release v1.0.4 (`755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6`) during the image
 build. That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
-The [Native](https://github.com/wischner/native) C++ UI SDK master snapshot `c1b5106c3434993e2fe40ab1c31c6b15374ef918` (package version `v0.0.0`) is built
-against it for both GEMix backends. Image 1.5.2 uses a single-pixel compact
-window frame, so status bars meet the bottom border without extra corner
-strokes. Native corner resizing and full scrollbar chrome are retained.
+The [Native](https://github.com/wischner/native) C++ UI SDK release v1.0.5 (`3184fd615d67bb27cdacc09e6a30b4c0123fa891`) is built
+against it for both GEMix backends. Image 1.5.3 adds the unified system
+menu bar, movable desktop icons, Add to Desktop, file-type icons, bold Ted
+Markdown headings and Stout desktop-size repaint fixes, with Native's
+square GEM toolbar separators. It keeps the single-pixel compact window frame.
 
 Includes:
 
@@ -77,8 +78,8 @@ all clients together: protocol-2 binaries cannot use the new server.
 The image build runs a real-server smoke test for 32, 33 and 49 strings,
 65 and 256 objects, check/disable updates, removal and overflow rejection.
 Both bundled Native SDK variants are rebuilt against the same GEM libraries.
-The Native revision is a master snapshot, packaged as v0.0.0 using Native's
-existing snapshot convention; the exact commit is recorded in metadata.
+The Native revision is the v1.0.5 release tag, packaged under that version;
+the exact commit is recorded in metadata.
 
 GEM tab bands default to 20 pixels. Native applications can use
 `tab_view::set_tab_height(28)` for a per-control override, or pass
