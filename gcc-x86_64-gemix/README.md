@@ -6,14 +6,16 @@ This image is part of **Wischner Ltd. Toolchains**.
 
 A reusable **Linux x86_64 GEMix development base** on Ubuntu 22.04.
 It extends the X11 toolchain with the GEM SDK, the Native C++ SDK for
-GEMix, the bundled GEM programs, and the Rasta viewer, built from pinned GEM
-and Native revisions.
+GEMix, the bundled GEM programs, and the Rasta viewer, built from pinned GEM,
+Native, and Rasta revisions.
 
-Current image version: `1.5.3`.
+Current image version: `1.5.4`.
 GEM release: `v1.0.4` (`755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6`).
 Native release: `v1.0.5` (`3184fd615d67bb27cdacc09e6a30b4c0123fa891`).
-Rasta revision: `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`, the snapshot that
-revision of GEM builds.
+Rasta revision: `9ef662dd1c28718f23a9d0a7461f6b836029b316`.
+Image 1.5.4 updates Rasta with the framebuffer startup race fix: existing
+pixels survive attachment and resizing, and identical subscriptions leave
+the viewer state unchanged.
 
 The compact resizable frame meets application status bars with a single
 bottom/right border. It has no inner work-area frame or corner strokes;
@@ -144,9 +146,11 @@ need their own Rasta session.
 The GEM SDK, bundled programs, and Rasta viewer are compiled from source
 during the image build. `GEM_REF` and `GEM_COMMIT` select the GEM revision.
 The build fetches that commit and checks the resolved tree, so the layer does
-not follow a moving branch. Rasta's revision is the one pinned by that GEM
-tree. `NATIVE_REF` and `NATIVE_COMMIT` select the Native revision the same
-way. All values live in `build.args`.
+not follow a moving branch. `RASTA_COMMIT` and `RASTA_SHA256` override the
+GEM tree's Rasta pin with an independently pinned, checksum-verified source
+archive. Rasta's upstream tests run during the build. `NATIVE_REF` and
+`NATIVE_COMMIT` select the Native revision the same way as GEM. All values
+live in `build.args`.
 
 The Native SDKs are built in the image with Native's own release packager,
 against the GEM built just before them. Native's published GEMix archives

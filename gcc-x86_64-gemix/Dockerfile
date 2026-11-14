@@ -2,9 +2,11 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.5.3
+ARG IMG_VERSION=1.5.4
 ARG GEM_REF=v1.0.4
 ARG GEM_COMMIT=755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6
+ARG RASTA_COMMIT=9ef662dd1c28718f23a9d0a7461f6b836029b316
+ARG RASTA_SHA256=152322cce7b3ec46f5bc046d676a86b456b7342298b5c54afa2657d1fa73aac4
 
 LABEL org.opencontainers.image.title="gcc-x86_64-gemix" \
       org.opencontainers.image.description="GCC x86_64 GEMix toolchain with the GEM SDK, the Native C++ SDK for GEMix, bundled GEM programs, and the Rasta viewer." \
@@ -60,6 +62,13 @@ RUN set -eux; \
     git -c protocol.version=2 -C /tmp/gem-source fetch --depth 1 origin "${GEM_COMMIT}"; \
     git -C /tmp/gem-source checkout --detach FETCH_HEAD; \
     test "$(git -C /tmp/gem-source rev-parse HEAD)" = "${GEM_COMMIT}"; \
+    # Override GEM's bundled Rasta pin with the independently verified snapshot. \
+    sed -i \
+      -e "s/^set(GEM_RASTA_REVISION .*$/set(GEM_RASTA_REVISION \"${RASTA_COMMIT}\")/" \
+      -e "s/^set(GEM_RASTA_SHA256 .*$/set(GEM_RASTA_SHA256 \"${RASTA_SHA256}\")/" \
+      /tmp/gem-source/tools/scripts/rasta.cmake; \
+    grep -Fx "set(GEM_RASTA_REVISION \"${RASTA_COMMIT}\")" /tmp/gem-source/tools/scripts/rasta.cmake; \
+    grep -Fx "set(GEM_RASTA_SHA256 \"${RASTA_SHA256}\")" /tmp/gem-source/tools/scripts/rasta.cmake; \
     GEM_IN_CONTAINER=1 cmake -S /tmp/gem-source -B /opt/gemix/work \
       -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_TESTING=OFF \
@@ -76,6 +85,7 @@ RUN set -eux; \
       gemread gemread_hosted \
       gemscape gemscape_hosted \
       ted; \
+    ctest --test-dir /opt/gemix/work/deps/rasta-build --output-on-failure --no-tests=error; \
     for component in fat12 msa prg stout; do \
       install -d "/opt/gemix/sdk/include/${component}"; \
       cp -a "/tmp/gem-source/include/${component}/." "/opt/gemix/sdk/include/${component}/"; \
@@ -121,7 +131,7 @@ RUN set -eux; \
     sed -n 's/.*GEM_RASTA_REVISION "\([0-9a-f]*\)".*/\1/p' \
       /tmp/gem-source/tools/scripts/rasta.cmake \
       > /opt/gemix/share/metadata/rasta.version; \
-    test -s /opt/gemix/share/metadata/rasta.version; \
+    test "$(cat /opt/gemix/share/metadata/rasta.version)" = "${RASTA_COMMIT}"; \
     printf '%s\n' 'https://github.com/tstih/rasta' \
       > /opt/gemix/share/metadata/rasta.source; \
     find /opt/gemix/work -mindepth 1 -maxdepth 1 ! -name deps -exec rm -rf {} +; \
@@ -133,7 +143,7 @@ RUN set -eux; \
     ldconfig
 
 # The SDK ships libraries and headers but no pkg-config metadata.
-ARG IMG_VERSION=1.5.3
+ARG IMG_VERSION=1.5.4
 RUN set -eux; \
     install -d /usr/local/lib/pkgconfig; \
     pc() { \
@@ -180,7 +190,7 @@ RUN set -eux; \
 #   gemd:   calls go through libgem to a running gemd.
 # The pkg-config entries link the image's own GEM libraries (the SDK
 # copies are the same files) so the system C++ runtime is used at run time.
-ARG IMG_VERSION=1.5.3
+ARG IMG_VERSION=1.5.4
 ARG NATIVE_REF=v1.0.5
 ARG NATIVE_COMMIT=3184fd615d67bb27cdacc09e6a30b4c0123fa891
 RUN set -eux; \
@@ -309,7 +319,7 @@ RUN set -eux; \
     test -d /opt/gemix/work/deps/cef/source/Resources; \
     echo "=== Recorded revision ==="; \
     test -s /opt/gemix/share/metadata/gem.version; \
-    test -s /opt/gemix/share/metadata/rasta.version; \
+    test "$(cat /opt/gemix/share/metadata/rasta.version)" = "${RASTA_COMMIT}"; \
     echo "=== Rasta usage ==="; \
     rasta --help > /tmp/rasta-help.txt 2>&1; \
     grep -q -- '--bpp' /tmp/rasta-help.txt; \

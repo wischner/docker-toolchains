@@ -5,9 +5,12 @@
 Ubuntu 22.04 based GCC toolchain for **GEMix (DRI GEM on Linux)** development.
 The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
 release v1.0.4 (`755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6`) during the image
-build. That revision builds Rasta `5f1e1511e918e8b4dfa6f8b7a51272f66133ea0e`.
+build. Rasta is independently pinned to
+`9ef662dd1c28718f23a9d0a7461f6b836029b316` and its source checksum is verified.
+Image 1.5.4 fixes the Rasta framebuffer startup race: attachment and resizing
+preserve existing pixels, and identical subscriptions keep the viewer state.
 The [Native](https://github.com/wischner/native) C++ UI SDK release v1.0.5 (`3184fd615d67bb27cdacc09e6a30b4c0123fa891`) is built
-against it for both GEMix backends. Image 1.5.3 adds the unified system
+against it for both GEMix backends. The image retains the unified system
 menu bar, movable desktop icons, Add to Desktop, file-type icons, bold Ted
 Markdown headings and Stout desktop-size repaint fixes, with Native's
 square GEM toolbar separators. It keeps the single-pixel compact window frame.
