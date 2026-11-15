@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.5.4
+ARG IMG_VERSION=1.5.5
 ARG GEM_REF=v1.0.4
 ARG GEM_COMMIT=755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6
 ARG RASTA_COMMIT=9ef662dd1c28718f23a9d0a7461f6b836029b316
@@ -143,7 +143,7 @@ RUN set -eux; \
     ldconfig
 
 # The SDK ships libraries and headers but no pkg-config metadata.
-ARG IMG_VERSION=1.5.4
+ARG IMG_VERSION=1.5.5
 RUN set -eux; \
     install -d /usr/local/lib/pkgconfig; \
     pc() { \
@@ -190,9 +190,9 @@ RUN set -eux; \
 #   gemd:   calls go through libgem to a running gemd.
 # The pkg-config entries link the image's own GEM libraries (the SDK
 # copies are the same files) so the system C++ runtime is used at run time.
-ARG IMG_VERSION=1.5.4
-ARG NATIVE_REF=v1.0.5
-ARG NATIVE_COMMIT=3184fd615d67bb27cdacc09e6a30b4c0123fa891
+ARG IMG_VERSION=1.5.5
+ARG NATIVE_REF=v1.0.6
+ARG NATIVE_COMMIT=426a42f0f6077580dc2234d0adca8bafdba3e041
 RUN set -eux; \
     git init /tmp/native-source; \
     git -C /tmp/native-source remote add origin https://github.com/wischner/native.git; \
