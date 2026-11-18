@@ -9,11 +9,12 @@ It extends the X11 toolchain with the GEM SDK, the Native C++ SDK for
 GEMix, the bundled GEM programs, and the Rasta viewer, built from pinned GEM,
 Native, and Rasta revisions.
 
-Current image version: `1.5.5`.
-GEM release: `v1.0.4` (`755e3f0147c40af23215b5ef92f7ef7f1d3dc2e6`).
-Native release: `v1.0.6` (`426a42f0f6077580dc2234d0adca8bafdba3e041`).
+Current image version: `1.6.0`.
+GEM release: `v1.0.7` (`432364e8f9ddf6760290dbedd8478447f58745a8`).
+Native release: `v1.0.8` (`9c0dffe14640cb60397fe67f124cda061b279ae4`).
 Rasta revision: `9ef662dd1c28718f23a9d0a7461f6b836029b316`.
-Image 1.5.5 rebuilds both Native GEMix SDK backends from release v1.0.6.
+Image 1.6.0 updates GEM to v1.0.7 and rebuilds both Native GEMix SDK
+backends from release v1.0.8.
 It retains the Rasta framebuffer startup race fix from image 1.5.4: existing
 pixels survive attachment and resizing, and identical subscriptions leave
 the viewer state unchanged.
@@ -147,9 +148,9 @@ need their own Rasta session.
 The GEM SDK, bundled programs, and Rasta viewer are compiled from source
 during the image build. `GEM_REF` and `GEM_COMMIT` select the GEM revision.
 The build fetches that commit and checks the resolved tree, so the layer does
-not follow a moving branch. `RASTA_COMMIT` and `RASTA_SHA256` override the
-GEM tree's Rasta pin with an independently pinned, checksum-verified source
-archive. Rasta's upstream tests run during the build. `NATIVE_REF` and
+not follow a moving branch. The image's `rasta.cmake` replaces GEM's moving
+Rasta checkout with a source archive pinned by `RASTA_COMMIT` and verified
+with `RASTA_SHA256`. Rasta's upstream tests run during the build. `NATIVE_REF` and
 `NATIVE_COMMIT` select the Native revision the same way as GEM. All values
 live in `build.args`.
 
@@ -197,7 +198,7 @@ all clients together: protocol-2 binaries cannot use the new server.
 The image build runs a real-server smoke test for 32, 33 and 49 strings,
 65 and 256 objects, check/disable updates, removal and overflow rejection.
 Both bundled Native SDK variants are rebuilt against the same GEM libraries.
-The Native revision is the v1.0.6 release tag, packaged under that version;
+The Native revision is the v1.0.8 release tag, packaged under that version;
 the exact commit is recorded in metadata.
 
 The Native pkg-config entries include `libgemctl`, which supplies the current
