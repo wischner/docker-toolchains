@@ -8,6 +8,12 @@ A reusable **Linux x86_64 OpenLook and XView development base** on Ubuntu 22.04.
 It extends the X11 toolchain with the CMake-native
 [`retro-vault/open-look`](https://github.com/retro-vault/open-look) SDK.
 
+Image **1.4.0** builds [OpenLook v0.5.0](https://github.com/retro-vault/open-look/releases/tag/v0.5.0)
+from pinned commit `4af207984537f7f895ca06616ef07c1d79236694`.
+The SDK and runtime remain under `/usr/openwin`; configuration now lives in
+`/etc/openlook` and runtime assets in `/usr/openwin/share/openlook`.
+Both the runtime and upstream's separate Development component are installed.
+
 ## Installed components
 
 - Everything from **`gcc-x86_64-linux-x11`**
@@ -17,7 +23,8 @@ It extends the X11 toolchain with the CMake-native
   `include/xview`, and `include/xview_private`
 - `olwm` plus the OpenLook application set from the source tree, including
   File Manager (`filemgr`), `cmdtool`, `textedit`, `clock`, `props`,
-  `xtoolplaces`, and `olwmslave`
+  `xtoolplaces`, `olwmslave`, the MosaiX browser (with its private CEF runtime),
+  Calculator (`xcalc`), and Virtual Desktops (`vwm`)
 - Runtime fonts, images, bitmaps, menus, File Manager help, locales,
   manuals, and the `sun-cmd` terminfo entry
 - `pkg-config` modules for `xview` and `olgx`
@@ -55,6 +62,15 @@ docker run --rm \
   wischner/gcc-x86_64-linux-openlook:latest \
   openlook-xephyr ./app
 ```
+
+The installed environment helper is `/usr/openwin/share/openlook/environment.sh`;
+`openlook-xephyr` loads the fonts and `/etc/openlook/Olwm` automatically.
+MosaiX may require `-e MOSAIX_DISABLE_SANDBOX=1` with Docker's default seccomp
+policy; use that option only for trusted development content because it disables
+Chromium's process sandbox.
+
+In v0.5.0, several applications crash during SIGTERM cleanup. Close applications
+through the window manager for a normal shutdown.
 
 To use an existing host X server instead:
 

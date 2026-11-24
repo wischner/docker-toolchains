@@ -2,9 +2,9 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.3.1
+ARG IMG_VERSION=1.4.0
 ARG OPENLOOK_REPOSITORY=https://github.com/retro-vault/open-look.git
-ARG OPENLOOK_REVISION=107a9a003791db463e2c3dbe3b4fd55d60792d06
+ARG OPENLOOK_REVISION=4af207984537f7f895ca06616ef07c1d79236694
 
 LABEL org.opencontainers.image.title="gcc-x86_64-linux-openlook" \
       org.opencontainers.image.description="Complete GCC x86_64 Linux OpenLook/XView development toolchain layered on the Linux X11 base image." \
@@ -17,6 +17,7 @@ LABEL org.opencontainers.image.title="gcc-x86_64-linux-openlook" \
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV OPENWINHOME=/usr/openwin
+ENV OPENLOOK_CONFIG_DIR=/etc/openlook
 ENV PATH=/usr/openwin/bin:${PATH}
 ENV LD_LIBRARY_PATH=/usr/openwin/lib
 ENV PKG_CONFIG_PATH=/usr/openwin/lib/pkgconfig
@@ -25,9 +26,10 @@ ENV MANPATH=/usr/openwin/share/man:
 
 COPY sdk/ /opt/openlook-sdk/
 
-# libtirpc and Boost are the development dependencies this port needs beyond
+# libtirpc, libnsl, and Boost are development dependencies this port needs beyond
 # the X11 base. XView headers include <rpc/rpc.h> and <boost/preprocessor.hpp>.
-# File Manager links libXpm, which the base already provides. OpenLook itself
+# File Manager links libXpm, which the base already provides. MosaiX needs the
+# Chromium/CEF runtime dependencies below. OpenLook itself
 # is the CMake-native retro-vault port; no imake toolchain is required.
 #
 # The font set, File Manager help, menus, manuals, locale data, and the
@@ -40,13 +42,20 @@ COPY sdk/ /opt/openlook-sdk/
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libboost-dev \
+    libnsl-dev \
     libtirpc-dev \
+    libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 \
+    libxcomposite1 libxdamage1 libxkbcommon0 libasound2 libgbm1 libcups2 \
+    libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install the complete OPENWINHOME tree from the upstream CMake rules:
 # libraries, headers (including xview_private), applications, fonts, images,
-# bitmaps, menus, help, manuals, locales, and terminfo. The compiled default
-# OPENWINHOME matches the image prefix.
+# bitmaps, help, manuals, locales, and terminfo. Configuration lives in
+# /etc/openlook. Install the separate Development component for SDK consumers.
+# The compiled default OPENWINHOME matches the image prefix.
+# GCC 11 diagnoses the calculator's bounded strlcpy shim at -O3; retain that
+# warning without letting upstream's -Werror reject the optimized build.
 RUN set -eux; \
     srcdir="$(mktemp -d)"; \
     git -C "$srcdir" init; \
@@ -56,9 +65,15 @@ RUN set -eux; \
     test "$(git -C "$srcdir" rev-parse HEAD)" = "$OPENLOOK_REVISION"; \
     cmake -S "$srcdir" -B "$srcdir/build" \
       -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX="$OPENWINHOME"; \
+      -DCMAKE_C_FLAGS=-Wno-error=stringop-truncation \
+      -DCMAKE_INSTALL_PREFIX="$OPENWINHOME" \
+      -DOPENLOOK_SYSCONFDIR="$OPENLOOK_CONFIG_DIR"; \
     cmake --build "$srcdir/build" --parallel "$(nproc)"; \
     cmake --install "$srcdir/build"; \
+    cmake --install "$srcdir/build" --component Development; \
+    cp -a "$srcdir/resources/images" "$srcdir/resources/bitmaps" "$OPENWINHOME/include/"; \
+    install -d "$OPENWINHOME/include/X11"; \
+    cp -a "$srcdir/resources/bitmaps" "$OPENWINHOME/include/X11/"; \
     find "$srcdir/include" -type f -printf '%P\n' | while IFS= read -r header; do \
       test -f "$OPENWINHOME/include/$header"; \
     done; \
@@ -109,27 +124,34 @@ RUN set -eux; \
     echo "=== OpenLook libraries and applications ==="; \
       test -f /usr/openwin/lib/libxview.so; test -f /usr/openwin/lib/libxview.a; \
       test -f /usr/openwin/lib/libolgx.so; test -f /usr/openwin/lib/libolgx.a; \
-      test -f /usr/openwin/lib/openwin-menu; \
-      test -f /usr/openwin/lib/openwin-menu-programs; \
-      test -f /usr/openwin/lib/app-defaults/Olwm; \
-      test -f /usr/openwin/lib/.text_extras_menu; \
-      test -f /usr/openwin/lib/help/filemgr.info; \
+      test -f /etc/openlook/openwin-menu; \
+      test -f /etc/openlook/openwin-menu-programs; \
+      test -f /etc/openlook/Olwm; \
+      test -f /etc/openlook/text_extras_menu; \
+      test -f /usr/openwin/share/openlook/help/filemgr.info; \
       test -f /usr/openwin/share/man/man1/filemgr.1; \
       test -d /usr/openwin/share/locale/C/props; \
       TERMINFO=/usr/openwin/share/terminfo infocmp sun-cmd >/dev/null; \
-      test -x /usr/openwin/use-openwinhome.sh; \
+      test -f /usr/openwin/share/openlook/environment.sh; \
+      test -s /usr/openwin/lib/mosaix/cef/libcef.so; \
+      test -s /usr/openwin/lib/mosaix/cef/icudtl.dat; \
       command -v olwm; command -v openlook-xephyr; command -v filemgr; command -v clock; \
       command -v cmdtool; command -v textedit; command -v props; \
       command -v olwmslave; command -v xtoolplaces; \
+      command -v mosaix; command -v vwm; \
+      test -x /usr/openwin/bin/xcalc; command -v openlook-session; \
       pkg-config --exists xview olgx; \
     echo "=== pkg-config compile test ==="; \
     printf '#include <xview/xview.h>\nint main(int argc, char **argv){xv_init(XV_INIT_ARGC_PTR_ARGV, &argc, argv, 0); return 0;}\n' > /tmp/test-xview.c; \
     gcc -o /tmp/test-xview /tmp/test-xview.c $(pkg-config --cflags --libs xview); \
+    gcc -o /tmp/test-xview-static /tmp/test-xview.c $(pkg-config --cflags xview) \
+      /usr/openwin/lib/libxview.a /usr/openwin/lib/libolgx.a \
+      $(pkg-config --static --libs xview); \
     echo "=== CMake compile test ==="; \
     mkdir -p /tmp/test-openlook-cmake; \
     cp /tmp/test-xview.c /tmp/test-openlook-cmake/main.c; \
-    printf 'cmake_minimum_required(VERSION 3.16)\nproject(test_openlook C)\nfind_package(OpenLook CONFIG REQUIRED)\nadd_executable(test-openlook main.c)\ntarget_link_libraries(test-openlook PRIVATE OpenLook::xview)\n' > /tmp/test-openlook-cmake/CMakeLists.txt; \
+    printf 'cmake_minimum_required(VERSION 3.16)\nproject(test_openlook C)\nfind_package(OpenLook CONFIG REQUIRED)\nadd_executable(test-openlook main.c)\ntarget_link_libraries(test-openlook PRIVATE OpenLook::xview)\nadd_executable(test-openlook-static main.c)\ntarget_link_libraries(test-openlook-static PRIVATE OpenLook::xview_static)\n' > /tmp/test-openlook-cmake/CMakeLists.txt; \
     cmake -S /tmp/test-openlook-cmake -B /tmp/test-openlook-cmake/build; \
     cmake --build /tmp/test-openlook-cmake/build --parallel; \
-    rm -rf /tmp/test-xview /tmp/test-xview.c /tmp/test-openlook-cmake; \
+    rm -rf /tmp/test-xview /tmp/test-xview-static /tmp/test-xview.c /tmp/test-openlook-cmake; \
     echo "All checks passed."

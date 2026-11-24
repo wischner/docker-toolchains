@@ -9,4 +9,5 @@ Version: 1.0.0
 Requires: olgx x11 libtirpc
 Libs: -L${libdir} -lxview
 Libs.private: -lm -lutil
+Requires.private: xrandr xext
 Cflags: -I${includedir}

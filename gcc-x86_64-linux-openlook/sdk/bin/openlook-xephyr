@@ -84,8 +84,9 @@ for required_font in \
     fi
 done
 
-if [[ -f "$OPENWINHOME/lib/app-defaults/Olwm" ]]; then
-    DISPLAY="$nested_display" xrdb -merge "$OPENWINHOME/lib/app-defaults/Olwm"
+export OPENLOOK_CONFIG_DIR="${OPENLOOK_CONFIG_DIR:-/etc/openlook}"
+if [[ -f "$OPENLOOK_CONFIG_DIR/Olwm" ]]; then
+    DISPLAY="$nested_display" xrdb -merge "$OPENLOOK_CONFIG_DIR/Olwm"
 fi
 
 DISPLAY="$nested_display" olwm &

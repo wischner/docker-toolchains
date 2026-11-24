@@ -1,5 +1,5 @@
 include(CMakeFindDependencyMacro)
-find_dependency(X11 REQUIRED)
+find_dependency(X11 REQUIRED COMPONENTS Xrandr Xext)
 
 find_path(OpenLook_TIRPC_INCLUDE_DIR
     NAMES rpc/rpc.h
@@ -46,7 +46,7 @@ if(NOT TARGET OpenLook::xview_static)
     set_target_properties(OpenLook::xview_static PROPERTIES
         IMPORTED_LOCATION "${OpenLook_LIBRARY_DIR}/libxview.a"
         INTERFACE_INCLUDE_DIRECTORIES "${OpenLook_INCLUDE_DIR};${OpenLook_TIRPC_INCLUDE_DIR}"
-        INTERFACE_LINK_LIBRARIES "OpenLook::olgx_static;${OpenLook_TIRPC_LIBRARY};X11::X11;m;util"
+        INTERFACE_LINK_LIBRARIES "OpenLook::olgx_static;${OpenLook_TIRPC_LIBRARY};X11::X11;X11::Xrandr;X11::Xext;m;util"
     )
 endif()
 

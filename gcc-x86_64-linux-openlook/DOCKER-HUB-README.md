@@ -7,12 +7,18 @@
 It is designed for legacy OpenLook desktop software, XView applications, and
 `olwm` environments using the CMake-native `retro-vault/open-look` port.
 
+Version **1.4.0** includes [OpenLook v0.5.0](https://github.com/retro-vault/open-look/releases/tag/v0.5.0),
+pinned to commit `4af207984537f7f895ca06616ef07c1d79236694`.
+The SDK and runtime use `/usr/openwin`; configuration lives in `/etc/openlook`
+and runtime assets in `/usr/openwin/share/openlook`.
+
 ## What is included
 
 - everything from `wischner/gcc-x86_64-linux-x11`
 - shared and static XView and OLGX libraries
 - every exported `olgx`, `pixrect`, `xview`, and `xview_private` header
-- `olwm` and the OpenLook application suite, including File Manager
+- `olwm` and the OpenLook application suite, including File Manager,
+  MosaiX with its private CEF runtime, Calculator (`xcalc`), and Virtual Desktops (`vwm`)
 - runtime fonts, images, bitmaps, menus, File Manager help, locales,
   manuals, and the `sun-cmd` terminfo entry
 - `pkg-config` modules and CMake imported targets for shared/static linking
@@ -60,6 +66,14 @@ docker run --rm \
   wischner/gcc-x86_64-linux-openlook:latest \
   openlook-xephyr ./app
 ```
+
+The installed environment helper is `/usr/openwin/share/openlook/environment.sh`.
+MosaiX may require `-e MOSAIX_DISABLE_SANDBOX=1` with Docker's default seccomp
+policy; use that option only for trusted development content because it disables
+Chromium's process sandbox.
+
+In v0.5.0, several applications crash during SIGTERM cleanup. Close applications
+through the window manager for a normal shutdown.
 
 Existing host X server:
 
