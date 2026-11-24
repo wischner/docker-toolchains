@@ -96,3 +96,14 @@ make -C gcc-x86_64-linux-x11 -f Makefile.toolchain \
 ## Relationship to SDL2 image
 
 `wischner/gcc-x86_64-linux-sdl` extends this image and adds SDL2, SDL2_image, SDL2_mixer, SDL2_ttf, SDL3, audio backends, and Wayland-related packages.
+
+## Native C++ SDK
+
+Image `1.7.0` includes [Native v1.1.0](https://github.com/wischner/native/releases/tag/v1.1.0)
+for `linux-x11-x86_64` in `/opt/native/linux-x11-x86_64` (`$NATIVE_SDK`).
+The release archive is SHA-256 pinned and includes `libnative.a`, public headers,
+dependency libraries, `manifest.json`, licenses, and the `Native::Native` CMake target.
+The image build compiles and links a consumer against this installed SDK.
+
+Configure consumers with `-DNative_DIR="$NATIVE_SDK/lib/cmake/Native"`, then
+use `find_package(Native CONFIG REQUIRED)` and link `Native::Native`.

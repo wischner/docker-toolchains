@@ -1,7 +1,7 @@
 # Haiku OS build tools (cross-compilation toolchain) on Ubuntu
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.2.0
+ARG IMG_VERSION=1.3.0
 ARG HAIKU_COMMIT=master
 ARG HAIKU_PACKAGE_MIRROR=https://eu.hpkg.haiku-os.org
 ARG HAIKU_PACKAGE_BRANCH=master
@@ -83,7 +83,7 @@ RUN mkdir -p ${HAIKU_TOOLCHAIN_PATH}/build \
  && ln -snf ${HAIKU_TOOLCHAIN_PATH}/buildtools buildtools \
  && ./haiku/configure \
         --cross-tools-source ./buildtools \
-        --build-cross-tools x86_64 \
+        --build-cross-tools x86_64 -j"$(nproc)" \
  && echo "Cross-tools configured/built successfully"
 
 # Cross tools binaries
@@ -225,3 +225,49 @@ RUN echo "=== Haiku Cross-Compilation Toolchain (link-capable) ===" \
  && file /tmp/test \
  && rm -f /tmp/test.c /tmp/test \
  && echo "OK: toolchain can link Haiku binaries."
+
+COPY haiku-x86_64.cmake /opt/toolchains/haiku-x86_64.cmake
+
+
+# Pinned Native release SDK: public headers, libraries, CMake package and notices.
+ARG NATIVE_VERSION=v1.1.0
+ARG NATIVE_SHA256=56cffbdc4e52ae4460d1c76e762577aa1f177242c905373f8cc826eba0527b2e
+ENV NATIVE_SDK=/opt/native/haiku-x86_64
+ADD --checksum=sha256:${NATIVE_SHA256} https://github.com/wischner/native/releases/download/${NATIVE_VERSION}/native-${NATIVE_VERSION}-haiku-x86_64-sdk.tar.gz /tmp/native-sdk.tar.gz
+RUN set -eux; \
+    install -d "${NATIVE_SDK}"; \
+    tar -xzf /tmp/native-sdk.tar.gz -C "${NATIVE_SDK}" --strip-components=1; \
+    rm /tmp/native-sdk.tar.gz; \
+    test -s "${NATIVE_SDK}/include/native.h"; \
+    test -s "${NATIVE_SDK}/lib/libnative.a"; \
+    test -s "${NATIVE_SDK}/lib/cmake/Native/NativeConfig.cmake"; \
+    test -s "${NATIVE_SDK}/manifest.json"; \
+    printf '%s\n' "${NATIVE_VERSION}" > "${NATIVE_SDK}/.version"; \
+    printf '%s\n' "${NATIVE_SHA256}" > "${NATIVE_SDK}/.sha256"
+
+# Compile and link a consumer using only the installed SDK's public interface.
+RUN set -eux; \
+    install -d /tmp/native-consumer; \
+    printf '%s\n' \
+      '#include <native.h>' \
+      'int program(int, char **) {' \
+      '  native::app_wnd window("Native SDK check");' \
+      '  return 0;' \
+      '}' > /tmp/native-consumer/main.cpp; \
+    printf '%s\n' \
+      'cmake_minimum_required(VERSION 3.20)' \
+      'project(native_consumer LANGUAGES CXX)' \
+      'find_package(Native CONFIG REQUIRED)' \
+      'add_executable(native_consumer main.cpp)' \
+      'target_link_libraries(native_consumer PRIVATE Native::Native)' \
+      > /tmp/native-consumer/CMakeLists.txt; \
+    cmake -S /tmp/native-consumer -B /tmp/native-consumer/build \
+      -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/haiku-x86_64.cmake \
+      -DNative_DIR="${NATIVE_SDK}/lib/cmake/Native"; \
+    cmake --build /tmp/native-consumer/build; \
+    file /tmp/native-consumer/build/native_consumer; \
+    rm -rf /tmp/native-consumer
+
+LABEL org.opencontainers.image.native.version="${NATIVE_VERSION}" \
+      org.opencontainers.image.native.sdk="haiku-x86_64" \
+      org.opencontainers.image.native.sha256="${NATIVE_SHA256}"

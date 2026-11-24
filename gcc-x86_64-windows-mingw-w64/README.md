@@ -4,7 +4,7 @@ This image is part of **Wischner Ltd. Toolchains**.
 
 ## What it is
 
-A ready-to-use **MinGW-w64 cross-compilation environment** for building 64-bit Windows binaries (`.exe`, `.dll`) from Linux on Ubuntu 22.04.
+A ready-to-use **MinGW-w64 cross-compilation environment** for building 64-bit Windows binaries (`.exe`, `.dll`) from Linux on Ubuntu 24.04.
 
 This image provides the canonical `x86_64-w64-mingw32-*` toolchain, CMake/Make workflow support, and practical packaging/signing helpers for Windows releases.
 
@@ -74,3 +74,19 @@ For bug reports, feature requests, or questions, please use the issue tracker:
 [https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)
 
 Contributions are welcome. If you'd like to improve this image, feel free to open a pull request.
+
+## Native C++ SDK
+
+This release moves to Ubuntu 24.04 and MinGW GCC 13 to match Native's C++ runtime ABI.
+
+Image `1.2.0` includes [Native v1.1.0](https://github.com/wischner/native/releases/tag/v1.1.0)
+for `windows-mingw-x86_64` in `/opt/native/windows-mingw-x86_64` (`$NATIVE_SDK`).
+The release archive is SHA-256 pinned and includes `libnative.a`, public headers,
+dependency libraries, `manifest.json`, licenses, and the `Native::Native` CMake target.
+The image build compiles and links a consumer against this installed SDK.
+
+Configure consumers with `-DNative_DIR="$NATIVE_SDK/lib/cmake/Native"`, then
+use `find_package(Native CONFIG REQUIRED)` and link `Native::Native`.
+Cross-compile with `-DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/mingw-w64-x86_64.cmake`.
+Deploy the SDK runtime DLLs with the application; WinUI applications require
+Windows App Runtime 1.8 (x64) on the destination.

@@ -118,3 +118,14 @@ docker run --rm -it \
 ## Relationship to other images
 
 `wischner/gcc-x86_64-linux-motif` extends `wischner/gcc-x86_64-linux-x11` and is a sibling image to `wischner/gcc-x86_64-linux-sdl`.
+
+## Native C++ SDK
+
+Image `1.5.0` includes [Native v1.1.0](https://github.com/wischner/native/releases/tag/v1.1.0)
+for `linux-openmotif-x86_64` in `/opt/native/linux-openmotif-x86_64` (`$NATIVE_SDK`).
+The release archive is SHA-256 pinned and includes `libnative.a`, public headers,
+dependency libraries, `manifest.json`, licenses, and the `Native::Native` CMake target.
+The image build compiles and links a consumer against this installed SDK.
+
+Configure consumers with `-DNative_DIR="$NATIVE_SDK/lib/cmake/Native"`, then
+use `find_package(Native CONFIG REQUIRED)` and link `Native::Native`.

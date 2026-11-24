@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.4.1
+ARG IMG_VERSION=1.5.0
 ARG WINDOW_MAKER_REPOSITORY=https://github.com/retro-vault/window-maker.git
 ARG WINDOW_MAKER_REVISION=970ab4ba10e904a1ac53a830defdf02b37e629b7
 ARG WINDOW_MAKER_VERSION=0.96.0
@@ -300,3 +300,49 @@ RUN set -eux; \
         /tmp/test-wings.c /tmp/test-wings-shared /tmp/test-wings-static \
         /tmp/test-window-maker-cmake; \
     echo "All checks passed."
+
+
+# Pinned Native release SDK: public headers, libraries, CMake package and notices.
+ARG NATIVE_VERSION=v1.1.0
+ARG NATIVE_SHA256=b886072e1bae36390905e2bd6d1892faf03fcf55abd85aebcce204e8abad587d
+ENV NATIVE_SDK=/opt/native/linux-wmaker-x86_64
+ADD --checksum=sha256:${NATIVE_SHA256} https://github.com/wischner/native/releases/download/${NATIVE_VERSION}/native-${NATIVE_VERSION}-linux-wmaker-x86_64-sdk.tar.gz /tmp/native-sdk.tar.gz
+RUN set -eux; \
+    install -d "${NATIVE_SDK}"; \
+    tar -xzf /tmp/native-sdk.tar.gz -C "${NATIVE_SDK}" --strip-components=1; \
+    rm /tmp/native-sdk.tar.gz; \
+    test -s "${NATIVE_SDK}/include/native.h"; \
+    test -s "${NATIVE_SDK}/lib/libnative.a"; \
+    test -s "${NATIVE_SDK}/lib/cmake/Native/NativeConfig.cmake"; \
+    test -s "${NATIVE_SDK}/manifest.json"; \
+    printf '%s\n' "${NATIVE_VERSION}" > "${NATIVE_SDK}/.version"; \
+    printf '%s\n' "${NATIVE_SHA256}" > "${NATIVE_SDK}/.sha256"
+
+# Compile and link a consumer using only the installed SDK's public interface.
+RUN set -eux; \
+    install -d /tmp/native-consumer; \
+    printf '%s\n' \
+      '#include <native.h>' \
+      'int program(int, char **) {' \
+      '  native::app_wnd window("Native SDK check");' \
+      '  return 0;' \
+      '}' > /tmp/native-consumer/main.cpp; \
+    printf '%s\n' \
+      'cmake_minimum_required(VERSION 3.20)' \
+      'project(native_consumer LANGUAGES CXX)' \
+      'find_package(Native CONFIG REQUIRED)' \
+      'add_executable(native_consumer main.cpp)' \
+      'target_link_libraries(native_consumer PRIVATE Native::Native)' \
+      > /tmp/native-consumer/CMakeLists.txt; \
+    cmake -S /tmp/native-consumer -B /tmp/native-consumer/build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DNative_DIR="${NATIVE_SDK}/lib/cmake/Native"; \
+    cmake --build /tmp/native-consumer/build; \
+    ldd /tmp/native-consumer/build/native_consumer > /tmp/native-consumer/ldd.txt; \
+    cat /tmp/native-consumer/ldd.txt; \
+    ! grep -q "not found" /tmp/native-consumer/ldd.txt; \
+    rm -rf /tmp/native-consumer
+
+LABEL org.opencontainers.image.native.version="${NATIVE_VERSION}" \
+      org.opencontainers.image.native.sdk="linux-wmaker-x86_64" \
+      org.opencontainers.image.native.sha256="${NATIVE_SHA256}"

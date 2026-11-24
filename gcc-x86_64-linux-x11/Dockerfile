@@ -1,7 +1,7 @@
 # GCC x86_64 Linux X11 development toolchain (Ubuntu 22.04)
 FROM ubuntu:22.04
 
-ARG IMG_VERSION=1.6.0
+ARG IMG_VERSION=1.7.0
 ARG LIBXAW_VERSION=1.0.16
 ARG LIBXAW_REVISION=0877699c1fb9ef29a2a1e4429b5f77fd5c3adc5c
 
@@ -210,3 +210,49 @@ RUN echo "=== Compiler ===" && gcc --version && g++ --version \
           /tmp/test-pam /tmp/test-pam.c /tmp/test-lmdb /tmp/test-lmdb.c \
           /tmp/test-tcl /tmp/test-tcl.c \
  && echo "All checks passed."
+
+
+# Pinned Native release SDK: public headers, libraries, CMake package and notices.
+ARG NATIVE_VERSION=v1.1.0
+ARG NATIVE_SHA256=b9ff379580dcdc4a56fe55587cffc13d296bf87bf757574bb57d6664c9e75282
+ENV NATIVE_SDK=/opt/native/linux-x11-x86_64
+ADD --checksum=sha256:${NATIVE_SHA256} https://github.com/wischner/native/releases/download/${NATIVE_VERSION}/native-${NATIVE_VERSION}-linux-x11-x86_64-sdk.tar.gz /tmp/native-sdk.tar.gz
+RUN set -eux; \
+    install -d "${NATIVE_SDK}"; \
+    tar -xzf /tmp/native-sdk.tar.gz -C "${NATIVE_SDK}" --strip-components=1; \
+    rm /tmp/native-sdk.tar.gz; \
+    test -s "${NATIVE_SDK}/include/native.h"; \
+    test -s "${NATIVE_SDK}/lib/libnative.a"; \
+    test -s "${NATIVE_SDK}/lib/cmake/Native/NativeConfig.cmake"; \
+    test -s "${NATIVE_SDK}/manifest.json"; \
+    printf '%s\n' "${NATIVE_VERSION}" > "${NATIVE_SDK}/.version"; \
+    printf '%s\n' "${NATIVE_SHA256}" > "${NATIVE_SDK}/.sha256"
+
+# Compile and link a consumer using only the installed SDK's public interface.
+RUN set -eux; \
+    install -d /tmp/native-consumer; \
+    printf '%s\n' \
+      '#include <native.h>' \
+      'int program(int, char **) {' \
+      '  native::app_wnd window("Native SDK check");' \
+      '  return 0;' \
+      '}' > /tmp/native-consumer/main.cpp; \
+    printf '%s\n' \
+      'cmake_minimum_required(VERSION 3.20)' \
+      'project(native_consumer LANGUAGES CXX)' \
+      'find_package(Native CONFIG REQUIRED)' \
+      'add_executable(native_consumer main.cpp)' \
+      'target_link_libraries(native_consumer PRIVATE Native::Native)' \
+      > /tmp/native-consumer/CMakeLists.txt; \
+    cmake -S /tmp/native-consumer -B /tmp/native-consumer/build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DNative_DIR="${NATIVE_SDK}/lib/cmake/Native"; \
+    cmake --build /tmp/native-consumer/build; \
+    ldd /tmp/native-consumer/build/native_consumer > /tmp/native-consumer/ldd.txt; \
+    cat /tmp/native-consumer/ldd.txt; \
+    ! grep -q "not found" /tmp/native-consumer/ldd.txt; \
+    rm -rf /tmp/native-consumer
+
+LABEL org.opencontainers.image.native.version="${NATIVE_VERSION}" \
+      org.opencontainers.image.native.sdk="linux-x11-x86_64" \
+      org.opencontainers.image.native.sha256="${NATIVE_SHA256}"

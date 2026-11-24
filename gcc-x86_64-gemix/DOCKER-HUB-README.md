@@ -7,12 +7,12 @@ The GEM SDK, bundled GEM programs, and Rasta viewer are built from GEM
 release v1.0.7 (`432364e8f9ddf6760290dbedd8478447f58745a8`) during the image
 build. Rasta is independently pinned to
 `9ef662dd1c28718f23a9d0a7461f6b836029b316` and its source checksum is verified.
-Image 1.6.0 updates GEM to v1.0.7 and rebuilds both Native GEMix SDK
-backends from release v1.0.8.
+Image 1.7.0 rebuilds both Native GEMix SDK backends from release v1.1.0
+against GEM v1.0.7.
 It retains the Rasta framebuffer startup race fix from image 1.5.4:
 attachment and resizing preserve existing pixels, and identical subscriptions
 keep the viewer state.
-The [Native](https://github.com/wischner/native) C++ UI SDK release v1.0.8 (`9c0dffe14640cb60397fe67f124cda061b279ae4`) is built
+The [Native](https://github.com/wischner/native) C++ UI SDK release v1.1.0 (`58f14a5601e1b66da585a4c0c8671c6294c57af1`) is built
 against it for both GEMix backends. The image retains the unified system
 menu bar, movable desktop icons, Add to Desktop, file-type icons, bold Ted
 Markdown headings and Stout desktop-size repaint fixes, with Native's
@@ -84,7 +84,7 @@ all clients together: protocol-2 binaries cannot use the new server.
 The image build runs a real-server smoke test for 32, 33 and 49 strings,
 65 and 256 objects, check/disable updates, removal and overflow rejection.
 Both bundled Native SDK variants are rebuilt against the same GEM libraries.
-The Native revision is the v1.0.8 release tag, packaged under that version;
+The Native revision is the v1.1.0 release tag, packaged under that version;
 the exact commit is recorded in metadata.
 
 GEM tab bands default to 20 pixels. Native applications can use

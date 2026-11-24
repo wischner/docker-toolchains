@@ -121,6 +121,30 @@ available for reproducible builds.
 
 ---
 
+## Native C++ SDKs
+
+The following images include [Native v1.1.0](https://github.com/wischner/native/releases/tag/v1.1.0):
+
+| Image | Version | Native backend |
+| --- | --- | --- |
+| `gcc-x86_64-linux-x11` | `1.7.0` | X11 / Athena |
+| `gcc-x86_64-gemix` | `1.7.0` | GEMix hosted and gemd |
+| `gcc-x86_64-linux-sdl` | `1.4.0` | SDL2 |
+| `gcc-x86_64-linux-motif` | `1.5.0` | OpenMotif |
+| `gcc-x86_64-linux-openlook` | `1.5.0` | OpenLook / XView |
+| `gcc-x86_64-linux-window-maker` | `1.5.0` | Window Maker / WINGs |
+| `gcc-x86_64-windows-mingw-w64` | `1.2.0` | Windows |
+| `gcc-x86_64-haiku` | `1.3.0` | Haiku |
+
+Each SDK includes public headers, `libnative.a`, dependency libraries, licenses,
+and the `Native::Native` CMake target. Except for GEMix, configure applications
+with `-DNative_DIR="$NATIVE_SDK/lib/cmake/Native"`; the Windows and Haiku images
+also provide cross-compilation toolchain files documented in their READMEs.
+GEMix retains its separate `$NATIVE_GEMIX_SDK` and `$NATIVE_GEMIX_GEMD_SDK`
+prefixes. GEMix rebuilds Native from the pinned release commit against its GEM
+libraries; the other images install SHA-256-pinned upstream release archives.
+Every image compiles and links an SDK consumer during its build.
+
 ## Usage
 
 The examples mount your current working directory at `/work` in the container.

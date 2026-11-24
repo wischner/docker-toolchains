@@ -84,3 +84,14 @@ For bug reports, feature requests, or questions, please use the issue tracker:
 [https://github.com/wischner/docker-toolchains/issues](https://github.com/wischner/docker-toolchains/issues)
 
 Contributions are welcome. If you'd like to improve this image, feel free to open a pull request.
+
+## Native C++ SDK
+
+Image `1.4.0` includes [Native v1.1.0](https://github.com/wischner/native/releases/tag/v1.1.0)
+for `linux-sdl2-x86_64` in `/opt/native/linux-sdl2-x86_64` (`$NATIVE_SDK`).
+The release archive is SHA-256 pinned and includes `libnative.a`, public headers,
+dependency libraries, `manifest.json`, licenses, and the `Native::Native` CMake target.
+The image build compiles and links a consumer against this installed SDK.
+
+Configure consumers with `-DNative_DIR="$NATIVE_SDK/lib/cmake/Native"`, then
+use `find_package(Native CONFIG REQUIRED)` and link `Native::Native`.

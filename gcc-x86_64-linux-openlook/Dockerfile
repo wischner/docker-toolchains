@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=wischner/gcc-x86_64-linux-x11:1.6.0
 FROM ${BASE_IMAGE}
 
-ARG IMG_VERSION=1.4.0
+ARG IMG_VERSION=1.5.0
 ARG OPENLOOK_REPOSITORY=https://github.com/retro-vault/open-look.git
 ARG OPENLOOK_REVISION=4af207984537f7f895ca06616ef07c1d79236694
 
@@ -155,3 +155,49 @@ RUN set -eux; \
     cmake --build /tmp/test-openlook-cmake/build --parallel; \
     rm -rf /tmp/test-xview /tmp/test-xview-static /tmp/test-xview.c /tmp/test-openlook-cmake; \
     echo "All checks passed."
+
+
+# Pinned Native release SDK: public headers, libraries, CMake package and notices.
+ARG NATIVE_VERSION=v1.1.0
+ARG NATIVE_SHA256=9e9a4246ac0ed2455affe891386d9b8d2eb65e7e7d8a7d05f940b02c9d6652f1
+ENV NATIVE_SDK=/opt/native/linux-openlook-x86_64
+ADD --checksum=sha256:${NATIVE_SHA256} https://github.com/wischner/native/releases/download/${NATIVE_VERSION}/native-${NATIVE_VERSION}-linux-openlook-x86_64-sdk.tar.gz /tmp/native-sdk.tar.gz
+RUN set -eux; \
+    install -d "${NATIVE_SDK}"; \
+    tar -xzf /tmp/native-sdk.tar.gz -C "${NATIVE_SDK}" --strip-components=1; \
+    rm /tmp/native-sdk.tar.gz; \
+    test -s "${NATIVE_SDK}/include/native.h"; \
+    test -s "${NATIVE_SDK}/lib/libnative.a"; \
+    test -s "${NATIVE_SDK}/lib/cmake/Native/NativeConfig.cmake"; \
+    test -s "${NATIVE_SDK}/manifest.json"; \
+    printf '%s\n' "${NATIVE_VERSION}" > "${NATIVE_SDK}/.version"; \
+    printf '%s\n' "${NATIVE_SHA256}" > "${NATIVE_SDK}/.sha256"
+
+# Compile and link a consumer using only the installed SDK's public interface.
+RUN set -eux; \
+    install -d /tmp/native-consumer; \
+    printf '%s\n' \
+      '#include <native.h>' \
+      'int program(int, char **) {' \
+      '  native::app_wnd window("Native SDK check");' \
+      '  return 0;' \
+      '}' > /tmp/native-consumer/main.cpp; \
+    printf '%s\n' \
+      'cmake_minimum_required(VERSION 3.20)' \
+      'project(native_consumer LANGUAGES CXX)' \
+      'find_package(Native CONFIG REQUIRED)' \
+      'add_executable(native_consumer main.cpp)' \
+      'target_link_libraries(native_consumer PRIVATE Native::Native)' \
+      > /tmp/native-consumer/CMakeLists.txt; \
+    cmake -S /tmp/native-consumer -B /tmp/native-consumer/build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DNative_DIR="${NATIVE_SDK}/lib/cmake/Native"; \
+    cmake --build /tmp/native-consumer/build; \
+    ldd /tmp/native-consumer/build/native_consumer > /tmp/native-consumer/ldd.txt; \
+    cat /tmp/native-consumer/ldd.txt; \
+    ! grep -q "not found" /tmp/native-consumer/ldd.txt; \
+    rm -rf /tmp/native-consumer
+
+LABEL org.opencontainers.image.native.version="${NATIVE_VERSION}" \
+      org.opencontainers.image.native.sdk="linux-openlook-x86_64" \
+      org.opencontainers.image.native.sha256="${NATIVE_SHA256}"

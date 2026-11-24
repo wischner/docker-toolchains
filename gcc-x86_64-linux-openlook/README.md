@@ -8,7 +8,7 @@ A reusable **Linux x86_64 OpenLook and XView development base** on Ubuntu 22.04.
 It extends the X11 toolchain with the CMake-native
 [`retro-vault/open-look`](https://github.com/retro-vault/open-look) SDK.
 
-Image **1.4.0** builds [OpenLook v0.5.0](https://github.com/retro-vault/open-look/releases/tag/v0.5.0)
+Image **1.5.0** builds [OpenLook v0.5.0](https://github.com/retro-vault/open-look/releases/tag/v0.5.0)
 from pinned commit `4af207984537f7f895ca06616ef07c1d79236694`.
 The SDK and runtime remain under `/usr/openwin`; configuration now lives in
 `/etc/openlook` and runtime assets in `/usr/openwin/share/openlook`.
@@ -86,3 +86,14 @@ docker run --rm -it \
 ## Relationship to other images
 
 `wischner/gcc-x86_64-linux-openlook` extends `wischner/gcc-x86_64-linux-x11` and complements the Motif and GNUstep images for another classic Unix desktop toolkit family.
+
+## Native C++ SDK
+
+Image `1.5.0` includes [Native v1.1.0](https://github.com/wischner/native/releases/tag/v1.1.0)
+for `linux-openlook-x86_64` in `/opt/native/linux-openlook-x86_64` (`$NATIVE_SDK`).
+The release archive is SHA-256 pinned and includes `libnative.a`, public headers,
+dependency libraries, `manifest.json`, licenses, and the `Native::Native` CMake target.
+The image build compiles and links a consumer against this installed SDK.
+
+Configure consumers with `-DNative_DIR="$NATIVE_SDK/lib/cmake/Native"`, then
+use `find_package(Native CONFIG REQUIRED)` and link `Native::Native`.

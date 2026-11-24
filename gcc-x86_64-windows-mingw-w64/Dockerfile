@@ -1,7 +1,7 @@
-# GCC x86_64 Windows MinGW-w64 cross-compilation toolchain (Ubuntu 22.04)
-FROM ubuntu:22.04
+# GCC x86_64 Windows MinGW-w64 cross-compilation toolchain (Ubuntu 24.04)
+FROM ubuntu:24.04
 
-ARG IMG_VERSION=1.1.0
+ARG IMG_VERSION=1.2.0
 ARG MINGW_TRIPLET=x86_64-w64-mingw32
 
 LABEL org.opencontainers.image.title="gcc-x86_64-windows-mingw-w64" \
@@ -13,6 +13,8 @@ LABEL org.opencontainers.image.title="gcc-x86_64-windows-mingw-w64" \
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Native v1.1.0 is built with GCC 13; Ubuntu 24.04 supplies the matching
+# MinGW C++ ABI needed to link its release SDK.
 # Core build tools, MinGW-w64 cross toolchain, common cross-target libraries,
 # and practical Windows packaging/signing/testing helpers.
 RUN apt-get update && apt-get install -y \
@@ -76,6 +78,10 @@ RUN mkdir -p /opt/toolchains \
     'set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)' \
     > /opt/toolchains/mingw-w64-x86_64.cmake
 
+# Ubuntu 24.04 keeps the 64-bit Wine loader outside PATH.
+RUN test -x /usr/lib/wine/wine64 \
+ && ln -s /usr/lib/wine/wine64 /usr/local/bin/wine64
+
 WORKDIR /work
 
 # Sanity checks
@@ -96,3 +102,47 @@ RUN echo "=== Compiler ===" && gcc --version | head -1 \
  && file /tmp/winmain.exe /tmp/winsock.exe /tmp/ztest.exe \
  && rm -f /tmp/winmain.c /tmp/winmain.exe /tmp/winsock.c /tmp/winsock.exe /tmp/ztest.c /tmp/ztest.exe \
  && echo "Toolchain checks passed."
+
+
+# Pinned Native release SDK: public headers, libraries, CMake package and notices.
+ARG NATIVE_VERSION=v1.1.0
+ARG NATIVE_SHA256=82b14a34e3691041bf21245ac67c161d83a4d9964533ae9f1fe54e0d44af4e25
+ENV NATIVE_SDK=/opt/native/windows-mingw-x86_64
+ADD --checksum=sha256:${NATIVE_SHA256} https://github.com/wischner/native/releases/download/${NATIVE_VERSION}/native-${NATIVE_VERSION}-windows-mingw-x86_64-sdk.tar.gz /tmp/native-sdk.tar.gz
+RUN set -eux; \
+    install -d "${NATIVE_SDK}"; \
+    tar -xzf /tmp/native-sdk.tar.gz -C "${NATIVE_SDK}" --strip-components=1; \
+    rm /tmp/native-sdk.tar.gz; \
+    test -s "${NATIVE_SDK}/include/native.h"; \
+    test -s "${NATIVE_SDK}/lib/libnative.a"; \
+    test -s "${NATIVE_SDK}/lib/cmake/Native/NativeConfig.cmake"; \
+    test -s "${NATIVE_SDK}/manifest.json"; \
+    printf '%s\n' "${NATIVE_VERSION}" > "${NATIVE_SDK}/.version"; \
+    printf '%s\n' "${NATIVE_SHA256}" > "${NATIVE_SDK}/.sha256"
+
+# Compile and link a consumer using only the installed SDK's public interface.
+RUN set -eux; \
+    install -d /tmp/native-consumer; \
+    printf '%s\n' \
+      '#include <native.h>' \
+      'int program(int, char **) {' \
+      '  native::app_wnd window("Native SDK check");' \
+      '  return 0;' \
+      '}' > /tmp/native-consumer/main.cpp; \
+    printf '%s\n' \
+      'cmake_minimum_required(VERSION 3.20)' \
+      'project(native_consumer LANGUAGES CXX)' \
+      'find_package(Native CONFIG REQUIRED)' \
+      'add_executable(native_consumer main.cpp)' \
+      'target_link_libraries(native_consumer PRIVATE Native::Native)' \
+      > /tmp/native-consumer/CMakeLists.txt; \
+    cmake -S /tmp/native-consumer -B /tmp/native-consumer/build \
+      -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/toolchains/mingw-w64-x86_64.cmake \
+      -DNative_DIR="${NATIVE_SDK}/lib/cmake/Native"; \
+    cmake --build /tmp/native-consumer/build; \
+    file /tmp/native-consumer/build/native_consumer.exe; \
+    rm -rf /tmp/native-consumer
+
+LABEL org.opencontainers.image.native.version="${NATIVE_VERSION}" \
+      org.opencontainers.image.native.sdk="windows-mingw-x86_64" \
+      org.opencontainers.image.native.sha256="${NATIVE_SHA256}"
